@@ -1,7 +1,7 @@
 # Think to Buy
 ### The app that tells you if you can actually afford it
 
-**Live at: [thinktobuy.netlify.app](https://thinktobuy.netlify.app)**
+**Live at: [himothyjimothy17-tech.github.io/Think-To-Buy](https://himothyjimothy17-tech.github.io/Think-To-Buy)**
 
 > Built by an 8th grader who got tired of seeing people make bad financial decisions.
 
@@ -130,7 +130,7 @@ Note: Auth and cloud sync require a Supabase project. The live version at thinkt
 
 Built by a middle school student interested in fintech and making financial literacy more accessible.
 
-Live at: [thinktobuy.netlify.app](https://thinktobuy.netlify.app)
+**Live at: [himothyjimothy17-tech.github.io/Think-To-Buy](https://himothyjimothy17-tech.github.io/Think-To-Buy)**
 
 ---
 
