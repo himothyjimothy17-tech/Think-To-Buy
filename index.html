@@ -1989,7 +1989,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
       <div><div class="hmenu-item-title">AI Advisor Setup</div><div class="hmenu-item-desc">Add your free Gemini API key</div></div>
     </div>
     <div class="hmenu-divider"></div>
-    <div class="hmenu-item" onclick="doLogout();closeHMenu()">
+    <div class="hmenu-item" onclick="if(sb){sb.auth.signOut().finally(()=>location.reload())}else{location.reload()}">
       <span class="hmenu-icon">🚪</span>
       <div><div class="hmenu-item-title">Sign Out</div><div class="hmenu-item-desc" id="hmenu-email"></div></div>
     </div>
@@ -2064,7 +2064,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
       <div class="auth-user-bar" id="user-bar" style="display:none;">
         <div class="sync-indicator" id="sync-dot"></div>
         <strong id="user-email-display"></strong>
-        <button onclick="doLogout()">Sign out</button>
+        <button onclick="if(sb){sb.auth.signOut().finally(()=>location.reload())}else{location.reload()}">Sign out</button>
       </div>
       <div class="streak-badge" id="streak-badge" onclick="openTool('streak')" title="Spending streak">
         <span>🔥</span><span id="streak-count">0</span>
