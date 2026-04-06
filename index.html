@@ -4413,15 +4413,7 @@ async function doForgot() {
 
 async function doLogout() {
   try { await sb.auth.signOut(); } catch(e) {}
-  currentUser = null;
-  chatMemory = [];
-  // Force hide app, show auth screen
-  document.querySelectorAll('.app, #user-bar').forEach(el => el.style.display = 'none');
-  const authScreen = document.getElementById('auth-screen');
-  if (authScreen) authScreen.style.display = 'flex';
-  try { showLogin(); } catch(e) {}
-  // Force page reload as final fallback
-  setTimeout(() => { if (document.getElementById('auth-screen').style.display !== 'flex') location.reload(); }, 500);
+  location.reload();
 }
 
 /* ── Cloud Sync ── */
