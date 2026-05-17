@@ -3,9 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Should I Buy It?</title>
+<title>Think To Buy — Smart Spending Decisions</title>
+<meta name="description" content="Think To Buy helps you decide if you can afford a purchase based on your income and savings. Get an instant verdict before you spend.">
+<meta name="keywords" content="think to buy, thinktobuy, should I buy it, can I afford it, financial decision app, teen finance app, spending tracker, smart spending">
+<meta name="author" content="Think To Buy">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://himothyjimothy17-tech.github.io/Think-To-Buy/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Think To Buy">
+<meta property="og:title" content="Think To Buy — Smart Spending Decisions">
+<meta property="og:description" content="Enter your income, savings, and item price to get an instant verdict on whether you should buy it. Free financial decision app.">
+<meta property="og:url" content="https://himothyjimothy17-tech.github.io/Think-To-Buy/">
+<meta property="og:image" content="https://himothyjimothy17-tech.github.io/Think-To-Buy/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Think To Buy — Smart Spending Decisions">
+<meta name="twitter:description" content="Enter your income, savings, and item price to get an instant verdict on whether you should buy it.">
+<meta name="twitter:image" content="https://himothyjimothy17-tech.github.io/Think-To-Buy/preview.png">
 <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Should I Buy It?&quot;,&quot;short_name&quot;:&quot;Think to Buy&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;background_color&quot;:&quot;#080b10&quot;,&quot;theme_color&quot;:&quot;#c9a84c&quot;,&quot;description&quot;:&quot;Smart spending decisions&quot;}">
-<meta name="theme-color" content="#c9a84c">
+<meta name="theme-color" content="#7c6af5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Think to Buy">
@@ -29,24 +46,24 @@ if (typeof supabase === 'undefined') {
   --bg-card:    #111118;
   --bg-input:   #0d0d14;
 
-  /* Accent — purple/indigo like Linear */
-  --accent:       #7c6af5;
-  --accent-light: #a89cf8;
-  --accent-dim:   #3d3580;
-  --accent-glow:  rgba(124,106,245,0.15);
+  /* Accent — deeper violet */
+  --accent:       #7B2CBF;
+  --accent-light: #a855f7;
+  --accent-dim:   #4a1a7a;
+  --accent-glow:  rgba(123,44,191,0.18);
 
   /* Secondary accent — teal */
-  --teal:         #06b6d4;
-  --teal-dim:     #0891b2;
-  --teal-glow:    rgba(6,182,212,0.12);
+  --teal:         #83C5BE;
+  --teal-dim:     #5a9e98;
+  --teal-glow:    rgba(131,197,190,0.12);
 
-  /* Status colors */
-  --good:       #10d97e;
-  --good-bg:    rgba(16,217,126,0.08);
-  --good-border: rgba(16,217,126,0.2);
-  --warn:       #f59e0b;
-  --warn-bg:    rgba(245,158,11,0.08);
-  --warn-border: rgba(245,158,11,0.2);
+  /* Status colors — sage green, champagne, conventional red */
+  --good:       #83C5BE;
+  --good-bg:    rgba(131,197,190,0.08);
+  --good-border: rgba(131,197,190,0.2);
+  --warn:       #E6CCB2;
+  --warn-bg:    rgba(230,204,178,0.08);
+  --warn-border: rgba(230,204,178,0.2);
   --bad:        #f43f5e;
   --bad-bg:     rgba(244,63,94,0.08);
   --bad-border: rgba(244,63,94,0.2);
@@ -55,7 +72,7 @@ if (typeof supabase === 'undefined') {
   --text:       #f4f4f8;
   --text-2:     #a0a0b8;
   --text-3:     #5a5a7a;
-  --muted:      rgba(244,244,248,0.5);
+  --muted:      rgba(244,244,248,0.62);
   --muted2:     rgba(244,244,248,0.25);
 
   /* Borders */
@@ -147,17 +164,28 @@ body::before {
   to   { transform: translate(40px, 30px) scale(1.08); }
 }
 
+@keyframes verdict-bar-in {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes pill-pop {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.96); }
+  60%  { transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0;
   background-image:
-    linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(123,44,191,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123,44,191,0.03) 1px, transparent 1px);
   background-size: 56px 56px;
   pointer-events: none;
   transition: opacity 0.3s;
 }
-body.light-mode::before { opacity: 0.3; }
+
 
 .app { max-width: 860px; margin: 0 auto; position: relative; z-index: 1; }
 
@@ -181,15 +209,6 @@ header {
   vertical-align: super;
 }
 .header-actions { display: flex; gap: 8px; align-items: center; }
-.theme-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--glass); border: 1px solid var(--border);
-  border-radius: 50px; padding: 7px 14px;
-  font-size: 12px; font-weight: 500; color: var(--text-2);
-  cursor: pointer; transition: all 0.2s var(--ease);
-  backdrop-filter: blur(12px);
-}
-.theme-pill:hover { border-color: var(--border-hi); color: var(--text); }
 
 /* Settings button */
 .settings-btn {
@@ -203,6 +222,55 @@ header {
 .settings-btn:hover { border-color: var(--border-hi); }
 
 /* ─── SETTINGS MODAL ─── */
+/* ─── DATA ENTRY POPUP ─── */
+.data-popup-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.data-popup-overlay.open { display: flex; }
+.data-popup {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hi);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  width: 100%; max-width: 360px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(123,44,191,0.1);
+  animation: rise 0.2s var(--ease);
+}
+.data-popup-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent-light);
+  margin-bottom: 6px;
+}
+.data-popup-q {
+  font-size: 18px; font-weight: 800; letter-spacing: -0.03em;
+  color: var(--text); margin-bottom: 16px; line-height: 1.3;
+}
+.data-popup-actions {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.data-popup-submit {
+  flex: 1; padding: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border: none; border-radius: var(--r-sm);
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.data-popup-submit:hover { opacity: 0.88; }
+.data-popup-skip {
+  padding: 12px 16px;
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--muted);
+  font-family: 'Inter', sans-serif; font-size: 13px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.data-popup-skip:hover { border-color: var(--border-hi); color: var(--text-2); }
+
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.7);
@@ -338,7 +406,7 @@ header {
 }
 .input-prefix {
   position: absolute; left: 14px;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px; font-weight: 700;
   color: var(--gold); pointer-events: none; z-index: 1;
 }
@@ -451,34 +519,48 @@ input[type="range"]::-webkit-slider-thumb:hover {
 #result { display: none; animation: rise 0.35s var(--ease); }
 
 .verdict-card {
-  border-radius: var(--r-lg); padding: 24px 28px;
+  border-radius: var(--r-lg); padding: 28px 28px 28px 32px;
   display: flex; align-items: flex-start; gap: 18px;
   margin-bottom: 16px; position: relative; overflow: hidden;
   border: 1px solid transparent;
+  transition: border-color 0.35s ease, background 0.35s ease;
 }
 .verdict-card::before {
   content: ''; position: absolute; inset: 0;
-  opacity: 0.08; z-index: 0;
+  opacity: 0.07; z-index: 0;
+  transition: background 0.35s ease;
+}
+.verdict-card::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: 4px 0 0 4px; z-index: 2;
+  transition: background 0.35s ease;
+  transform-origin: top;
+  animation: verdict-bar-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 .verdict-card > * { position: relative; z-index: 1; }
-.verdict-card.good { border-color: rgba(62,232,160,0.3); }
+.verdict-card.good { border-color: rgba(131,197,190,0.25); }
 .verdict-card.good::before { background: var(--good); }
-.verdict-card.warn { border-color: rgba(240,176,71,0.3); }
+.verdict-card.good::after { background: var(--good); }
+.verdict-card.warn { border-color: rgba(230,204,178,0.25); }
 .verdict-card.warn::before { background: var(--warn); }
-.verdict-card.bad  { border-color: rgba(240,79,106,0.3); }
+.verdict-card.warn::after { background: var(--warn); }
+.verdict-card.bad  { border-color: rgba(244,63,94,0.25); }
 .verdict-card.bad::before { background: var(--bad); }
+.verdict-card.bad::after { background: var(--bad); }
 
-.v-emoji { font-size: 36px; line-height: 1; flex-shrink: 0; }
-.v-label { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
+.v-emoji { display: none; }
+.v-content { flex: 1; }
+.v-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
 .v-label.good { color: var(--good); }
 .v-label.warn { color: var(--warn); }
 .v-label.bad  { color: var(--bad); }
 .v-title {
   font-family: 'Inter', sans-serif;
-  font-size: 20px; font-weight: 800; margin-bottom: 8px;
-  letter-spacing: -0.03em;
+  font-size: 26px; font-weight: 900; margin-bottom: 10px;
+  letter-spacing: -0.04em; line-height: 1.15;
+  transition: color 0.35s ease;
 }
-.v-body { font-size: 13px; color: var(--text-2); line-height: 1.75; }
+.v-body { font-size: 14px; color: var(--text-2); line-height: 1.8; }
 
 /* ─── POST-RESULT ACTIONS ─── */
 .result-actions {
@@ -498,7 +580,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* ─── STATS ─── */
 .stat-row {
-  display: grid; grid-template-columns: repeat(4,1fr); gap: 10px;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
   margin-bottom: 14px;
 }
 @media (max-width: 580px) { .stat-row { grid-template-columns: repeat(2,1fr); } }
@@ -506,10 +588,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: 14px 12px;
   transition: border-color 0.2s, box-shadow 0.2s;
+  animation: pill-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 .stat-pill:hover { border-color: var(--border-hi); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
 .stat-pill .sp-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
-.stat-pill .sp-val { font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.stat-pill .sp-val { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
 .sp-val.c-good { color: var(--good); }
 .sp-val.c-warn { color: var(--warn); }
 .sp-val.c-bad  { color: var(--bad); }
@@ -529,7 +612,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: block; margin: 0 auto;
   background: var(--glass); border: 1px solid var(--border);
   border-radius: 50px; padding: 10px 28px;
-  color: var(--muted); font-family: 'Outfit', sans-serif;
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
   font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
   text-transform: uppercase; cursor: pointer;
   transition: all 0.2s var(--ease);
@@ -547,12 +630,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   padding: 13px 22px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; border-radius: var(--r-sm);
-  color: #08090d; font-family: 'Outfit', sans-serif;
+  color: #08090d; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer;
   white-space: nowrap; transition: opacity 0.15s, box-shadow 0.2s;
-  box-shadow: 0 2px 16px rgba(201,168,76,0.3);
+  box-shadow: 0 2px 16px rgba(123,44,191,0.25);
 }
-.add-btn:hover { opacity: 0.88; box-shadow: 0 4px 24px rgba(201,168,76,0.45); }
+.add-btn:hover { opacity: 0.88; box-shadow: 0 4px 24px rgba(123,44,191,0.35); }
 
 .pay-toggle {
   padding: 7px 14px;
@@ -576,13 +659,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
   backdrop-filter: blur(16px); transition: border-color 0.2s;
   animation: rise 0.25s var(--ease);
 }
-.goal-card:hover { border-color: rgba(201,168,76,0.2); }
+.goal-card:hover { border-color: rgba(123,44,191,0.2); }
 .goal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.goal-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; }
+.goal-name { font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 700; }
 .goal-actions { display: flex; align-items: center; gap: 10px; }
 .goal-pct { font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 50px; }
-.goal-pct.done { background: rgba(62,232,160,0.12); color: var(--good); }
-.goal-pct.prog { background: rgba(201,168,76,0.1); color: var(--gold-light); }
+.goal-pct.done { background: rgba(131,197,190,0.12); color: var(--good); }
+.goal-pct.prog { background: rgba(123,44,191,0.1); color: var(--gold-light); }
 .icon-btn {
   background: none; border: none; cursor: pointer;
   color: var(--muted2); font-size: 16px; padding: 4px;
@@ -605,7 +688,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   padding: 8px 14px;
   background: var(--glass-2); border: 1px solid var(--border);
   border-radius: var(--r-sm); color: var(--muted);
-  font-family: 'Outfit', sans-serif; font-size: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
 .adj-btn:hover { border-color: var(--teal); color: var(--teal); }
@@ -620,7 +703,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: var(--r-md); padding: 14px 16px;
   text-align: center;
 }
-.hist-stat-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--gold); }
+.hist-stat-val { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); }
 .hist-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
 
 .hist-controls {
@@ -635,7 +718,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transition: all 0.18s var(--ease);
 }
 .filter-chip:hover { border-color: var(--border-hi); color: var(--gold-light); }
-.filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+.filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(123,44,191,0.08); }
 .sort-select {
   margin-left: auto; width: auto !important; padding: 6px 30px 6px 10px !important;
   font-size: 11px !important;
@@ -649,11 +732,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: rise 0.2s var(--ease);
   backdrop-filter: blur(12px);
 }
-.hist-item:hover { border-color: rgba(201,168,76,0.2); }
-.hist-emoji { font-size: 22px; flex-shrink: 0; }
+.hist-item:hover { border-color: rgba(123,44,191,0.2); }
+.hist-emoji { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .hist-body { flex: 1; min-width: 0; }
 .hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.hist-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hist-price { font-size: 15px; font-weight: 700; flex-shrink: 0; }
 .hist-price.good { color: var(--good); }
 .hist-price.warn { color: var(--warn); }
@@ -669,7 +752,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: block; margin: 12px auto 0;
   background: var(--glass); border: 1px solid var(--border);
   border-radius: 50px; padding: 8px 22px;
-  color: var(--muted); font-family: 'Outfit', sans-serif;
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
   font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
   text-transform: uppercase; cursor: pointer;
   transition: all 0.2s var(--ease);
@@ -686,7 +769,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: var(--r-md); padding: 16px 18px;
   font-size: 13px; line-height: 1.75; animation: rise 0.25s var(--ease);
 }
-.msg.user { background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18); align-self: flex-end; max-width: 90%; }
+.msg.user { background: rgba(123,44,191,0.07); border: 1px solid rgba(123,44,191,0.18); align-self: flex-end; max-width: 90%; }
 .msg.bot { background: var(--glass-2); border: 1px solid var(--border); color: var(--text); }
 .msg-who { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px; }
 .msg.user .msg-who { color: var(--gold); }
@@ -697,20 +780,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
   flex: 1; background: var(--glass-2);
   border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 13px 16px;
-  color: var(--text); font-family: 'Outfit', sans-serif;
+  color: var(--text); font-family: 'DM Sans', sans-serif;
   font-size: 14px; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.ai-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.ai-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(123,44,191,0.1); }
 .ai-input::placeholder { color: var(--muted2); }
 .ai-send {
   padding: 13px 22px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; border-radius: var(--r-sm);
-  color: #08090d; font-family: 'Outfit', sans-serif;
+  color: #08090d; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer;
   white-space: nowrap; transition: opacity 0.15s;
-  box-shadow: 0 2px 16px rgba(201,168,76,0.3);
+  box-shadow: 0 2px 16px rgba(123,44,191,0.25);
 }
 .ai-send:hover { opacity: 0.88; }
 .ai-send:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -723,7 +806,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-size: 11px; font-weight: 500; cursor: pointer;
   transition: all 0.18s var(--ease);
 }
-.chip:hover { border-color: var(--border-hi); color: var(--gold-light); background: rgba(201,168,76,0.06); }
+.chip:hover { border-color: var(--border-hi); color: var(--gold-light); background: rgba(123,44,191,0.06); }
 
 .ai-error {
   font-size: 12px; color: var(--bad);
@@ -771,27 +854,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @keyframes bob { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
 /* ─── LIGHT MODE ─── */
-body.light-mode {
-  background: #f0f4ff;
-  color: #0d1428;
-  --glass: rgba(255,255,255,0.8);
-  --glass-2: rgba(255,255,255,0.95);
-  --glass-3: rgba(13,20,40,0.03);
-  --border: rgba(13,20,40,0.12);
-  --border-hi: rgba(201,168,76,0.5);
-  --text: #0d1428;
-  --muted: rgba(13,20,40,0.5);
-  --muted2: rgba(13,20,40,0.3);
-  --bg: #f0f4ff;
-}
-body.light-mode .amb-orb { opacity: 0.05; }
-body.light-mode .modal { background: #fff; }
-body.light-mode select option { background: #fff; }
-body.light-mode .currency-opt { color: rgba(13,20,40,0.5); }
-body.light-mode .card { background: rgba(255,255,255,0.9); box-shadow: 0 4px 24px rgba(13,20,40,0.1); }
-body.light-mode .hmenu { background: #fff; }
-body.light-mode #auth-screen { background: #f0f4ff; }
-body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 /* ─── MARKETS ─── */
 .market-card {
   background: var(--glass);
@@ -811,7 +873,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 }
 .market-meta { display: flex; align-items: center; gap: 12px; }
 .market-symbol {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 20px; font-weight: 900;
   letter-spacing: -0.01em;
 }
@@ -830,7 +892,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   cursor: pointer; border: none;
   transition: all 0.18s var(--ease);
   white-space: nowrap; user-select: none;
-  text-transform: uppercase; font-family: 'Outfit', sans-serif;
+  text-transform: uppercase; font-family: 'DM Sans', sans-serif;
 }
 .verdict-badge.dont  { background: #f04f6a; color: #fff; }
 .verdict-badge.maybe { background: #5a6a8a; color: #c8d4e8; }
@@ -903,10 +965,13 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   border-radius: var(--r-md); padding: 18px 16px;
   border: 1px solid transparent; text-align: center;
 }
-.how-card.good-card { background: rgba(62,232,160,0.05); border-color: rgba(62,232,160,0.15); }
-.how-card.warn-card { background: rgba(240,176,71,0.05); border-color: rgba(240,176,71,0.15); }
-.how-card.bad-card  { background: rgba(240,79,106,0.05); border-color: rgba(240,79,106,0.15); }
-.how-icon { font-size: 26px; margin-bottom: 8px; }
+.how-card.good-card { background: rgba(131,197,190,0.05); border-color: rgba(131,197,190,0.15); }
+.how-card.warn-card { background: rgba(230,204,178,0.05); border-color: rgba(230,204,178,0.15); }
+.how-card.bad-card  { background: rgba(244,63,94,0.05); border-color: rgba(244,63,94,0.15); }
+.how-icon { width: 28px; height: 4px; border-radius: 2px; margin-bottom: 14px; }
+.how-icon.how-good { background: var(--good); }
+.how-icon.how-warn { background: var(--warn); }
+.how-icon.how-bad  { background: var(--bad); }
 .how-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 6px; text-transform: uppercase; }
 .how-card.good-card .how-label { color: var(--good); }
 .how-card.warn-card .how-label { color: var(--warn); }
@@ -944,7 +1009,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 }
 .gs-stat { text-align: center; }
 .gs-val {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px; font-weight: 700; color: var(--gold);
 }
 .gs-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 3px; }
@@ -953,8 +1018,8 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
 /* ─── DID YOU KNOW ─── */
 .dyk-card {
-  background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(62,207,207,0.05));
-  border: 1px solid rgba(201,168,76,0.2);
+  background: linear-gradient(135deg, rgba(123,44,191,0.08), rgba(131,197,190,0.05));
+  border: 1px solid rgba(123,44,191,0.2);
   border-radius: var(--r-lg); padding: 24px 26px;
   margin-bottom: 16px; margin-top: 16px;
   display: flex; flex-direction: column; gap: 12px;
@@ -972,11 +1037,11 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   align-self: flex-start;
   background: none; border: 1px solid var(--border-hi);
   border-radius: 50px; padding: 6px 16px;
-  color: var(--gold); font-family: 'Outfit', sans-serif;
+  color: var(--gold); font-family: 'DM Sans', sans-serif;
   font-size: 11px; font-weight: 600; cursor: pointer;
   transition: all 0.18s var(--ease);
 }
-.dyk-next:hover { background: rgba(201,168,76,0.1); }
+.dyk-next:hover { background: rgba(123,44,191,0.1); }
 
 /* ─── PRINCIPLES GRID ─── */
 .principles-grid {
@@ -1011,7 +1076,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .logo-wrap { display: flex; align-items: center; gap: 10px; }
 .logo-icon { display: none; }
 .wordmark {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 20px; font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -1082,7 +1147,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   margin-bottom: 8px;
 }
 .hmenu-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 17px; font-weight: 700;
 }
 .hmenu-close {
@@ -1110,7 +1175,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 }
 .bs-stat { text-align: center; }
 .bs-val {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px; font-weight: 700; color: var(--text);
 }
 .bs-val.bad { color: var(--bad); }
@@ -1127,37 +1192,104 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .bill-item:hover { border-color: rgba(255,255,255,0.12); }
 .bill-icon { font-size: 22px; flex-shrink: 0; }
 .bill-body { flex: 1; min-width: 0; }
-.bill-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; }
+.bill-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; }
 .bill-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .bill-amount { font-size: 16px; font-weight: 700; color: var(--bad); flex-shrink: 0; }
 
 /* ─── MOBILE ─── */
 @media (max-width: 600px) {
-  body { padding: 12px 10px 40px; }
-  .wordmark { font-size: 18px; }
+  body { padding: 12px 14px 60px; }
+  header { padding: 6px 0 20px; }
+  .wordmark { font-size: 17px; }
   .wordmark-sub { display: none; }
   .logo-icon { width: 26px; height: 26px; }
-  .theme-pill { padding: 7px 10px; font-size: 11px; }
   .streak-badge { padding: 6px 8px; }
-  .tabs { gap: 1px; padding: 4px; }
+
+  /* Tabs */
+  .tabs { gap: 1px; padding: 4px; margin-bottom: 14px; }
   .tab { font-size: 11px; padding: 9px 6px; min-width: 0; }
-  .card { padding: 18px 16px; }
-  .card-title { font-size: 18px; }
-  .field-group { grid-template-columns: 1fr; }
+
+  /* Cards */
+  .card { padding: 20px 18px; margin-bottom: 12px; }
+  .card-title { font-size: 17px; margin-bottom: 14px; }
+
+  /* Form */
+  .field-group { grid-template-columns: 1fr; gap: 12px; }
   .full { grid-column: 1; }
-  .stat-row { grid-template-columns: repeat(2,1fr); }
-  .chart-duo { grid-template-columns: 1fr; }
+
+  /* Income row — hide slider on mobile, just show number input */
+  .range-wrap input[type="range"] { display: none; }
+  .range-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .range-right { width: 100%; }
+  .income-input { width: 100%; max-width: 100%; }
+  #incomeVal { display: none; }
+
+  /* Paying with — stack label above, buttons full width */
+  .pay-row-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .pay-btns { width: 100%; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .pay-toggle { flex: 1; text-align: center; padding: 10px 8px; }
+
+  /* Verdict card */
+  .verdict-card { padding: 20px 18px 20px 22px; }
+  .v-title { font-size: 20px; }
+
+  /* Result actions — 2x2 grid */
+  .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .action-chip { justify-content: center; padding: 9px 10px; }
+
+  /* Stat pills — horizontal scroll instead of 3 rows */
+  .stat-row {
+    display: flex; flex-wrap: nowrap;
+    overflow-x: auto; gap: 8px;
+    padding-bottom: 6px; margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .stat-row::-webkit-scrollbar { display: none; }
+  .stat-pill {
+    flex: 0 0 auto; min-width: 110px;
+    padding: 12px 10px;
+  }
+  .stat-pill .sp-val { font-size: 14px; }
+
+  /* Charts */
+  .chart-duo { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Other grids */
   .how-grid { grid-template-columns: 1fr; }
   .principles-grid { grid-template-columns: 1fr; }
   .hist-header { grid-template-columns: repeat(2,1fr); }
   .market-header { flex-direction: column; align-items: flex-start; }
   .goal-form-grid { grid-template-columns: 1fr; }
-  .hmenu { width: 260px; }
-  .v-title { font-size: 18px; }
+  .hmenu { width: 270px; }
+
+  /* Insight strip */
+  #insight-strip { font-size: 12px; line-height: 1.7; padding: 12px 14px 12px 16px; }
+
+  /* NL bar hint — collapse by default on mobile */
+  .nl-hint { display: none; }
+
+  /* Chips in advisor */
+  .quick-chips { gap: 6px; }
+  .chip { font-size: 12px; padding: 7px 12px; }
+
+  /* Bills summary */
+  .bs-stats { gap: 8px; }
 }
+
 @media (max-width: 400px) {
-  .tab { font-size: 10px; padding: 8px 4px; }
+  body { padding: 10px 12px 60px; }
   .streak-badge span:last-child { display: none; }
+  .stat-pill { min-width: 95px; }
+  .result-actions { grid-template-columns: 1fr; }
+  .action-chip { justify-content: center; }
+}
+
+@media (max-width: 500px) {
+  .tab-label { display: none; }
+  .tab { min-width: 0; padding: 10px 8px; }
+  .tab.active { background: var(--bg-3); }
+  .tab-emoji svg { width: 16px; height: 16px; }
 }
 /* ─── LANDING PAGE ─── */
 #landing-screen {
@@ -1171,15 +1303,15 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   background: rgba(6,9,16,0.7); backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
-.landing-logo { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.landing-logo { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
 .landing-logo em { font-style: normal; color: var(--gold); font-weight: 700; }
 .landing-logo sup { font-size: 11px; color: var(--gold); vertical-align: super; }
 .landing-nav-btn {
   padding: 9px 22px; border-radius: 50px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
-  border: none; color: #08090d; font-family: 'Outfit', sans-serif;
+  border: none; color: #08090d; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+  box-shadow: 0 4px 16px rgba(123,44,191,0.25);
   transition: opacity 0.15s;
 }
 .landing-nav-btn:hover { opacity: 0.88; }
@@ -1197,7 +1329,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   content: ''; width: 32px; height: 1px; background: var(--gold-dim);
 }
 .landing-h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(36px, 7vw, 64px);
   font-weight: 900; line-height: 1.1;
   letter-spacing: -0.02em; margin-bottom: 20px;
@@ -1217,20 +1349,20 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   padding: 16px 36px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; border-radius: 50px;
-  color: #08090d; font-family: 'Outfit', sans-serif;
+  color: #08090d; font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 6px 28px rgba(201,168,76,0.4);
+  box-shadow: 0 6px 28px rgba(123,44,191,0.3);
   transition: opacity 0.15s, transform 0.1s;
 }
 .landing-cta-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 .landing-cta-secondary {
   padding: 16px 36px; border-radius: 50px;
   background: transparent; border: 1px solid var(--border-hi);
-  color: var(--gold); font-family: 'Outfit', sans-serif;
+  color: var(--gold); font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 600; cursor: pointer;
   transition: all 0.15s;
 }
-.landing-cta-secondary:hover { background: rgba(201,168,76,0.08); }
+.landing-cta-secondary:hover { background: rgba(123,44,191,0.08); }
 
 /* Feature showcase */
 .landing-features {
@@ -1265,17 +1397,17 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   border-radius: var(--r-lg); padding: 24px;
   margin: 0 24px 40px; max-width: 860px;
   margin-left: auto; margin-right: auto;
-  box-shadow: 0 16px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,168,76,0.1);
+  box-shadow: 0 16px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(123,44,191,0.1);
 }
 .preview-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
 .preview-verdict {
   display: flex; align-items: flex-start; gap: 16px;
-  background: rgba(62,232,160,0.06); border: 1px solid rgba(62,232,160,0.2);
+  background: rgba(131,197,190,0.06); border: 1px solid rgba(131,197,190,0.2);
   border-radius: var(--r-md); padding: 18px; margin-bottom: 14px;
 }
 .preview-emoji { font-size: 32px; flex-shrink: 0; }
 .preview-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--good); margin-bottom: 4px; }
-.preview-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.preview-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 900; margin-bottom: 6px; }
 .preview-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
 .preview-stats {
   display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
@@ -1285,8 +1417,76 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   background: rgba(255,255,255,0.03); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 12px; text-align: center;
 }
-.preview-stat-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--gold); }
+.preview-stat-val { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); }
 .preview-stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Landing differentiators */
+.diff-section {
+  padding: 0 24px 60px; max-width: 860px; margin: 0 auto; width: 100%;
+}
+.diff-label {
+  text-align: center; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 12px;
+}
+.diff-headline {
+  text-align: center; font-family: 'Inter', sans-serif;
+  font-size: 26px; font-weight: 900; letter-spacing: -0.04em;
+  margin-bottom: 8px; color: var(--text);
+}
+.diff-headline em { font-style: normal; color: var(--accent-light); }
+.diff-sub {
+  text-align: center; font-size: 14px; color: var(--muted);
+  line-height: 1.7; margin-bottom: 36px; max-width: 500px;
+  margin-left: auto; margin-right: auto;
+}
+.diff-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-bottom: 36px;
+}
+@media (max-width: 580px) { .diff-grid { grid-template-columns: 1fr; } }
+.diff-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 22px 20px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.diff-card:hover { border-color: var(--border-hi); }
+.diff-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--teal));
+}
+.diff-tag {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent-light); background: var(--accent-glow);
+  border: 1px solid rgba(123,44,191,0.2);
+  border-radius: 50px; padding: 3px 10px; margin-bottom: 10px;
+}
+.diff-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; }
+.diff-body { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.diff-vs {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 24px 28px; margin-bottom: 36px;
+  overflow-x: auto;
+}
+.diff-vs-table { width: 100%; border-collapse: collapse; min-width: 420px; }
+.diff-vs-table th {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0 0 14px;
+  text-align: left; color: var(--muted);
+}
+.diff-vs-table th:not(:first-child) { text-align: center; }
+.diff-vs-table td {
+  padding: 10px 0; border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--text-2); vertical-align: middle;
+}
+.diff-vs-table td:not(:first-child) { text-align: center; }
+.diff-vs-table td:first-child { font-weight: 600; color: var(--text); }
+.diff-check { color: var(--good); font-weight: 700; font-size: 15px; }
+.diff-cross { color: var(--muted2); font-size: 15px; }
+.diff-us-col { color: var(--accent-light) !important; font-weight: 700; font-size: 13px; }
 
 /* Landing footer */
 .landing-footer {
@@ -1333,48 +1533,53 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   background: rgba(13,20,40,0.98);
   border: 1px solid var(--border-hi);
   border-radius: var(--r-lg); padding: 32px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(201,168,76,0.1);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(123,44,191,0.1);
   animation: rise 0.3s var(--ease);
 }
 .tutorial-steps { display: flex; gap: 6px; margin-bottom: 28px; }
 .tutorial-step-dot { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
 .tutorial-step-dot.active { background: var(--gold); }
 .tutorial-step-dot.done   { background: var(--gold-dim); }
-.tutorial-icon { font-size: 40px; margin-bottom: 14px; }
-.tutorial-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-bottom: 10px; }
+.tutorial-icon {
+  font-size: 22px; margin-bottom: 16px; color: var(--accent-light);
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--accent-glow); border: 1px solid rgba(123,44,191,0.2);
+  display: flex; align-items: center; justify-content: center;
+}
+.tutorial-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; margin-bottom: 10px; }
 .tutorial-body { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 24px; }
 .tutorial-body strong { color: var(--text); font-weight: 600; }
 .tutorial-actions { display: flex; gap: 10px; justify-content: space-between; align-items: center; }
-.tutorial-skip { background: none; border: none; color: var(--muted2); font-family: 'Outfit',sans-serif; font-size: 12px; cursor: pointer; }
+.tutorial-skip { background: none; border: none; color: var(--muted2); font-family: 'Inter',sans-serif; font-size: 12px; cursor: pointer; }
 .tutorial-skip:hover { color: var(--muted); }
-.tutorial-next { padding: 12px 28px; background: linear-gradient(135deg, var(--gold-light), var(--gold)); border: none; border-radius: 50px; color: #08090d; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(201,168,76,0.3); transition: opacity 0.15s; }
+.tutorial-next { padding: 12px 28px; background: linear-gradient(135deg, var(--gold-light), var(--gold)); border: none; border-radius: 50px; color: #08090d; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(123,44,191,0.25); transition: opacity 0.15s; }
 .tutorial-next:hover { opacity: 0.88; }
 .tutorial-counter { font-size: 11px; color: var(--muted2); }
 
 /* ─── SMART INSIGHTS ─── */
-.insights-panel { background: rgba(13,20,40,0.85); border: 1px solid var(--border-hi); border-radius: var(--r-lg); padding: 24px 26px; margin-bottom: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.08); }
+.insights-panel { background: rgba(13,20,40,0.85); border: 1px solid var(--border-hi); border-radius: var(--r-lg); padding: 24px 26px; margin-bottom: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(123,44,191,0.08); }
 .insights-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .insights-eyebrow::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-dim), transparent); }
 .insights-grid { display: flex; flex-direction: column; gap: 10px; }
 .insight-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 13px; line-height: 1.6; color: var(--text); animation: rise 0.3s var(--ease); }
-.insight-item.good-insight { border-color: rgba(78,203,141,0.2); background: rgba(78,203,141,0.04); }
-.insight-item.warn-insight { border-color: rgba(232,168,56,0.2); background: rgba(232,168,56,0.04); }
+.insight-item.good-insight { border-color: rgba(131,197,190,0.2); background: rgba(131,197,190,0.04); }
+.insight-item.warn-insight { border-color: rgba(230,204,178,0.2); background: rgba(230,204,178,0.04); }
 .insight-item.bad-insight  { border-color: rgba(224,84,112,0.2); background: rgba(224,84,112,0.04); }
 .insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.insight-refresh { display: block; margin: 12px auto 0; background: none; border: 1px solid var(--border); border-radius: 50px; padding: 6px 18px; color: var(--muted); font-family: 'Outfit', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.18s; }
+.insight-refresh { display: block; margin: 12px auto 0; background: none; border: 1px solid var(--border); border-radius: 50px; padding: 6px 18px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.18s; }
 .insight-refresh:hover { border-color: var(--border-hi); color: var(--gold); }
 
 /* ─── NATURAL LANGUAGE BAR ─── */
-.nl-bar { margin-bottom: 14px; background: rgba(13,20,40,0.85); border: 1px solid var(--border-hi); border-radius: var(--r-lg); padding: 14px 16px; backdrop-filter: blur(24px); box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(201,168,76,0.08); }
+.nl-bar { margin-bottom: 14px; background: rgba(13,20,40,0.85); border: 1px solid var(--border-hi); border-radius: var(--r-lg); padding: 14px 16px; backdrop-filter: blur(24px); box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(123,44,191,0.08); }
 .nl-bar-inner { display: flex; align-items: center; gap: 10px; }
 .nl-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; }
-.nl-input { flex: 1; background: transparent !important; border: none !important; outline: none !important; color: var(--text) !important; font-family: 'Outfit', sans-serif; font-size: 14px !important; padding: 0 !important; box-shadow: none !important; }
+.nl-input { flex: 1; background: transparent !important; border: none !important; outline: none !important; color: var(--text) !important; font-family: 'DM Sans', sans-serif; font-size: 14px !important; padding: 0 !important; box-shadow: none !important; }
 .nl-input::placeholder { color: var(--muted2); font-size: 13px; }
 .nl-voice-btn { background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; border-radius: 50%; transition: all 0.15s; flex-shrink: 0; opacity: 0.6; }
 .nl-voice-btn:hover { opacity: 1; }
 .nl-voice-btn.listening { opacity: 1; animation: pulse-mic 1s ease-in-out infinite; background: rgba(240,79,106,0.15); }
 @keyframes pulse-mic { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
-.nl-parse-btn { padding: 8px 18px; border-radius: 50px; background: linear-gradient(135deg, var(--gold-light), var(--gold)); border: none; color: #08090d; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s; }
+.nl-parse-btn { padding: 8px 18px; border-radius: 50px; background: linear-gradient(135deg, var(--gold-light), var(--gold)); border: none; color: #08090d; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s; }
 .nl-parse-btn:hover { opacity: 0.88; }
 .nl-status { font-size: 12px; color: var(--teal); margin-top: 8px; min-height: 16px; }
 .nl-status.error { color: var(--bad); }
@@ -1393,11 +1598,11 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   border-radius: var(--r-lg);
   padding: 36px 32px;
   backdrop-filter: blur(24px);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(201,168,76,0.1);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(123,44,191,0.1);
   text-align: center;
 }
 .auth-logo {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 24px; font-weight: 600;
   letter-spacing: -0.03em;
   margin-bottom: 4px;
@@ -1405,24 +1610,24 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .auth-logo em { font-style: normal; color: var(--gold); font-weight: 700; }
 .auth-logo sup { font-size: 14px; color: var(--gold); vertical-align: super; }
 .auth-tagline { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 28px; }
-.auth-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.auth-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
 .auth-sub { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
 .auth-field { margin-bottom: 14px; text-align: left; }
 .auth-field label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
 .auth-field input {
   width: 100%; background: var(--glass-2); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 13px 14px;
-  color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; outline: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.auth-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.auth-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(123,44,191,0.1); }
 .auth-btn {
   width: 100%; padding: 14px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; border-radius: var(--r-sm);
-  color: #08090d; font-family: 'Outfit', sans-serif;
+  color: #08090d; font-family: 'DM Sans', sans-serif;
   font-size: 14px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+  box-shadow: 0 4px 20px rgba(123,44,191,0.25);
   transition: opacity 0.15s, transform 0.1s;
   margin-top: 4px;
 }
@@ -1443,7 +1648,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .auth-user-bar strong { color: var(--text); font-weight: 600; }
 .auth-user-bar button {
   background: none; border: none; color: var(--muted2);
-  font-size: 11px; cursor: pointer; font-family: 'Outfit', sans-serif;
+  font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif;
   padding: 0; transition: color 0.15s;
 }
 .auth-user-bar button:hover { color: var(--bad); }
@@ -1496,11 +1701,11 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   padding: 8px 16px; border-radius: 50px;
   border: 1px solid var(--border);
   background: var(--glass); color: var(--muted);
-  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: all 0.18s var(--ease);
 }
 .learn-topic-btn:hover { border-color: var(--border-hi); color: var(--gold-light); }
-.learn-topic-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+.learn-topic-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(123,44,191,0.08); }
 
 .lesson-card {
   background: rgba(13,20,40,0.85);
@@ -1510,11 +1715,11 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   backdrop-filter: blur(24px);
 }
 .lesson-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
-.lesson-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-bottom: 14px; }
+.lesson-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; margin-bottom: 14px; }
 .lesson-body { font-size: 14px; color: var(--muted); line-height: 1.85; margin-bottom: 18px; }
 .lesson-body strong { color: var(--text); font-weight: 600; }
 .lesson-example {
-  background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
+  background: rgba(123,44,191,0.06); border: 1px solid rgba(123,44,191,0.2);
   border-radius: var(--r-md); padding: 16px 18px; margin-bottom: 18px;
   font-size: 13px; color: var(--text); line-height: 1.7;
 }
@@ -1526,7 +1731,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 }
 .lesson-point-icon { font-size: 16px; flex-shrink: 0; }
 .lesson-quiz {
-  background: rgba(62,207,207,0.05); border: 1px solid rgba(62,207,207,0.2);
+  background: rgba(131,197,190,0.05); border: 1px solid rgba(62,207,207,0.2);
   border-radius: var(--r-md); padding: 18px;
 }
 .lesson-quiz-q { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
@@ -1535,7 +1740,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   padding: 10px 14px; border-radius: var(--r-sm);
   border: 1px solid var(--border); background: var(--glass);
   font-size: 13px; color: var(--muted); cursor: pointer;
-  text-align: left; font-family: 'Outfit', sans-serif;
+  text-align: left; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s;
 }
 .quiz-opt:hover { border-color: var(--teal); color: var(--text); }
@@ -1555,7 +1760,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   margin-left: auto; flex-shrink: 0;
   padding: 4px 12px; border-radius: 50px;
   border: 1px solid rgba(62,207,207,0.4); background: none;
-  color: var(--teal); font-family: 'Outfit', sans-serif; font-size: 11px;
+  color: var(--teal); font-family: 'DM Sans', sans-serif; font-size: 11px;
   font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
 .hint-close-btn:hover { background: rgba(62,207,207,0.1); }
@@ -1567,65 +1772,91 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .nl-hint-close {
   margin-left: auto; padding: 3px 10px; border-radius: 50px;
   border: 1px solid var(--border); background: none;
-  color: var(--muted); font-family: 'Outfit', sans-serif; font-size: 11px;
+  color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px;
   cursor: pointer; transition: all 0.15s;
 }
 .nl-hint-close:hover { color: var(--gold); border-color: var(--gold); }
 
 /* ─── SHARE CARD ─── */
-.share-chip { background: rgba(201,168,76,0.1) !important; border-color: rgba(201,168,76,0.3) !important; color: var(--gold) !important; }
+.share-chip { background: rgba(123,44,191,0.1) !important; border-color: rgba(123,44,191,0.25) !important; color: var(--gold) !important; }
 .share-preview-card {
-  background: linear-gradient(135deg, #0d1f3c 0%, #080e1c 60%, #060910 100%);
-  border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 16px; padding: 28px 24px 20px;
-  text-align: center; margin-bottom: 16px;
+  background: #07070d;
+  border: 1px solid rgba(123,44,191,0.3);
+  border-radius: 20px; padding: 0;
+  text-align: left; margin-bottom: 16px;
   position: relative; overflow: hidden;
+  min-height: 200px;
 }
 .share-preview-card::before {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at top left, rgba(201,168,76,0.08), transparent 60%);
-  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(123,44,191,0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(131,197,190,0.1) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
 }
+.share-preview-card::after {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--teal));
+  border-radius: 20px 20px 0 0;
+}
+.share-inner { position: relative; z-index: 1; padding: 24px 24px 20px; }
 .share-app-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5);
-  letter-spacing: 0.05em; margin-bottom: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
 }
-.share-app-name em { color: var(--gold); font-style: normal; }
-.share-emoji { font-size: 44px; margin-bottom: 8px; line-height: 1; }
+.share-app-name::before {
+  content: ''; display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent);
+}
+.share-app-name em { color: rgba(255,255,255,0.35); font-style: normal; }
+.share-emoji { display: none; }
 .share-verdict-label {
-  font-size: 11px; font-weight: 800; letter-spacing: 0.2em;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
   text-transform: uppercase; margin-bottom: 6px;
 }
 .share-verdict-label.good { color: var(--good); }
 .share-verdict-label.warn { color: var(--warn); }
 .share-verdict-label.bad  { color: var(--bad); }
 .share-item {
-  font-family: 'Playfair Display', serif;
-  font-size: 20px; font-weight: 900; color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 900; color: #fff;
   margin-bottom: 10px; line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 .share-verdict-body {
-  font-size: 12px; color: rgba(255,255,255,0.6);
-  line-height: 1.6; margin-bottom: 14px; max-width: 280px; margin-left: auto; margin-right: auto;
+  font-size: 13px; color: rgba(255,255,255,0.55);
+  line-height: 1.65; margin-bottom: 20px;
+  max-width: 100%;
 }
 .share-stats {
-  display: flex; justify-content: center; gap: 16px;
-  font-size: 11px; color: rgba(255,255,255,0.45);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 12px; margin-bottom: 10px;
+  display: flex; gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 16px; margin-bottom: 0;
 }
-.share-stat-item strong { color: var(--gold); display: block; font-size: 14px; }
+.share-stat-item {
+  flex: 1; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  padding: 0 8px;
+}
+.share-stat-item:last-child { border-right: none; }
+.share-stat-item strong {
+  display: block; font-size: 16px; font-weight: 800;
+  font-family: 'Inter', sans-serif; letter-spacing: -0.02em;
+  margin-bottom: 3px;
+}
+.share-stat-item span { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
 .share-url {
-  font-size: 10px; color: rgba(255,255,255,0.25);
-  letter-spacing: 0.1em; text-transform: uppercase;
+  display: none;
 }
 .share-actions { display: flex; gap: 10px; }
 .share-btn {
   flex: 1; padding: 12px; border-radius: var(--r-md);
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; color: #08090d;
-  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
   cursor: pointer; transition: opacity 0.15s;
 }
 .share-btn:hover { opacity: 0.88; }
@@ -1635,7 +1866,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .pwa-banner {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   z-index: 999; display: flex; align-items: center; gap: 12px;
-  background: rgba(13,20,40,0.97); border: 1px solid rgba(201,168,76,0.35);
+  background: rgba(13,20,40,0.97); border: 1px solid rgba(123,44,191,0.25);
   border-radius: 50px; padding: 12px 16px 12px 14px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   backdrop-filter: blur(24px);
@@ -1650,7 +1881,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   padding: 8px 16px; border-radius: 50px;
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   border: none; color: #08090d;
-  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
   cursor: pointer; white-space: nowrap; flex-shrink: 0;
   transition: opacity 0.15s;
 }
@@ -1679,7 +1910,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   text-transform: uppercase; color: var(--gold); margin-bottom: 2px;
 }
 .compare-vs {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-size: 22px; font-weight: 900; color: var(--muted2);
   display: flex; align-items: center; justify-content: center;
   padding-top: 32px;
@@ -1696,7 +1927,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .compare-card.winner { border-color: var(--good); box-shadow: 0 0 20px rgba(78,203,141,0.1); }
 .compare-card.loser { opacity: 0.7; }
 .compare-card-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.compare-card-price { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--gold); margin-bottom: 14px; }
+.compare-card-price { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 900; color: var(--gold); margin-bottom: 14px; }
 .compare-stat { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .compare-stat:last-child { border-bottom: none; }
 .compare-stat-label { color: var(--muted); }
@@ -1709,7 +1940,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .compare-badge.warn { background: rgba(232,168,56,0.12); color: var(--warn); border: 1px solid rgba(232,168,56,0.3); }
 .compare-badge.bad  { background: rgba(224,84,112,0.12); color: var(--bad); border: 1px solid rgba(224,84,112,0.3); }
 .compare-winner-label { font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--good); margin-bottom: 8px; }
-.compare-winner-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--text); margin-bottom: 10px; }
+.compare-winner-name { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 900; color: var(--text); margin-bottom: 10px; }
 .compare-winner-reason { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
 /* ─── COMPARE RESULTS ─── */
@@ -1734,7 +1965,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .cmp-winner-header { border-top: 2px solid var(--good); }
 .cmp-best-badge { font-size: 9px; font-weight: 800; letter-spacing: 0.15em; color: var(--good); margin-bottom: 4px; }
 .cmp-item-name { font-size: 15px; font-weight: 700; color: var(--text); }
-.cmp-item-price { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--gold); }
+.cmp-item-price { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; color: var(--gold); }
 
 .cmp-insight-card {
   display: flex; gap: 14px; align-items: flex-start;
@@ -1746,12 +1977,12 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .cmp-insight-body { font-size: 12px; color: var(--muted); line-height: 1.65; }
 
 .cmp-verdict {
-  background: rgba(13,20,40,0.95); border: 1px solid rgba(201,168,76,0.3);
+  background: rgba(13,20,40,0.95); border: 1px solid rgba(123,44,191,0.25);
   border-radius: var(--r-lg); padding: 24px; text-align: center;
   margin-top: 4px;
 }
 .cmp-verdict-label { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
-.cmp-verdict-name { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; color: var(--text); margin-bottom: 10px; }
+.cmp-verdict-name { font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 900; color: var(--text); margin-bottom: 10px; }
 .cmp-verdict-body { font-size: 13px; color: var(--muted); line-height: 1.75; max-width: 480px; margin: 0 auto; }
 
 /* ─── COMPARE VS HEADER ─── */
@@ -1765,7 +1996,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .cmp-vs-head.winner { border-top: 2px solid var(--good); }
 .cmp-vs-divider {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Playfair Display', serif; font-size: 16px;
+  font-family: 'Inter', sans-serif; font-size: 16px;
   color: var(--muted2); padding: 0 12px; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
 }
 
@@ -1777,13 +2008,13 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .cmp-wiki-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
 .cmp-wiki-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .cmp-wiki-desc { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-.cmp-wiki-price { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--gold); white-space: nowrap; flex-shrink: 0; }
+.cmp-wiki-price { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; color: var(--gold); white-space: nowrap; flex-shrink: 0; }
 .cmp-wiki-extract { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 10px; }
 .cmp-wiki-link { font-size:11px; color:var(--teal); background:none; border:none; cursor:pointer; padding:0; font-family:'Outfit',sans-serif; text-align:left; }
 .cmp-wiki-link:hover { text-decoration:underline; }
 
 .cmp-secondary-card {
-  background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
+  background: rgba(123,44,191,0.06); border: 1px solid rgba(123,44,191,0.2);
   border-radius: var(--r-md); padding: 16px 20px; margin-top: 10px;
 }
 .cmp-secondary-label { font-size:9px; font-weight:800; letter-spacing:0.18em; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
@@ -1804,7 +2035,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .dash-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
 @media(max-width:580px){ .dash-stats { grid-template-columns: repeat(2,1fr); } }
 .dash-stat { background: rgba(13,20,40,0.85); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px; text-align: center; backdrop-filter: blur(12px); }
-.dash-stat-val { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+.dash-stat-val { font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 700; color: var(--gold); }
 .dash-stat-val.good { color: var(--good); }
 .dash-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
 .dash-503020 { margin-bottom: 14px; }
@@ -1819,17 +2050,17 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 .rule-bar-verdict { font-size: 11px; margin-top: 3px; }
 .dash-saved-card { margin-bottom: 14px; }
 .saved-hero { text-align: center; padding: 16px 0 12px; }
-.saved-amount { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 900; color: var(--good); line-height: 1; }
+.saved-amount { font-family: 'Inter', sans-serif; font-size: 48px; font-weight: 900; color: var(--good); line-height: 1; }
 .saved-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .saved-breakdown { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
-.saved-chip { padding: 6px 14px; border-radius: 50px; background: rgba(78,203,141,0.08); border: 1px solid rgba(78,203,141,0.2); font-size: 12px; color: var(--good); }
+.saved-chip { padding: 6px 14px; border-radius: 50px; background: rgba(78,203,141,0.08); border: 1px solid rgba(131,197,190,0.2); font-size: 12px; color: var(--good); }
 </style>
 </head>
 <body>
 
 <!-- PWA INSTALL BANNER -->
 <div id="pwa-banner" style="display:none;" class="pwa-banner">
-  <span class="pwa-icon">📱</span>
+  
   <div class="pwa-text">
     <strong>Add to Home Screen</strong>
     <span>Use Think to Buy like a real app</span>
@@ -1865,8 +2096,8 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
   <div class="landing-hero">
     <div class="landing-eyebrow">Smart Spending Decisions</div>
-    <h1 class="landing-h1">Before you buy,<br><em>know if you should.</em></h1>
-    <p class="landing-sub">Enter the price, your savings, and income — get an instant verdict on whether the purchase makes sense for your financial situation.</p>
+    <h1 class="landing-h1">Stop guessing.<br><em>Start knowing.</em></h1>
+    <p class="landing-sub">Get a green, yellow, or red verdict on any purchase — before you open your wallet. No bank account needed. Free forever.</p>
     <div class="landing-cta-group">
       <button class="landing-cta-primary" onclick="showAuthFromLanding()">Start for free →</button>
       <button class="landing-cta-secondary" onclick="document.getElementById('landing-features').scrollIntoView({behavior:'smooth'})">See how it works</button>
@@ -1877,7 +2108,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   <div class="landing-preview">
     <div class="preview-eyebrow">Live example — AirPods Pro · $249 · $1,200 savings</div>
     <div class="preview-verdict">
-      <span class="preview-emoji">✅</span>
+      
       <div>
         <div class="preview-label">All Clear</div>
         <div class="preview-title">This is a smart purchase</div>
@@ -1897,52 +2128,141 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     <div class="features-label">Everything you need to spend smarter</div>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-emoji">🔍</div>
+        
         <div class="feature-title">Purchase Analyzer</div>
         <div class="feature-desc">Get a green, yellow, or red verdict instantly. See exactly how long recovery takes and what percentage of your savings is at risk.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">🎯</div>
+        
         <div class="feature-title">Savings Goals</div>
         <div class="feature-desc">Set targets for what you're saving toward. Track progress, add funds, and see how many weeks until you get there.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">📋</div>
+        
         <div class="feature-title">Spending History</div>
         <div class="feature-desc">Every decision you save is logged with charts. See your spending patterns by category over time.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">✦</div>
+        
         <div class="feature-title">Smart Advisor</div>
         <div class="feature-desc">Ask any money question and get advice tailored to your actual numbers — not generic tips.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">📈</div>
+        
         <div class="feature-title">Markets</div>
         <div class="feature-desc">Track live stocks and crypto with your own Buy, Neutral, or Don't Buy verdict on each asset.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">💸</div>
+        
         <div class="feature-title">Bill Tracker</div>
         <div class="feature-desc">Add your recurring bills and see exactly what's left after expenses each week based on your income.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-emoji">🎓</div>
+        
         <div class="feature-title">Financial Education</div>
         <div class="feature-desc">8 plain-English lessons on taxes, investing, credit, and more — things school never taught you. Each with real examples and a quiz.</div>
       </div>
     </div>
   </div>
 
+  <!-- WHY THINK TO BUY -->
+  <div class="diff-section">
+    <div class="diff-label">What makes us different</div>
+    <div class="diff-headline">Most apps track what you <em>already spent.</em><br>We stop you before you do.</div>
+    <div class="diff-sub">Think To Buy is the only app built around the moment that actually matters — the second before you open your wallet.</div>
+
+    <div class="diff-grid">
+      <div class="diff-card">
+        <div class="diff-tag">Only us</div>
+        <div class="diff-title">Pre-purchase, not post-purchase</div>
+        <div class="diff-body">Mint, YNAB, and Copilot all analyze money you've already spent. Think To Buy works <em>before</em> you buy — giving you a verdict while you can still say no.</div>
+      </div>
+      <div class="diff-card">
+        <div class="diff-tag">Only us</div>
+        <div class="diff-title">No bank account required</div>
+        <div class="diff-body">Every competitor asks to link your bank. We never touch your accounts — just type in the numbers. Your financial data stays on your device.</div>
+      </div>
+      <div class="diff-card">
+        <div class="diff-tag">Only us</div>
+        <div class="diff-title">Opportunity cost built in</div>
+        <div class="diff-body">We show you what that money becomes in 10 years if invested instead. Not just "you have $X left" — but what you're actually giving up.</div>
+      </div>
+      <div class="diff-card">
+        <div class="diff-tag">Only us</div>
+        <div class="diff-title">Built for people without a salary</div>
+        <div class="diff-body">YNAB costs $99/year and assumes a full income. Think To Buy is free forever and works whether you make $50 a week or $5,000.</div>
+      </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="diff-vs">
+      <table class="diff-vs-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="diff-us-col">Think To Buy</th>
+            <th>Mint</th>
+            <th>YNAB</th>
+            <th>PocketGuard</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pre-purchase verdict</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+          </tr>
+          <tr>
+            <td>No bank link needed</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+          </tr>
+          <tr>
+            <td>Opportunity cost calculator</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+          </tr>
+          <tr>
+            <td>Voice + natural language input</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+          </tr>
+          <tr>
+            <td>AI financial advisor</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+            <td><span class="diff-cross">—</span></td>
+          </tr>
+          <tr>
+            <td>Free forever</td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-check">✓</span></td>
+            <td><span class="diff-cross">$99/yr</span></td>
+            <td><span class="diff-cross">$8/mo</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- BOTTOM CTA -->
   <div style="text-align:center; padding: 0 24px 60px;">
-    <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:12px;">Ready to spend smarter?</div>
+    <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:900;margin-bottom:12px;letter-spacing:-0.03em;">Ready to spend smarter?</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:28px;">Free forever. Your data syncs across all your devices.</div>
     <button class="landing-cta-primary" onclick="showAuthFromLanding()">Create your free account →</button>
   </div>
 
   <div class="landing-footer">
-    Built with care · <strong>thinktobuy.netlify.app</strong> · Free forever
+    Built with care · <strong>himothyjimothy17-tech.github.io/Think-To-Buy</strong> · Free forever
   </div>
 </div>
 
@@ -1974,7 +2294,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     </div>
 
     <div id="auth-confirm-view" style="display:none;">
-      <div style="font-size:40px;margin-bottom:16px;">📬</div>
+      
       <div class="auth-title">Check your email</div>
       <div class="auth-sub">We sent a confirmation link to your email. Click it to activate your account, then come back and sign in.</div>
       <button class="auth-btn" onclick="showLogin()">Back to Sign In</button>
@@ -1992,7 +2312,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 <div class="modal-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
   <div class="modal">
     <div class="modal-title">
-      ⚙️ Settings
+      Settings
       <button class="modal-close" onclick="closeSettings()">✕</button>
     </div>
 
@@ -2036,24 +2356,24 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
       <button class="hmenu-close" onclick="closeHMenu()">✕</button>
     </div>
     <div class="hmenu-item" onclick="openTool('loan');closeHMenu()">
-      <span class="hmenu-icon">🧮</span>
+      <span class="hmenu-icon">≈</span>
       <div><div class="hmenu-item-title">Loan Calculator</div><div class="hmenu-item-desc">See the true cost of financing</div></div>
     </div>
     <div class="hmenu-item" onclick="openTool('networth');closeHMenu()">
-      <span class="hmenu-icon">📊</span>
+      <span class="hmenu-icon">↗</span>
       <div><div class="hmenu-item-title">Net Worth Tracker</div><div class="hmenu-item-desc">Assets minus debts</div></div>
     </div>
     <div class="hmenu-item" onclick="openTool('streak');closeHMenu()">
-      <span class="hmenu-icon">🔥</span>
+      <span class="hmenu-icon">◆</span>
       <div><div class="hmenu-item-title">Spending Streak</div><div class="hmenu-item-desc">Your "Don't Buy" streak</div></div>
     </div>
     <div class="hmenu-divider"></div>
     <div class="hmenu-item" onclick="startTutorial();closeHMenu()">
-      <span class="hmenu-icon">📖</span>
+      <span class="hmenu-icon">▤</span>
       <div><div class="hmenu-item-title">Tutorial</div><div class="hmenu-item-desc">Replay the getting started guide</div></div>
     </div>
     <div class="hmenu-item" onclick="openSettings();closeHMenu()">
-      <span class="hmenu-icon">⚙️</span>
+      <span class="hmenu-icon">⊙</span>
       <div><div class="hmenu-item-title">Settings</div><div class="hmenu-item-desc">Currency, thresholds, theme</div></div>
     </div>
     <div class="hmenu-item" onclick="openAISettings();closeHMenu()">
@@ -2062,31 +2382,50 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     </div>
     <div class="hmenu-divider"></div>
     <div class="hmenu-item" onclick="signOutNow()">
-      <span class="hmenu-icon">🚪</span>
+      <span class="hmenu-icon">→</span>
       <div><div class="hmenu-item-title">Sign Out</div><div class="hmenu-item-desc" id="hmenu-email"></div></div>
     </div>
   </div><!-- /hmenu -->
+
+  <!-- DATA ENTRY POPUP -->
+  <div class="data-popup-overlay" id="data-popup-overlay" onclick="if(event.target===this)closeDataPopup()">
+    <div class="data-popup">
+      <div class="data-popup-label" id="data-popup-label">Quick question</div>
+      <div class="data-popup-q" id="data-popup-q"></div>
+      <div class="input-shell">
+        <span class="input-prefix" id="data-popup-prefix">$</span>
+        <input type="number" class="has-prefix" id="data-popup-input"
+          placeholder="0" min="0"
+          onkeydown="if(event.key==='Enter')submitDataPopup()">
+      </div>
+      <div class="data-popup-actions">
+        <button class="data-popup-submit" onclick="submitDataPopup()">Save →</button>
+        <button class="data-popup-skip" onclick="closeDataPopup()">Skip</button>
+      </div>
+    </div>
+  </div>
 
   <!-- SHARE MODAL -->
   <div class="modal-overlay" id="share-overlay" onclick="if(event.target===this)closeShare()" style="display:none;">
     <div class="modal-card" style="max-width:400px;">
       <div class="modal-header">
-        <span class="modal-title">📤 Share your verdict</span>
+        <span class="modal-title">Share your verdict</span>
         <button class="modal-close" onclick="closeShare()">✕</button>
       </div>
       <div style="padding:0 20px 20px;">
         <div id="share-preview" class="share-preview-card">
-          <div class="share-app-name">Should I <em>Buy It</em>?</div>
+          <div class="share-inner">
+            <div class="share-app-name">Think To Buy</div>
+            <div class="share-verdict-label" id="share-verdict-label"></div>
+            <div class="share-item" id="share-item"></div>
+            <div class="share-verdict-body" id="share-verdict-body"></div>
+            <div class="share-stats" id="share-stats"></div>
+          </div>
           <div class="share-emoji" id="share-emoji"></div>
-          <div class="share-verdict-label" id="share-verdict-label"></div>
-          <div class="share-item" id="share-item"></div>
-          <div class="share-verdict-body" id="share-verdict-body"></div>
-          <div class="share-stats" id="share-stats"></div>
-          <div class="share-url">thinktobuy.netlify.app</div>
         </div>
         <div class="share-actions">
           <button class="share-btn" onclick="downloadVerdictCard()">⬇ Download Image</button>
-          <button class="share-btn share-btn-copy" onclick="copyVerdictText()">📋 Copy Text</button>
+          <button class="share-btn share-btn-copy" onclick="copyVerdictText()">Copy Text</button>
         </div>
         <div id="share-copy-confirm" style="text-align:center;font-size:12px;color:var(--good);min-height:18px;margin-top:8px;"></div>
       </div>
@@ -2097,14 +2436,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   <div class="modal-overlay" id="ai-settings-overlay" onclick="if(event.target===this)closeAISettings()" style="display:none;">
     <div class="modal-card" style="max-width:420px;">
       <div class="modal-header">
-        <span class="modal-title">✦ AI Advisor Setup</span>
+        <span class="modal-title">AI Advisor Setup</span>
         <button class="modal-close" onclick="closeAISettings()">✕</button>
       </div>
       <div style="padding:0 24px 24px;">
         <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
           Powered by <strong>Groq + Llama 3.3</strong> — free, fast AI for complex financial questions. Your key is stored only in your browser.
         </p>
-        <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:var(--r-md);padding:14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.7;">
+        <div style="background:rgba(123,44,191,0.06);border:1px solid rgba(123,44,191,0.2);border-radius:var(--r-md);padding:14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.7;">
           <strong style="color:var(--gold);">Get a free key:</strong><br>
           1. Go to <a href="https://console.groq.com" target="_blank" style="color:var(--teal);">console.groq.com</a><br>
           2. Click <strong>API Keys</strong> → <strong>Create API Key</strong><br>
@@ -2139,9 +2478,9 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <button onclick="if(sb){sb.auth.signOut().finally(()=>location.reload())}else{location.reload()}">Sign out</button>
       </div>
       <div class="streak-badge" id="streak-badge" onclick="openTool('streak')" title="Spending streak">
-        <span>🔥</span><span id="streak-count">0</span>
+        <span id="streak-count">0</span>
       </div>
-      <button class="theme-pill" onclick="toggleTheme()" id="theme-btn">☀️</button>
+
       <button class="hamburger-btn" onclick="toggleHMenu()" title="More tools">
         <span></span><span></span><span></span>
       </button>
@@ -2150,14 +2489,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="go('analyze',this)">🔍 Analyze</button>
-    <button class="tab" onclick="go('goals',this)">🎯 Goals</button>
-    <button class="tab tab-new" onclick="go('history',this)" id="tab-history">📊 History</button>
-    <button class="tab" onclick="go('ai',this)">✦ Advisor</button>
-    <button class="tab tab-new" onclick="go('markets',this)" id="tab-markets">📈 Markets</button>
-    <button class="tab" onclick="go('bills',this)">💸 Bills</button>
-    <button class="tab tab-new" onclick="go('learn',this)" id="tab-learn">🎓 Learn</button>
-    <button class="tab tab-new" onclick="go('compare',this)" id="tab-compare">⚖️ Compare</button>
+    <button class="tab active" onclick="go('analyze',this)" title="Analyze"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><span class="tab-label"> Analyze</span></button>
+    <button class="tab" onclick="go('goals',this)" title="Goals"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span><span class="tab-label"> Goals</span></button>
+    <button class="tab tab-new" onclick="go('history',this)" id="tab-history" title="History"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></span><span class="tab-label"> History</span></button>
+    <button class="tab" onclick="go('ai',this)" title="Advisor"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/></svg></span><span class="tab-label"> Advisor</span></button>
+    <button class="tab tab-new" onclick="go('markets',this)" id="tab-markets" title="Markets"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><span class="tab-label"> Markets</span></button>
+    <button class="tab" onclick="go('bills',this)" title="Bills"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span class="tab-label"> Bills</span></button>
+    <button class="tab tab-new" onclick="go('learn',this)" id="tab-learn" title="Learn"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="tab-label"> Learn</span></button>
+    <button class="tab tab-new" onclick="go('compare',this)" id="tab-compare" title="Compare"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><span class="tab-label"> Compare</span></button>
   </div>
 
   <!-- ══ ANALYZE ══ -->
@@ -2170,12 +2509,12 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <input type="text" id="nl-input" class="nl-input"
           placeholder='Try: "thinking of buying AirPods Pro for $249"'
           onkeydown="if(event.key==='Enter') parseNaturalInput()">
-        <button class="nl-voice-btn" id="nl-voice-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+        <button class="nl-voice-btn" id="nl-voice-btn" onclick="toggleVoice()" title="Voice input">mic</button>
         <button class="nl-parse-btn" onclick="parseNaturalInput()">Extract →</button>
       </div>
       <div class="nl-status" id="nl-status"></div>
       <div class="nl-hint" id="nl-hint">
-        💡 <strong>New:</strong> Just describe what you want to buy in plain English — or tap 🎤 to speak it. We'll fill the form for you.
+        <strong>New:</strong> Just describe what you want to buy in plain English — or tap the mic to speak it. We'll fill the form for you.
         <button onclick="document.getElementById('nl-hint').style.display='none';localStorage.setItem('sib4_nl_hint','1')" class="nl-hint-close">Got it</button>
       </div>
     </div>
@@ -2194,14 +2533,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <div class="field">
           <label>Category</label>
           <select id="category">
-            <option value="Tech">💻 Tech</option>
-            <option value="Clothing">👕 Clothing</option>
-            <option value="Food">🍔 Food</option>
-            <option value="Entertainment">🎮 Entertainment</option>
-            <option value="Health">💊 Health</option>
-            <option value="Transport">🚗 Transport</option>
-            <option value="Education">📚 Education</option>
-            <option value="Other">📦 Other</option>
+            <option value="Tech">Tech</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Food">Food</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Health">Health</option>
+            <option value="Transport">Transport</option>
+            <option value="Education">Education</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
@@ -2225,8 +2564,8 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
           <div class="field">
             <label>Is this a…</label>
             <div class="toggle-group">
-              <button class="toggle-opt active" id="tog-want" onclick="setNeed(false)">✨ Want</button>
-              <button class="toggle-opt" id="tog-need" onclick="setNeed(true)">🔧 Need</button>
+              <button class="toggle-opt active" id="tog-want" onclick="setNeed(false)">Want</button>
+              <button class="toggle-opt" id="tog-need" onclick="setNeed(true)">Need</button>
             </div>
           </div>
         </div>
@@ -2234,23 +2573,25 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <div class="full">
           <div class="range-wrap">
             <div class="range-header">
-              <label>Weekly Income</label>
+              <label>Weekly Income <span style="font-size:10px;color:var(--muted);font-weight:400;">(optional)</span></label>
               <div class="range-right">
                 <input type="number" class="income-input" id="income-num" placeholder="500" min="0" max="99999" oninput="syncIncomeFromNum(this.value)">
                 <span class="range-val" id="incomeVal">$0</span>
               </div>
             </div>
             <input type="range" id="income" min="0" max="2000" step="25" value="0" oninput="updateRange(this)">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Leave at 0 to skip — unlocks recovery time stats if filled in.</div>
           </div>
         </div>
 
 
         <div class="full" style="margin-top:8px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-            <span style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Paying with</span>
-            <div style="display:flex;gap:6px;">
-              <button id="pay-debit" onclick="setPayMethod('debit')" class="pay-toggle active">💳 Debit / Cash</button>
-              <button id="pay-credit" onclick="setPayMethod('credit')" class="pay-toggle">💳 Credit Card</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;" class="pay-row-inner">
+            <span style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Paying with <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(optional)</span></span>
+            <div style="display:flex;gap:6px;" class="pay-btns">
+              <button id="pay-cash" onclick="setPayMethod('cash')" class="pay-toggle">Cash</button>
+              <button id="pay-debit" onclick="setPayMethod('debit')" class="pay-toggle">Debit</button>
+              <button id="pay-credit" onclick="setPayMethod('credit')" class="pay-toggle">Credit</button>
             </div>
           </div>
           <div id="credit-warning" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);border-radius:var(--r-sm);font-size:12px;color:#f87191;line-height:1.6;">
@@ -2272,10 +2613,10 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
           <div id="v-title" class="v-title"></div>
           <div id="v-body" class="v-body"></div>
           <div class="result-actions">
-            <button class="action-chip teal" onclick="addCurrentAsGoal()">🎯 Save as Goal</button>
-            <button class="action-chip" onclick="quickAskFromResult('Is there a smarter way to afford this?')">✦ Ask AI</button>
-            <button class="action-chip" onclick="quickAskFromResult('What is the opportunity cost of buying this?')">💡 Opportunity cost</button>
-            <button class="action-chip share-chip" onclick="shareVerdict()">📤 Share</button>
+            <button class="action-chip teal" onclick="addCurrentAsGoal()">Save as Goal</button>
+            <button class="action-chip" onclick="quickAskFromResult('Is there a smarter way to afford this?')">Ask AI</button>
+            <button class="action-chip" onclick="quickAskFromResult('What is the opportunity cost of buying this?')">Opportunity cost</button>
+            <button class="action-chip share-chip" onclick="shareVerdict()">Share</button>
           </div>
         </div>
       </div>
@@ -2285,7 +2626,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <div class="stat-pill"><div class="sp-label">% of Savings</div><div class="sp-val c-gold" id="s-pct">—</div></div>
         <div class="stat-pill"><div class="sp-label">Weeks to Recover</div><div class="sp-val" id="s-wks">—</div></div>
         <div class="stat-pill"><div class="sp-label">Emergency Runway</div><div class="sp-val" id="s-run">—</div></div>
+        <div class="stat-pill"><div class="sp-label">Cost Per Day (1yr)</div><div class="sp-val" id="s-cpd">—</div></div>
+        <div class="stat-pill"><div class="sp-label">Invested in 10yrs</div><div class="sp-val" id="s-opp">—</div></div>
       </div>
+
+      <!-- INSIGHT STRIP -->
+      <div id="income-nudge" style="display:none;margin:-6px 0 12px;padding:0 2px;"></div>
+      <!-- INSIGHT STRIP -->
+      <div id="insight-strip" style="display:none;margin:12px 0;padding:12px 16px 12px 20px;background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r-md);font-size:13px;color:var(--text-2);line-height:1.8;"></div>
 
       <div class="chart-duo">
         <div class="card" style="padding: 20px;">
@@ -2314,17 +2662,17 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
       <div class="divider" style="margin-top:8px;">How your score is calculated</div>
       <div class="how-grid">
         <div class="how-card good-card">
-          <div class="how-icon">✅</div>
+          <div class="how-icon how-good"></div>
           <div class="how-label">Smart Buy</div>
           <div class="how-desc">Under 15% of savings and recoverable in under 3 weeks of income. You can comfortably afford it.</div>
         </div>
         <div class="how-card warn-card">
-          <div class="how-icon">⚠️</div>
+          <div class="how-icon how-warn"></div>
           <div class="how-label">Think Twice</div>
           <div class="how-desc">15–70% of savings or 3–6 weeks to recover. Possible, but worth pausing and planning first.</div>
         </div>
         <div class="how-card bad-card">
-          <div class="how-icon">🚫</div>
+          <div class="how-icon how-bad"></div>
           <div class="how-label">Don't Buy</div>
           <div class="how-desc">Over 70% of savings or 6+ weeks to recover. This would leave your finances dangerously thin.</div>
         </div>
@@ -2380,7 +2728,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
       <div id="goal-list" class="goal-list"></div>
       <div id="goal-empty" class="empty">
-        <div class="ei">🎯</div>
+        <div class="ei">—</div>
         No goals yet.<br>Add your first savings goal above.
       </div>
     </div>
@@ -2390,7 +2738,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   <div id="panel-history" class="panel">
 
     <div class="feature-hint" id="history-hint">
-      📊 <strong>New — Spending Dashboard:</strong> See how much you've saved by saying no, how your spending compares to the 50/30/20 rule, and your smart vs risky decision breakdown.
+      <strong>New — Spending Dashboard:</strong> See how much you've saved by saying no, how your spending compares to the 50/30/20 rule, and your smart vs risky decision breakdown.
       <button onclick="document.getElementById('history-hint').style.display='none';localStorage.setItem('sib4_hist_hint','1')" class="hint-close-btn">Got it ✓</button>
     </div>
 
@@ -2402,7 +2750,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
       </div>
       <div class="dash-stat">
         <div class="dash-stat-val good" id="hs-saved">—</div>
-        <div class="dash-stat-label">💪 Money Saved</div>
+        <div class="dash-stat-label">Money Saved</div>
       </div>
       <div class="dash-stat">
         <div class="dash-stat-val" id="hs-smart-pct">—</div>
@@ -2446,9 +2794,9 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     <!-- PURCHASE LIST -->
     <div class="hist-controls" id="hist-controls" style="display:none;">
       <button class="filter-chip active" onclick="setFilter('all',this)">All</button>
-      <button class="filter-chip" onclick="setFilter('good',this)">✅ Smart buys</button>
-      <button class="filter-chip" onclick="setFilter('warn',this)">⚠️ Risky</button>
-      <button class="filter-chip" onclick="setFilter('bad',this)">🚫 Avoided</button>
+      <button class="filter-chip" onclick="setFilter('good',this)">Smart buys</button>
+      <button class="filter-chip" onclick="setFilter('warn',this)">Risky</button>
+      <button class="filter-chip" onclick="setFilter('bad',this)">Avoided</button>
       <select class="sort-select" onchange="setSortOrder(this.value)">
         <option value="date-desc">Newest first</option>
         <option value="date-asc">Oldest first</option>
@@ -2459,7 +2807,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
     <div id="history-list"></div>
     <div id="hist-empty" class="empty">
-      <div class="ei">📊</div>
+      <div class="ei">—</div>
       No history yet.<br>Analyze purchases and save them to see your spending dashboard.
     </div>
     <button class="export-btn" id="export-btn" onclick="exportCSV()" style="display:none;">⬇ Download Spreadsheet</button>
@@ -2513,7 +2861,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     <div class="insights-panel" id="insights-panel">
       <div class="insights-eyebrow">Your Financial Snapshot</div>
       <div class="insights-grid" id="insights-grid">
-        <div class="insight-item"><span class="insight-icon">💡</span><span>Add your savings, income and make a few purchases to unlock personalised insights about your financial health.</span></div>
+        <div class="insight-item"><span class="insight-icon">→</span><span>Add your savings, income and make a few purchases to unlock personalised insights about your financial health.</span></div>
       </div>
       <button class="insight-refresh" onclick="renderInsights()">↻ Refresh insights</button>
     </div>
@@ -2521,7 +2869,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     <!-- FINANCE PRINCIPLES -->
     <div class="principles-grid">
       <div class="principle-card">
-        <div class="principle-icon">📉</div>
+        <div class="principle-icon">%</div>
         <div class="principle-title">Pay yourself first</div>
         <div class="principle-body">Move money to savings the moment you get paid — before spending anything. You can't miss what you never see.</div>
       </div>
@@ -2531,12 +2879,12 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
         <div class="principle-body">Starting to save early matters more than saving the "right" amount. Compound interest rewards patience above all else.</div>
       </div>
       <div class="principle-card">
-        <div class="principle-icon">🛡️</div>
+        <div class="principle-icon">◉</div>
         <div class="principle-title">Emergency fund first</div>
         <div class="principle-body">Before investing or big purchases, build 3–6 months of expenses as a buffer. It's the foundation everything else rests on.</div>
       </div>
       <div class="principle-card">
-        <div class="principle-icon">🔁</div>
+        <div class="principle-icon">↺</div>
         <div class="principle-title">Automate everything</div>
         <div class="principle-body">Willpower is unreliable. Automatic transfers to savings and investment accounts remove the decision — and the temptation.</div>
       </div>
@@ -2629,7 +2977,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
     </div>
 
     <!-- BILLS SUMMARY -->
-    <div class="bills-summary" id="bills-summary" style="display:none;">
+    <div class="bills-summary bs-stats" id="bills-summary" style="display:none;">
       <div class="bs-stat"><div class="bs-val" id="bs-monthly">—</div><div class="bs-label">Monthly Bills</div></div>
       <div class="gs-divider"></div>
       <div class="bs-stat"><div class="bs-val bad" id="bs-weekly">—</div><div class="bs-label">Per Week</div></div>
@@ -2641,7 +2989,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
     <div id="bills-list"></div>
     <div id="bills-empty" class="empty">
-      <div class="ei">💸</div>
+      <div class="ei">—</div>
       No bills yet.<br>Add your recurring expenses above.
     </div>
 
@@ -2651,7 +2999,7 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
   <div id="panel-learn" class="panel">
 
     <div class="feature-hint" id="learn-hint">
-      🎓 <strong>New — Financial Education:</strong> 8 plain-English lessons on things school never taught you. Each has a real example and a quiz to test yourself.
+      <strong>New — Financial Education:</strong> 8 plain-English lessons on things school never taught you. Each has a real example and a quiz to test yourself.
       <button onclick="document.getElementById('learn-hint').style.display='none';localStorage.setItem('sib4_learn_hint','1')" class="hint-close-btn">Got it ✓</button>
     </div>
 
@@ -2664,14 +3012,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
 
       <!-- Topic selector -->
       <div class="learn-topics" id="learn-topics">
-        <button class="learn-topic-btn active" onclick="showLesson('tax',this)">💰 Taxes</button>
-        <button class="learn-topic-btn" onclick="showLesson('interest',this)">📈 Interest</button>
-        <button class="learn-topic-btn" onclick="showLesson('investing',this)">🏦 Investing</button>
-        <button class="learn-topic-btn" onclick="showLesson('credit',this)">💳 Credit</button>
-        <button class="learn-topic-btn" onclick="showLesson('business',this)">🏢 Business</button>
-        <button class="learn-topic-btn" onclick="showLesson('inflation',this)">📊 Inflation</button>
-        <button class="learn-topic-btn" onclick="showLesson('budgeting',this)">📋 Budgeting</button>
-        <button class="learn-topic-btn" onclick="showLesson('retirement',this)">🌅 Retirement</button>
+        <button class="learn-topic-btn active" onclick="showLesson('tax',this)">Taxes</button>
+        <button class="learn-topic-btn" onclick="showLesson('interest',this)">Interest</button>
+        <button class="learn-topic-btn" onclick="showLesson('investing',this)">Investing</button>
+        <button class="learn-topic-btn" onclick="showLesson('credit',this)">Credit</button>
+        <button class="learn-topic-btn" onclick="showLesson('business',this)">Business</button>
+        <button class="learn-topic-btn" onclick="showLesson('inflation',this)">Inflation</button>
+        <button class="learn-topic-btn" onclick="showLesson('budgeting',this)">Budgeting</button>
+        <button class="learn-topic-btn" onclick="showLesson('retirement',this)">Retirement</button>
       </div>
     </div>
 
@@ -2699,14 +3047,14 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
           </div>
           <div class="field"><label>Category</label>
             <select id="cmp-a-cat">
-              <option value="Tech">💻 Tech</option>
-              <option value="Clothing">👕 Clothing</option>
-              <option value="Food">🍔 Food</option>
-              <option value="Entertainment">🎮 Entertainment</option>
-              <option value="Health">💊 Health</option>
-              <option value="Transport">🚗 Transport</option>
-              <option value="Education">📚 Education</option>
-              <option value="Other">📦 Other</option>
+              <option value="Tech">Tech</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Food">Food</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Health">Health</option>
+              <option value="Transport">Transport</option>
+              <option value="Education">Education</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -2723,20 +3071,20 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.95); }
           </div>
           <div class="field"><label>Category</label>
             <select id="cmp-b-cat">
-              <option value="Tech">💻 Tech</option>
-              <option value="Clothing">👕 Clothing</option>
-              <option value="Food">🍔 Food</option>
-              <option value="Entertainment">🎮 Entertainment</option>
-              <option value="Health">💊 Health</option>
-              <option value="Transport">🚗 Transport</option>
-              <option value="Education">📚 Education</option>
-              <option value="Other">📦 Other</option>
+              <option value="Tech">Tech</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Food">Food</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Health">Health</option>
+              <option value="Transport">Transport</option>
+              <option value="Education">Education</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
       </div>
 
-      <button class="analyze-btn" onclick="runComparison()" style="margin-top:16px;">⚖️ Compare Now</button>
+      <button class="analyze-btn" onclick="runComparison()" style="margin-top:16px;">Compare Now</button>
     </div>
 
     <!-- Results -->
@@ -2771,25 +3119,35 @@ let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
 let goals   = JSON.parse(localStorage.getItem('sib4_goals') || '[]');
 let lastResult = null;
 let charts = {};
-let lightMode = false;
+let lightMode = false; // dark mode only — kept for chart color compatibility
 let isNeed = false;
 let currencySymbol = localStorage.getItem('sib4_currency') || '$';
 let chatHistory = []; // kept for compatibility
 
 /* ─── PAYMENT METHOD ─── */
-let payMethod = localStorage.getItem('sib4_paymethod') || 'debit';
+let payMethod = localStorage.getItem('sib4_paymethod') || 'none';
 function setPayMethod(method) {
-  payMethod = method;
-  localStorage.setItem('sib4_paymethod', method);
-  document.getElementById('pay-debit').classList.toggle('active', method === 'debit');
-  document.getElementById('pay-credit').classList.toggle('active', method === 'credit');
+  // Toggle off if already active (makes it optional)
+  if (payMethod === method) {
+    payMethod = 'none';
+    localStorage.setItem('sib4_paymethod', 'none');
+  } else {
+    payMethod = method;
+    localStorage.setItem('sib4_paymethod', method);
+  }
+  const cashBtn = document.getElementById('pay-cash');
+  const debitBtn = document.getElementById('pay-debit');
+  const creditBtn = document.getElementById('pay-credit');
+  if (cashBtn) cashBtn.classList.toggle('active', payMethod === 'cash');
+  if (debitBtn) debitBtn.classList.toggle('active', payMethod === 'debit');
+  if (creditBtn) creditBtn.classList.toggle('active', payMethod === 'credit');
   const warn = document.getElementById('credit-warning');
-  if (warn) warn.style.display = method === 'credit' ? 'block' : 'none';
+  if (warn) warn.style.display = payMethod === 'credit' ? 'block' : 'none';
 }
 // Restore on load
 (function() {
   const saved = localStorage.getItem('sib4_paymethod');
-  if (saved) setPayMethod(saved);
+  if (saved && saved !== 'none') setPayMethod(saved);
 })();
 const TIMEZONE_CURRENCY = {
   'Europe/London': ['£','GBP'], 'Europe/Dublin': ['£','GBP'],
@@ -2848,6 +3206,98 @@ function autoDetectCurrency() {
   }
 })();
 
+/* ─── DATA ENTRY POPUP ─── */
+let _popupCallback = null;
+
+function showDataPopup(config) {
+  // config: { field, label, question, prefix, callback }
+  document.getElementById('data-popup-label').textContent = config.label || 'Quick question';
+  document.getElementById('data-popup-q').textContent = config.question;
+  document.getElementById('data-popup-prefix').textContent = config.prefix || currencySymbol;
+  const input = document.getElementById('data-popup-input');
+  input.value = '';
+  input.placeholder = config.placeholder || '0';
+  _popupCallback = config.callback || null;
+  document.getElementById('data-popup-overlay').classList.add('open');
+  setTimeout(() => input.focus(), 120);
+}
+
+function closeDataPopup() {
+  document.getElementById('data-popup-overlay').classList.remove('open');
+  _popupCallback = null;
+}
+
+function submitDataPopup() {
+  const val = parseFloat(document.getElementById('data-popup-input').value);
+  if (!val || val <= 0) {
+    document.getElementById('data-popup-input').style.borderColor = 'var(--bad)';
+    setTimeout(() => document.getElementById('data-popup-input').style.borderColor = '', 1200);
+    return;
+  }
+  closeDataPopup();
+  if (_popupCallback) _popupCallback(val);
+}
+
+// Shared popup configs
+function askForIncome(callback) {
+  showDataPopup({
+    label: 'One quick thing',
+    question: "What's your weekly income?",
+    prefix: currencySymbol,
+    placeholder: '500',
+    callback: (val) => {
+      // Save to income field + localStorage
+      const numEl = document.getElementById('income-num');
+      const slider = document.getElementById('income');
+      if (numEl) numEl.value = val;
+      if (slider) slider.value = Math.min(val, 2000);
+      localStorage.setItem('sib4_income', val);
+      const valEl = document.getElementById('incomeVal');
+      if (valEl) valEl.textContent = currencySymbol + val.toLocaleString();
+      if (callback) callback(val);
+    }
+  });
+}
+
+function askForSavings(callback) {
+  showDataPopup({
+    label: 'One quick thing',
+    question: "How much do you currently have saved?",
+    prefix: currencySymbol,
+    placeholder: '1000',
+    callback: (val) => {
+      const el = document.getElementById('savings');
+      if (el) el.value = val;
+      if (callback) callback(val);
+    }
+  });
+}
+
+function askForPrice(callback) {
+  showDataPopup({
+    label: 'One quick thing',
+    question: "What's the price of the item?",
+    prefix: currencySymbol,
+    placeholder: '250',
+    callback: (val) => {
+      const el = document.getElementById('price');
+      if (el) el.value = val;
+      if (callback) callback(val);
+    }
+  });
+}
+
+// nudgeHTML → now renders a button that opens the popup
+function nudgeHTML(fieldKey, label, extraText) {
+  const callbackMap = {
+    'income-num': 'askForIncome(()=>{renderHistory();renderGoals();renderBills();})',
+    'savings':    'askForSavings(()=>{})',
+    'price':      'askForPrice(()=>{})',
+  };
+  const cb = callbackMap[fieldKey] || 'askForIncome(()=>{})';
+  return `<button onclick="${cb}" style="background:none;border:none;border-bottom:1px solid var(--accent);color:var(--accent-light);font-size:12px;cursor:pointer;padding:0;font-family:'Inter',sans-serif;">${extraText ? extraText + ' ' : ''}${label}</button>`;
+}
+
 let histFilter = 'all';
 let histSort   = 'date-desc';
 
@@ -2872,14 +3322,6 @@ function setCurrency(sym, code, silent) {
 }
 
 /* ─── THEME ─── */
-function toggleTheme() {
-  lightMode = !lightMode;
-  document.body.classList.toggle('light-mode', lightMode);
-  document.getElementById('theme-btn').textContent = lightMode ? '🌙  Dark mode' : '☀️  Light mode';
-  document.querySelectorAll('select option').forEach(o => o.style.background = lightMode ? '#fff' : '#12151c');
-  if (lastResult) redrawCharts(lastResult);
-  renderHistChart();
-}
 
 /* ─── NEED/WANT ─── */
 function setNeed(v) {
@@ -2925,8 +3367,8 @@ function go(id, el) {
 
 /* ─── HELPERS ─── */
 const fmt = n => currencySymbol + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
-const tc  = (a=1) => lightMode ? `rgba(26,21,18,${a})` : `rgba(238,240,244,${a})`;
-const gc  = ()   => lightMode ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+const tc  = (a=1) => `rgba(238,240,244,${a})`;
+const gc  = ()   => 'rgba(255,255,255,0.06)';
 
 Chart.defaults.color = tc(0.55);
 Chart.defaults.borderColor = gc();
@@ -2946,7 +3388,14 @@ function analyze() {
   const threshPct = parseFloat(document.getElementById('thresh-pct').value) || 70;
   const threshWks = parseFloat(document.getElementById('thresh-wks').value) || 6;
 
-  if (price <= 0) { alert('Please enter the item price.'); return; }
+  if (price <= 0) {
+    const priceEl = document.getElementById('price');
+    priceEl.focus();
+    priceEl.style.borderColor = 'var(--accent)';
+    priceEl.style.boxShadow = '0 0 0 3px rgba(123,44,191,0.15)';
+    setTimeout(() => { priceEl.style.borderColor = ''; priceEl.style.boxShadow = ''; }, 2000);
+    return;
+  }
 
   const remaining    = savings - price;
   const weeksRecover = income > 0 ? price / income : Infinity;
@@ -2960,37 +3409,37 @@ function analyze() {
 
   // Case 1: Can't afford it
   if (price > savings) {
-    cls='bad'; emoji='🚫'; label='Don\'t Buy Yet'; title='You can\'t afford this right now';
+    cls='bad'; emoji=''; label='Don\'t Buy Yet'; title='You can\'t afford this right now';
     body=`You're ${fmt(price - savings)} short. ${income>0?'At your current income, save for '+Math.ceil((price-savings)/income)+' more weeks first.':'Build your savings before making this purchase.'}`;
 
   // Case 2: High % of savings AND takes a long time to recover — always bad
   } else if (pctSavings > 50 && income > 0 && weeksRecover > 8) {
-    cls='bad'; emoji='🚫'; label='Not Recommended'; title='This will leave you financially exposed';
+    cls='bad'; emoji=''; label='Not Recommended'; title='This will leave you financially exposed';
     body=`You'd spend ${pctSavings.toFixed(0)}% of your savings and it would take ${weeksRecover.toFixed(0)} weeks to earn it back at ${fmt(income)}/week. That's a very vulnerable position for a ${isNeed?'purchase':'want'}.`;
 
   // Case 3: Over the savings % threshold
   } else if (pctSavings > (threshPct + needBonus)) {
-    cls='warn'; emoji='⚠️'; label='High Risk'; title='This puts you in a vulnerable spot';
+    cls='warn'; emoji=''; label='High Risk'; title='This puts you in a vulnerable spot';
     body=`You'd spend ${pctSavings.toFixed(0)}% of your savings — above the recommended ${threshPct}% ceiling. Only ${fmt(remaining)} left as a buffer is not much of an emergency fund.`;
 
   // Case 4: Takes too long to recover
   } else if (income > 0 && weeksRecover > (threshWks + needBonus/2)) {
-    cls='warn'; emoji='⚠️'; label='Think Carefully'; title=isNeed?'Necessary, but plan ahead':'Worth pausing on this one';
+    cls='warn'; emoji=''; label='Think Carefully'; title=isNeed?'Necessary, but plan ahead':'Worth pausing on this one';
     body=`It takes ${weeksRecover.toFixed(1)} weeks of income to earn this back. That's a significant commitment at ${fmt(income)}/week — make sure you've budgeted for bills and essentials first.`;
 
   // Case 5: Runway after purchase is dangerously low (less than 4 weeks of income left)
   } else if (income > 0 && runway < 4 && pctSavings > 20) {
-    cls='warn'; emoji='⚠️'; label='Tight on Buffer'; title='Not much left after this purchase';
+    cls='warn'; emoji=''; label='Tight on Buffer'; title='Not much left after this purchase';
     body=`After buying this, you'd only have ${fmt(remaining)} — about ${runway.toFixed(1)} weeks of income. That's a thin emergency buffer. Consider waiting until you have more saved.`;
 
   // Case 6: Negligible purchase (under 5% of savings)
   } else if (pctSavings <= 5) {
-    cls='good'; emoji='✅'; label='All Clear'; title='This is a smart purchase';
+    cls='good'; emoji=''; label='All Clear'; title='This is a smart purchase';
     body=`At just ${pctSavings.toFixed(1)}% of your savings, this is financially negligible. ${fmt(remaining)} remains untouched — a very healthy cushion.`;
 
   // Case 7: Passes all checks
   } else {
-    cls='good'; emoji='✅'; label='All Clear'; title=isNeed?'This is a justified purchase':'This looks like a smart purchase';
+    cls='good'; emoji=''; label='All Clear'; title=isNeed?'This is a justified purchase':'This looks like a smart purchase';
     body=`You're spending ${pctSavings.toFixed(0)}% of savings${income>0?' and will recover it in ~'+weeksRecover.toFixed(1)+' weeks':''}. ${fmt(remaining)} stays untouched as a buffer.`;
   }
 
@@ -3020,6 +3469,8 @@ function analyze() {
   }
 
   const vc = document.getElementById('v-card');
+  vc.className = 'verdict-card'; // reset first to re-trigger ::after animation
+  vc.offsetHeight; // force reflow
   vc.className = 'verdict-card ' + cls;
   document.getElementById('v-emoji').textContent = emoji;
   document.getElementById('v-label').className = 'v-label ' + cls;
@@ -3063,7 +3514,73 @@ function analyze() {
 
   document.getElementById('s-run').textContent = isFinite(runway) && runway > 0 ? runway.toFixed(1)+'w' : '—';
 
+  // Show nudge if income missing — weeks/runway are useless without it
+  const incomeNudge = document.getElementById('income-nudge');
+  if (incomeNudge) {
+    if (income <= 0) {
+      incomeNudge.innerHTML = `<button onclick="askForIncome(()=>{if(lastResult)analyze();})" style="background:none;border:none;border-bottom:1px solid var(--accent);color:var(--accent-light);font-size:12px;cursor:pointer;padding:0;font-family:'Inter',sans-serif;">Add weekly income</button> <span style="font-size:12px;color:var(--muted);">to unlock Weeks to Recover and Emergency Runway.</span>`;
+      incomeNudge.style.display = 'block';
+    } else {
+      incomeNudge.style.display = 'none';
+    }
+  }
+
+  // Cost per day (amortized over 1 year)
+  const cpd = price / 365;
+  document.getElementById('s-cpd').textContent = cpd < 1 ? (cpd * 100).toFixed(0)+'¢/day' : fmt(cpd)+'/day';
+
+  // Opportunity cost — what this money would be worth in 10 years at 8% (S&P avg)
+  const oppCost = price * Math.pow(1.08, 10);
+  const oppEl = document.getElementById('s-opp');
+  oppEl.textContent = fmt(Math.round(oppCost));
+  oppEl.className = 'sp-val c-warn';
+
+  // Insight strip — pick the most persuasive contextual insight
+  const strip = document.getElementById('insight-strip');
+  let insights = [];
+  if (income > 0) insights.push(`That's <strong>${(price/income).toFixed(1)} weeks</strong> of your income for a single purchase.`);
+  if (savings > 0) insights.push(`You'd be left with <strong>${fmt(remaining)}</strong> — ${remaining < 500 ? 'dangerously low for an emergency.' : remaining < income * 4 ? 'less than a month of your income as a safety net.' : 'still a solid cushion.'}`);
+  insights.push(`That ${fmt(price)} invested in an index fund today could be worth <strong>${fmt(Math.round(oppCost))}</strong> in 10 years at 8% avg return.`);
+  insights.push(`Spread over a year, this costs <strong>${cpd < 1 ? (cpd*100).toFixed(0)+'¢' : fmt(cpd)}</strong> per day.`);
+  if (isNeed === false && cls !== 'good') insights.push(`This is a <strong>want, not a need</strong> — the financial pressure is real and optional.`);
+  if (payMethod === 'credit') insights.push(`On credit at 20% APR, you'd pay an extra <strong>${fmt(Math.round(price * 0.20))}</strong> if you don't clear the balance.`);
+
+  // Show 2 most relevant insights
+  const topInsights = insights.slice(0, 2);
+  strip.innerHTML = topInsights.join('<br>');
+  strip.style.display = 'block';
+
   document.getElementById('result').style.display = 'block';
+
+  // Stagger pill pop-in animations
+  document.querySelectorAll('.stat-pill').forEach((pill, i) => {
+    pill.style.animation = 'none';
+    pill.offsetHeight; // reflow
+    pill.style.animation = `pill-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms both`;
+  });
+
+  // Count-up for numeric stat values
+  function countUp(elId, target, suffix, duration) {
+    const el = document.getElementById(elId);
+    if (!el || isNaN(target) || target <= 0) return;
+    const start = Date.now();
+    const tick = () => {
+      const progress = Math.min((Date.now() - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = (target * ease).toFixed(suffix === '%' ? 0 : 1) + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+      else el.textContent = target.toFixed(suffix === '%' ? 0 : 1) + suffix;
+    };
+    requestAnimationFrame(tick);
+  }
+
+  setTimeout(() => {
+    if (isFinite(pctSavings)) countUp('s-pct', pctSavings, '%', 600);
+    if (isFinite(weeksRecover) && income > 0) countUp('s-wks', weeksRecover, 'w', 600);
+    if (isFinite(runway) && runway > 0) countUp('s-run', runway, 'w', 600);
+    countUp('s-cpd', cpd * (cpd < 1 ? 100 : 1), cpd < 1 ? '¢/day' : '/day', 500);
+  }, 100);
+
   redrawCharts(lastResult);
   document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'nearest' });
   renderSuggestions(name, cat, price, cls);
@@ -3088,7 +3605,7 @@ function analyze() {
 function redrawCharts(r) {
   const textColor = tc(0.6);
   const gridColor = gc();
-  const borderCol = lightMode ? '#f5f3ee' : '#080b10';
+  const borderCol = '#080b10';
 
   destroyChart('donut');
   charts.donut = new Chart(document.getElementById('cDonut').getContext('2d'), {
@@ -3097,7 +3614,7 @@ function redrawCharts(r) {
       labels: ['Purchase', 'Remaining'],
       datasets: [{
         data: [Math.max(0, r.price), Math.max(0, r.remaining)],
-        backgroundColor: ['#c9a84c', '#3ecfcf'],
+        backgroundColor: ['#7B2CBF', '#83C5BE'],
         borderColor: borderCol,
         borderWidth: 4, hoverOffset: 8,
       }]
@@ -3130,7 +3647,7 @@ function redrawCharts(r) {
       labels,
       datasets: [{
         data: vals,
-        backgroundColor: ctx => vals[ctx.dataIndex] >= r.price ? '#3ee8a0' : '#c9a84c',
+        backgroundColor: ctx => vals[ctx.dataIndex] >= r.price ? '#83C5BE' : '#7B2CBF',
         borderRadius: 5, borderSkipped: false,
       }]
     },
@@ -3161,7 +3678,7 @@ function addCurrentAsGoal() {
 }
 
 /* ─── HISTORY ─── */
-const catEmoji = { Tech:'💻', Clothing:'👕', Food:'🍔', Entertainment:'🎮', Health:'💊', Transport:'🚗', Education:'📚', Other:'📦' };
+const catColor = { Tech:'#7c6af5', Clothing:'#06b6d4', Food:'#10d97e', Entertainment:'#f59e0b', Health:'#f43f5e', Transport:'#83C5BE', Education:'#E6CCB2', Other:'#6b7280' };
 
 function saveToHistory() {
   if (!lastResult) return;
@@ -3234,7 +3751,7 @@ function renderHistory() {
       avoided.forEach(h => { catSavings[h.cat] = (catSavings[h.cat]||0) + h.price; });
       breakdown.innerHTML = Object.entries(catSavings)
         .sort((a,b)=>b[1]-a[1])
-        .map(([cat, amt]) => `<span class="saved-chip">${catEmoji[cat]||'📦'} ${cat}: ${fmt(Math.round(amt))}</span>`)
+        .map(([cat, amt]) => `<span class="saved-chip"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${catColor[cat]||'#6b7280'};margin-right:5px;vertical-align:middle;"></span>${cat}: ${fmt(Math.round(amt))}</span>`)
         .join('');
     }
   }
@@ -3277,7 +3794,7 @@ function renderHistory() {
     }).join('');
   } else if (charts503020) {
     charts503020.style.display = 'block';
-    document.getElementById('rule-bars').innerHTML = `<p style="font-size:13px;color:var(--muted)">Enter your weekly income on the Analyze tab to see how your spending compares to the 50/30/20 rule.</p>`;
+    document.getElementById('rule-bars').innerHTML = `<p style="font-size:13px;color:var(--muted);line-height:1.7;">${nudgeHTML('income-num','weekly income','Enter your')} to see how your spending compares to the 50/30/20 rule.</p>`;
   }
 
   renderHistList();
@@ -3298,7 +3815,7 @@ function renderHistList() {
   else if (histSort === 'price-asc')  items.sort((a, b) => a.price - b.price);
 
   if (!items.length) {
-    list.innerHTML = '<div class="empty" style="padding:24px"><div class="ei">🔍</div>No items match this filter.</div>';
+    list.innerHTML = '<div class="empty" style="padding:24px"><div class="ei">—</div>No items match this filter.</div>';
     return;
   }
 
@@ -3306,7 +3823,7 @@ function renderHistList() {
     const d = document.createElement('div');
     d.className = 'hist-item';
     d.innerHTML = `
-      <span class="hist-emoji">${catEmoji[h.cat]||'📦'}</span>
+      <span class="hist-emoji" style="background:${catColor[h.cat]||'#6b7280'}"></span>
       <div class="hist-body">
         <div class="hist-top">
           <span class="hist-name">${h.name}</span>
@@ -3337,7 +3854,7 @@ function renderHistChart() {
   const labels = Object.keys(cats), data = Object.values(cats);
   destroyChart('hist');
   if (!labels.length) return;
-  const colors = ['#c9a84c','#3ecfcf','#4ecb8d','#f04f6a','#e8a838','#a78bfa','#f87171','#38bdf8'];
+  const colors = ['#7B2CBF','#83C5BE','#E6CCB2','#f43f5e','#a855f7','#5a9e98','#f87171','#c4b5fd'];
   charts.hist = new Chart(document.getElementById('cHist').getContext('2d'), {
     type: 'bar',
     data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
@@ -3363,7 +3880,7 @@ function renderVerdictsChart() {
     type: 'doughnut',
     data: {
       labels: ['Smart Buy', 'Think Twice', 'Avoided'],
-      datasets: [{ data: [good, warn, bad], backgroundColor: ['#4ecb8d','#e8a838','#f04f6a'], borderWidth: 0, hoverOffset: 8 }]
+      datasets: [{ data: [good, warn, bad], backgroundColor: ['#83C5BE','#E6CCB2','#f43f5e'], borderWidth: 0, hoverOffset: 8 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '65%',
@@ -3433,7 +3950,7 @@ function renderGoals() {
     const pct = Math.min((g.saved / g.target)*100, 100);
     const done = pct >= 100;
     const left = Math.max(g.target - g.saved, 0);
-    const weeksLeft = income > 0 ? (left/income).toFixed(1)+' weeks at current income' : 'Enter weekly income on Analyze tab for time estimate';
+    const weeksLeft = income > 0 ? (left/income).toFixed(1)+' weeks at current income' : nudgeHTML('income-num','weekly income','Add your') + ' for a timeline';
     const d = document.createElement('div');
     d.className = 'goal-card';
     d.innerHTML = `
@@ -3605,7 +4122,7 @@ function buildResponse(topic, ctx, q) {
         if (parseFloat(months) < 3) r += `That's below the recommended 3-month minimum — I'd prioritise topping this up before other spending.`;
         else r += `That's a solid cushion.`;
       } else if (ctx.savings > 0) {
-        r += `You have ${fmt2(ctx.savings)} saved — enter your income in the Analyze tab so I can calculate your exact runway.`;
+        r += `You have ${fmt2(ctx.savings)} saved — ${nudgeHTML('income-num','weekly income','add your')} and I can calculate your exact runway.`;
       } else {
         r += `Start small — even ${fmt2(500)} in a separate account is a real safety net. Automate a fixed amount each week.`;
       }
@@ -3643,7 +4160,7 @@ function buildResponse(topic, ctx, q) {
         if (ctx.pct && ctx.pct < 10) return `Yes — the numbers support it. ${cl} This is financially low-risk for you.`;
         return `Your numbers look okay for this. ${cl} ${il} If you've thought it through and it genuinely adds value, go for it.`;
       }
-      return `Fill in your savings and income on the Analyze tab — I can give you a much sharper answer with those numbers.`;
+      return `I need a bit more to work with. ${nudgeHTML('price','item price','Enter the')} and ${nudgeHTML('savings','your savings','your')} on the Analyze tab — then ask me again and I'll give you a real answer.`;
     },
 
     wait: () => {
@@ -3656,7 +4173,7 @@ function buildResponse(topic, ctx, q) {
       if (ctx.pct !== null && ctx.pct > 70) return `Yes, ${fmt2(ctx.price)} is a lot relative to your ${fmt2(ctx.savings)} saved. This would leave you dangerously thin if anything unexpected came up. Consider a cheaper alternative, buying used, or saving up specifically for it.`;
       if (ctx.pct !== null && ctx.pct > 40) return `It's significant — ${ctx.pct.toFixed(0)}% of your savings. ${il} Ask yourself: is there a 80%-as-good version at 50% of the price? Could you buy it second-hand?`;
       if (ctx.pct !== null) return `At ${ctx.pct.toFixed(0)}% of your savings, it's notable but not extreme. ${il} The question is whether it's genuinely worth the trade-off.`;
-      return `"Expensive" depends entirely on your savings and income. Enter those in the Analyze tab and I can give you a precise answer rather than guessing.`;
+      return `"Expensive" is relative to your finances. ${nudgeHTML('price','item price','Enter the')} and ${nudgeHTML('savings','your savings','your')} and I can give you a precise answer.`;
     },
 
     wantneed: () => {
@@ -3703,7 +4220,7 @@ function buildResponse(topic, ctx, q) {
         else if (ctx.income > 1500) r += `Your income gives you real capacity to build wealth — make sure it's being directed intentionally, not just absorbed by lifestyle inflation.`;
         return r;
       }
-      return `Enter your weekly income in the Analyze tab and I can give you personalised spending benchmarks, savings targets, and how long it takes to recover from purchases.`;
+      return `${nudgeHTML('income-num','weekly income','Enter your')} and I can give you personalised spending benchmarks, savings targets, and recovery timelines.`;
     },
 
     goals: () => {
@@ -3897,6 +4414,50 @@ async function callGroq(prompt) {
   return data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
 }
 
+// ── Clarifying questions logic ──
+function getMissingData(q, ctx) {
+  const t = q.toLowerCase();
+  const missing = [];
+
+  const wantsAffordability = /afford|buy|should i|worth it|purchase|spend|too much|good deal|make sense/.test(t);
+  const wantsSavings       = /savings|saved|cushion|fund|buffer|emergency|left over|remaining/.test(t);
+  const wantsRecovery      = /recover|how long|weeks|earn back|pay back|time to|how soon/.test(t);
+  const wantsBudget        = /budget|50.30.20|income|bills|disposable|afford monthly|per month/.test(t);
+  const wantsGoal          = /save (up|for)|goal|target|how long (to|until|till)|when (can|will) i/.test(t);
+
+  // Only ask about price if the question is about this specific item and they haven't entered one
+  if ((wantsAffordability) && !ctx.price) {
+    missing.push({ key: 'price', label: 'Item price', q: "What's the price of the item you're considering?" });
+  }
+  // Ask about savings if any financial question but no savings entered
+  if ((wantsAffordability || wantsSavings || wantsRecovery) && !ctx.savings) {
+    missing.push({ key: 'savings', label: 'Your savings', q: "How much do you currently have saved?" });
+  }
+  // Ask about income only if recovery time or budget questions
+  if ((wantsRecovery || wantsBudget || wantsGoal) && !ctx.income) {
+    missing.push({ key: 'income', label: 'Weekly income', q: "What's your weekly income?" });
+  }
+
+  // Cap at 2 questions max — only the most critical
+  return missing.slice(0, 2);
+}
+
+function renderClarifyCard(missing, originalQ) {
+  const top = missing[0];
+  const cbMap = {
+    price:   `askForPrice(()=>{ document.getElementById('ai-q').value=${JSON.stringify(originalQ)};askAI(); })`,
+    savings: `askForSavings(()=>{ document.getElementById('ai-q').value=${JSON.stringify(originalQ)};askAI(); })`,
+    income:  `askForIncome(()=>{ renderHistory();renderGoals();renderBills();document.getElementById('ai-q').value=${JSON.stringify(originalQ)};askAI(); })`,
+  };
+  const cb = cbMap[top.key] || `askForIncome(()=>{})`;
+  const extra = missing[1] ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;">I'll also need: ${missing[1].q}</div>` : '';
+  return `To give you a real answer — <strong>${top.q}</strong>${extra}
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="${cb}" style="background:var(--accent-glow);border:1px solid var(--accent);border-radius:50px;padding:7px 16px;font-size:12px;color:var(--accent-light);cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;">Enter ${top.label} →</button>
+      <button onclick="this.closest('.msg').remove();document.getElementById('ai-q').value=${JSON.stringify(originalQ)};askAI()" style="background:none;border:1px solid var(--border);border-radius:50px;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;">Answer anyway</button>
+    </div>`;
+}
+
 async function askAI() {
   const q = document.getElementById('ai-q').value.trim();
   if (!q) return;
@@ -3922,6 +4483,17 @@ async function askAI() {
   bMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   const ctx   = getCtx();
+
+  // ── Clarifying questions: ask before responding if critical data is missing ──
+  const missing = getMissingData(q, ctx);
+  if (missing.length > 0) {
+    await new Promise(r => setTimeout(r, 350));
+    const reply = renderClarifyCard(missing, q);
+    bMsg.innerHTML = `<div class="msg-who">Advisor</div>${reply}`;
+    bMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
   const topic = matchTopic(q);
   const useGroq = GROQ_API_KEY && needsGemini(topic, q);
 
@@ -4038,13 +4610,13 @@ function tvSymbol(asset) {
 }
 
 function tvTheme() {
-  return lightMode ? 'light' : 'dark';
+  return 'dark';
 }
 
 function tvChartUrl(asset) {
   const sym = encodeURIComponent(tvSymbol(asset));
   const theme = tvTheme();
-  const bg = lightMode ? 'f5f3ee' : '0d1117';
+  const bg = '0d1117';
   return `https://s.tradingview.com/widgetembed/?frameElementId=tv_${asset.symbol}&symbol=${sym}&interval=D&hidesidetoolbar=1&hidetoptoolbar=0&symboledit=0&saveimage=0&toolbarbg=${bg}&studies=[]&theme=${theme}&style=1&timezone=Etc%2FUTC&withdateranges=1&showpopupbutton=0&locale=en`;
 }
 
@@ -4145,13 +4717,13 @@ function renderMarkets() {
           title="${asset.symbol} chart">
         </iframe>
         <div class="chart-fallback">
-          <span>📶</span>
+          
           <p>Chart loads on a published site.<br><span style="font-size:11px;opacity:0.6;">TradingView is blocked in local/sandbox previews.</span></p>
         </div>
       </div>
       <div class="asset-analysis">
         <div class="asset-analysis-header">
-          <div class="asset-analysis-title">📊 What you need to know about ${analysis.name}</div>
+          <div class="asset-analysis-title">What you need to know about ${analysis.name}</div>
           <div class="asset-meta-pills">
             <span class="asset-pill">Sector: ${analysis.sector}</span>
             <span class="asset-pill" style="color:${riskColor};border-color:${riskColor}40;">Risk: ${analysis.risk}</span>
@@ -4255,7 +4827,7 @@ function openTool(tool) {
 
   const tools = {
     loan: `
-      <div class="modal-title">🧮 Loan Calculator <button class="modal-close" onclick="closeTool()">✕</button></div>
+      <div class="modal-title">Loan Calculator <button class="modal-close" onclick="closeTool()">✕</button></div>
       <div class="setting-row">
         <span class="setting-label">Loan Amount</span>
         <div class="input-shell"><span class="input-prefix">${sym}</span><input type="number" class="has-prefix" id="loan-amt" placeholder="5000" oninput="calcLoan()"></div>
@@ -4270,15 +4842,15 @@ function openTool(tool) {
       </div>
       <div id="loan-result" style="margin-top:16px;padding:16px;background:var(--glass);border:1px solid var(--border);border-radius:var(--r-md);display:none;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Monthly Payment</div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold)" id="loan-monthly">—</div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Total Repaid</div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text)" id="loan-total">—</div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Total Interest</div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--bad)" id="loan-interest">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Monthly Payment</div><div style="font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--gold)" id="loan-monthly">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Total Repaid</div><div style="font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--text)" id="loan-total">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Total Interest</div><div style="font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--bad)" id="loan-interest">—</div></div>
           <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">True Cost</div><div style="font-size:12px;color:var(--muted);margin-top:4px;" id="loan-extra">—</div></div>
         </div>
       </div>`,
 
     networth: `
-      <div class="modal-title">📊 Net Worth Tracker <button class="modal-close" onclick="closeTool()">✕</button></div>
+      <div class="modal-title">Net Worth Tracker <button class="modal-close" onclick="closeTool()">✕</button></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Assets minus debts = your net worth. Simple but powerful.</p>
       <div class="setting-label" style="margin-bottom:8px;">Assets (what you own)</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -4296,15 +4868,15 @@ function openTool(tool) {
       <div id="nw-debts-list" style="margin-bottom:16px;"></div>
       <div id="nw-result" style="padding:18px;background:var(--glass);border:1px solid var(--border);border-radius:var(--r-md);text-align:center;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">Your Net Worth</div>
-        <div id="nw-total" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--gold);">—</div>
+        <div id="nw-total" style="font-family:'Inter',sans-serif;font-size:32px;font-weight:900;color:var(--gold);">—</div>
       </div>`,
 
     streak: `
-      <div class="modal-title">🔥 Spending Streak <button class="modal-close" onclick="closeTool()">✕</button></div>
+      <div class="modal-title">Spending Streak <button class="modal-close" onclick="closeTool()">✕</button></div>
       <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Every time you decide NOT to buy something, log it here to build your streak.</p>
       <div style="text-align:center;padding:24px 0;">
-        <div style="font-size:64px;margin-bottom:8px;">🔥</div>
-        <div style="font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--gold);" id="streak-modal-count">${streak}</div>
+        <div style="font-size:48px;font-weight:900;letter-spacing:-0.04em;color:var(--accent);margin-bottom:8px;" id="streak-big-num">0</div>
+        <div style="font-family:'Inter',sans-serif;font-size:48px;font-weight:900;color:var(--gold);" id="streak-modal-count">${streak}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;">day${streak !== 1 ? 's' : ''} streak</div>
       </div>
       <button class="cta" onclick="logStreak()" style="margin-top:8px;">✓ I resisted a purchase today!</button>
@@ -4421,7 +4993,7 @@ function resetStreak() {
 
 /* ─── BILLS ─── */
 let bills = JSON.parse(localStorage.getItem('sib4_bills') || '[]');
-const BILL_ICONS = { Netflix:'📺', Spotify:'🎵', Rent:'🏠', Gym:'💪', Internet:'📶', Phone:'📱', Insurance:'🛡️', Electricity:'⚡', Water:'💧', Gas:'🔥', default:'💳' };
+const BILL_ICONS = { Netflix:'▶', Spotify:'♪', Rent:'⌂', Gym:'◉', Internet:'⊕', Phone:'☏', Insurance:'◈', Electricity:'⚡', Water:'≋', Gas:'◌', default:'▪' };
 function billIcon(name) {
   const n = name.toLowerCase();
   for (const [k, v] of Object.entries(BILL_ICONS)) {
@@ -4476,9 +5048,11 @@ function renderBills() {
   document.getElementById('bs-leftover').textContent = leftover !== null
     ? (leftover >= 0 ? fmt(Math.round(leftover)) : '-' + fmt(Math.round(Math.abs(leftover))))
     : '—';
-  document.getElementById('bs-leftover-label').textContent = leftover !== null
-    ? (leftover >= 0 ? 'Left after bills/wk' : 'Over budget/wk')
-    : 'Add income on Analyze tab';
+  if (leftover !== null) {
+    document.getElementById('bs-leftover-label').textContent = leftover >= 0 ? 'Left after bills/wk' : 'Over budget/wk';
+  } else {
+    document.getElementById('bs-leftover-label').innerHTML = `<button onclick="askForIncome(()=>{renderBills();})" style="background:none;border:none;border-bottom:1px solid var(--accent);color:var(--accent-light);font-size:11px;cursor:pointer;padding:0;font-family:'Inter',sans-serif;">Add income</button> to see leftover`;
+  }
   document.getElementById('bs-leftover').className = 'bs-val ' + (leftover === null ? '' : leftover >= 0 ? 'good' : 'bad');
   list.innerHTML = '';
   bills.forEach(b => {
@@ -4673,7 +5247,7 @@ if (sb) sb.auth.onAuthStateChange(async (event, session) => {
     if (isNewLogin || event === 'SIGNED_IN') {
       await loadUserData();
       if (event === 'SIGNED_IN') {
-        showNotif('👋', `Welcome back, ${currentUser.email.split('@')[0]}!`, 'Your data has been loaded.', 4000);
+        showNotif('↗', `Welcome back, ${currentUser.email.split('@')[0]}!`, 'Your data has been loaded.', 4000);
         maybeShowTutorial();
       }
     }
@@ -5402,10 +5976,10 @@ function checkGoalAlerts() {
     const alertKey = `sib4_goal_alert_${g.id}`;
     const lastAlert = localStorage.getItem(alertKey) || '0';
     if (pct >= 100 && lastAlert !== '100') {
-      showNotif('🎉', `Goal complete!`, `You've reached your target for "${g.name}"!`, 8000);
+      showNotif('✓', `Goal complete!`, `You've reached your target for "${g.name}"!`, 8000);
       localStorage.setItem(alertKey, '100');
     } else if (pct >= 75 && lastAlert < '75') {
-      showNotif('🔥', `Almost there!`, `"${g.name}" is ${Math.round(pct)}% complete.`, 6000);
+      showNotif('◆', `Almost there!`, `"${g.name}" is ${Math.round(pct)}% complete.`, 6000);
       localStorage.setItem(alertKey, '75');
     } else if (pct >= 50 && lastAlert < '50') {
       showNotif('⭐', `Halfway there!`, `"${g.name}" is 50% funded.`, 6000);
@@ -5420,49 +5994,39 @@ function checkGoalAlerts() {
 
 const TUTORIAL_STEPS = [
   {
-    icon: '👋',
-    title: 'Welcome to Think to Buy',
-    body: 'This app helps you make <strong>smarter spending decisions</strong> — and teaches you how money actually works. Here\'s a quick tour of everything it can do.',
+    icon: '✦',
+    title: 'Welcome to Think To Buy',
+    body: 'Most finance apps tell you where your money went. This one helps you decide <strong>before it goes anywhere</strong>. Here\'s everything in 60 seconds.',
+  },
+  {
+    icon: '◎',
+    title: 'Type or speak anything',
+    body: 'Use the bar at the top of the Analyze tab. Type <em>"thinking of buying AirPods for $249"</em> and it fills the form for you. Or tap <strong>mic</strong> and just say it out loud.',
+  },
+  {
+    icon: '◎',
+    title: 'Get a verdict, not just a number',
+    body: 'Hit <strong>Analyze Purchase</strong>. You get green, yellow, or red — with a specific reason why, how long it takes to recover, and what that money becomes if invested instead. Not just "you have $X left."',
+  },
+  {
+    icon: '◎',
+    title: 'Ask the Advisor anything',
+    body: 'The <strong>Advisor tab</strong> answers real money questions based on your numbers — not generic tips. Ask "should I buy this on credit?" or "what\'s my opportunity cost?" and get a straight answer.',
+  },
+  {
+    icon: '◎',
+    title: 'Set goals, track progress',
+    body: 'Add what you\'re saving toward on the <strong>Goals tab</strong>. The app tells you exactly how many weeks until you get there — and nudges you at 50%, 75%, and when you hit 100%.',
+  },
+  {
+    icon: '◎',
+    title: 'See your spending truth',
+    body: 'The <strong>History tab</strong> shows how much you\'ve saved by saying no, how your spending compares to the 50/30/20 rule, and whether your decisions are trending smart or risky.',
   },
   {
     icon: '✦',
-    title: 'Just type naturally',
-    body: 'The <strong>natural language bar</strong> at the top of the Analyze tab understands plain English. Try typing <em>"thinking of buying AirPods for $249"</em> and it fills everything in for you. Or tap the 🎤 mic and just say it.',
-  },
-  {
-    icon: '🔍',
-    title: 'Get an instant verdict',
-    body: 'Fill in the item, price, savings and income — then hit <strong>Analyze Purchase</strong>. You get a green, yellow, or red verdict with a clear explanation of why, plus smart store suggestions and sale timing advice. Every analysis is <strong>auto-saved</strong> to your history.',
-  },
-  {
-    icon: '🎯',
-    title: 'Set savings goals',
-    body: 'On the <strong>Goals tab</strong>, set targets for things you\'re saving toward — a holiday, a new phone, anything. The app tells you exactly how many weeks until you get there based on your income, and alerts you at 50%, 75%, and 100%.',
-  },
-  {
-    icon: '💸',
-    title: 'Track your bills',
-    body: 'Add recurring expenses on the <strong>Bills tab</strong> — Netflix, rent, phone, gym. The app calculates your true disposable income after bills each week so you always know what you actually have left.',
-  },
-  {
-    icon: '📊',
-    title: 'Your spending dashboard',
-    body: 'The <strong>History tab</strong> is now a full spending dashboard. See how much money you\'ve <strong>saved by saying no</strong>, compare your spending against the 50/30/20 rule, and track smart vs risky decisions over time.',
-  },
-  {
-    icon: '📈',
-    title: 'Markets + plain English analysis',
-    body: 'The <strong>Markets tab</strong> shows live stock and crypto charts. Below each chart is a plain English breakdown — what the company does, risk level, investment horizon, and key facts. No finance degree required.',
-  },
-  {
-    icon: '🎓',
-    title: 'Learn what school skipped',
-    body: 'The <strong>Learn tab</strong> has 8 lessons on things most people were never taught — taxes, interest, investing, credit, how business works, inflation, budgeting, and retirement. Each has a real example and a quiz.',
-  },
-  {
-    icon: '🚀',
-    title: 'You\'re all set!',
-    body: 'Everything <strong>saves to the cloud</strong> automatically. Start with the Analyze tab — type something you\'ve been thinking about buying and see what the verdict is. You can replay this tutorial anytime from the ≡ menu.',
+    title: 'You\'re ready.',
+    body: 'Everything saves automatically. Start on the Analyze tab — type something you\'ve been thinking about buying and see what comes back. You can replay this tour anytime from the menu.',
   },
 ];
 
@@ -5529,15 +6093,15 @@ function generateInsights() {
     if (income > 0) {
       const billPct = (totalWeekly / income) * 100;
       if (billPct > 70) {
-        insights.push({ icon: '⚠️', type: 'bad', text: `Your bills eat <strong>${billPct.toFixed(0)}%</strong> of your weekly income — that's well above the recommended 50%. Consider reviewing your recurring expenses.` });
+        insights.push({ icon: '!', type: 'bad', text: `Your bills eat <strong>${billPct.toFixed(0)}%</strong> of your weekly income — that's well above the recommended 50%. Consider reviewing your recurring expenses.` });
       } else if (billPct > 50) {
-        insights.push({ icon: '📊', type: 'warn', text: `Bills take up <strong>${billPct.toFixed(0)}%</strong> of your income each week. You're at the limit — avoid adding new recurring costs.` });
+        insights.push({ icon: '↗', type: 'warn', text: `Bills take up <strong>${billPct.toFixed(0)}%</strong> of your income each week. You're at the limit — avoid adding new recurring costs.` });
       } else {
-        insights.push({ icon: '✅', type: 'good', text: `Your bills are only <strong>${billPct.toFixed(0)}%</strong> of weekly income — you have healthy room for saving and discretionary spending.` });
+        insights.push({ icon: '✓', type: 'good', text: `Your bills are only <strong>${billPct.toFixed(0)}%</strong> of weekly income — you have healthy room for saving and discretionary spending.` });
       }
     }
     const biggest = [...bills].sort((a,b) => toMonthly(b.amount,b.freq) - toMonthly(a.amount,a.freq))[0];
-    insights.push({ icon: '💳', type: 'neutral', text: `Your biggest recurring expense is <strong>${biggest.name}</strong> at ${fmt(Math.round(toMonthly(biggest.amount, biggest.freq)))}/month.` });
+    insights.push({ icon: '▪', type: 'neutral', text: `Your biggest recurring expense is <strong>${biggest.name}</strong> at ${fmt(Math.round(toMonthly(biggest.amount, biggest.freq)))}/month.` });
   }
 
   // ── Goals analysis ──
@@ -5546,7 +6110,7 @@ function generateInsights() {
     const totalTarget = goals.reduce((s,g) => s + g.target, 0);
     const overallPct  = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0;
     const complete    = goals.filter(g => g.saved >= g.target).length;
-    insights.push({ icon: '🎯', type: overallPct > 60 ? 'good' : 'warn', text: `You're <strong>${overallPct.toFixed(0)}%</strong> of the way to your savings goals overall — ${fmt(totalSaved)} saved of ${fmt(totalTarget)} total target. ${complete > 0 ? complete + ' goal' + (complete > 1 ? 's' : '') + ' complete.' : ''}` });
+    insights.push({ icon: '◎', type: overallPct > 60 ? 'good' : 'warn', text: `You're <strong>${overallPct.toFixed(0)}%</strong> of the way to your savings goals overall — ${fmt(totalSaved)} saved of ${fmt(totalTarget)} total target. ${complete > 0 ? complete + ' goal' + (complete > 1 ? 's' : '') + ' complete.' : ''}` });
     if (income > 0) {
       const closestGoal = goals.filter(g => g.saved < g.target).sort((a,b) => (a.target-a.saved) - (b.target-b.saved))[0];
       if (closestGoal) {
@@ -5563,11 +6127,11 @@ function generateInsights() {
     const total    = purchaseHistory.length;
     const smartPct = Math.round((goodBuys / total) * 100);
     if (smartPct >= 70) {
-      insights.push({ icon: '🏆', type: 'good', text: `<strong>${smartPct}%</strong> of your logged purchases were smart buys. You're making solid spending decisions.` });
+      insights.push({ icon: '✓', type: 'good', text: `<strong>${smartPct}%</strong> of your logged purchases were smart buys. You're making solid spending decisions.` });
     } else if (smartPct >= 40) {
-      insights.push({ icon: '📈', type: 'warn', text: `<strong>${smartPct}%</strong> of your purchases were smart buys. There's room to improve — use the Analyze tab before every purchase.` });
+      insights.push({ icon: '↗', type: 'warn', text: `<strong>${smartPct}%</strong> of your purchases were smart buys. There's room to improve — use the Analyze tab before every purchase.` });
     } else {
-      insights.push({ icon: '🚨', type: 'bad', text: `Only <strong>${smartPct}%</strong> of your logged purchases were smart buys. Consider pausing non-essential spending until your savings are healthier.` });
+      insights.push({ icon: '!', type: 'bad', text: `Only <strong>${smartPct}%</strong> of your logged purchases were smart buys. Consider pausing non-essential spending until your savings are healthier.` });
     }
 
     // Category breakdown
@@ -5575,34 +6139,34 @@ function generateInsights() {
     purchaseHistory.forEach(h => { cats[h.cat] = (cats[h.cat] || 0) + h.price; });
     const topCat = Object.entries(cats).sort((a,b) => b[1]-a[1])[0];
     if (topCat) {
-      insights.push({ icon: '📦', type: 'neutral', text: `Your biggest spending category is <strong>${topCat[0]}</strong> at ${fmt(Math.round(topCat[1]))} total across ${purchaseHistory.filter(h=>h.cat===topCat[0]).length} purchase${purchaseHistory.filter(h=>h.cat===topCat[0]).length>1?'s':''}.` });
+      insights.push({ icon: '▪', type: 'neutral', text: `Your biggest spending category is <strong>${topCat[0]}</strong> at ${fmt(Math.round(topCat[1]))} total across ${purchaseHistory.filter(h=>h.cat===topCat[0]).length} purchase${purchaseHistory.filter(h=>h.cat===topCat[0]).length>1?'s':''}.` });
     }
 
     // Total spent
     const totalSpent = purchaseHistory.reduce((s,h) => s+h.price, 0);
-    insights.push({ icon: '💰', type: 'neutral', text: `You've logged <strong>${fmt(Math.round(totalSpent))}</strong> in purchases across ${total} decision${total>1?'s':''}.` });
+    insights.push({ icon: '◆', type: 'neutral', text: `You've logged <strong>${fmt(Math.round(totalSpent))}</strong> in purchases across ${total} decision${total>1?'s':''}.` });
   }
 
   // ── Savings health ──
   if (savings > 0 && income > 0) {
     const months = savings / (income * 4.33);
     if (months >= 6) {
-      insights.push({ icon: '🛡️', type: 'good', text: `Your savings cover <strong>${months.toFixed(1)} months</strong> of income — you have a strong emergency fund. Well above the recommended 3–6 months.` });
+      insights.push({ icon: '◉', type: 'good', text: `Your savings cover <strong>${months.toFixed(1)} months</strong> of income — you have a strong emergency fund. Well above the recommended 3–6 months.` });
     } else if (months >= 3) {
-      insights.push({ icon: '✅', type: 'good', text: `Your savings cover about <strong>${months.toFixed(1)} months</strong> of income — you're within the recommended emergency fund range.` });
+      insights.push({ icon: '✓', type: 'good', text: `Your savings cover about <strong>${months.toFixed(1)} months</strong> of income — you're within the recommended emergency fund range.` });
     } else {
-      insights.push({ icon: '⚠️', type: 'warn', text: `Your savings only cover <strong>${months.toFixed(1)} months</strong> of income. Try to build to at least 3 months before making large discretionary purchases.` });
+      insights.push({ icon: '!', type: 'warn', text: `Your savings only cover <strong>${months.toFixed(1)} months</strong> of income. Try to build to at least 3 months before making large discretionary purchases.` });
     }
   }
 
   // Streak
   if (streak > 0) {
-    insights.push({ icon: '🔥', type: 'good', text: `You're on a <strong>${streak}-day</strong> "Don't Buy" streak. That's real discipline — keep it going.` });
+    insights.push({ icon: '◆', type: 'good', text: `You're on a <strong>${streak}-day</strong> "Don't Buy" streak. That's real discipline — keep it going.` });
   }
 
   // Fallback
   if (insights.length === 0) {
-    insights.push({ icon: '💡', type: 'neutral', text: 'Add your savings and income on the Analyze tab, set some goals, and log a few purchases — your personalised financial snapshot will appear here.' });
+    insights.push({ icon: '→', type: 'neutral', text: 'Add your savings and income on the Analyze tab, set some goals, and log a few purchases — your personalised financial snapshot will appear here.' });
   }
 
   return insights.slice(0, 6);
@@ -5626,28 +6190,26 @@ function renderInsights() {
 function shareVerdict() {
   if (!lastResult) return;
   const r = lastResult;
-  const labelMap = { good: 'All Clear ✅', warn: 'Think Carefully ⚠️', bad: 'Not Recommended 🚫' };
+  const labelMap = { good: 'All Clear', warn: 'Think Carefully', bad: 'Not Recommended' };
   const label = labelMap[r.cls] || '';
-  const emojiMap = { good: '✅', warn: '⚠️', bad: '🚫' };
 
-  document.getElementById('share-emoji').textContent = emojiMap[r.cls];
   const lbl = document.getElementById('share-verdict-label');
   lbl.textContent = label;
   lbl.className = 'share-verdict-label ' + r.cls;
-  document.getElementById('share-item').textContent = r.name + ' — ' + currencySymbol + r.price.toLocaleString();
+  document.getElementById('share-item').textContent = r.name + ' · ' + currencySymbol + r.price.toLocaleString();
 
   const bodyMap = {
-    good: `Spending ${r.pctSavings.toFixed(0)}% of savings. Recover in ${isFinite(r.weeksRecover) ? r.weeksRecover.toFixed(1) + ' weeks' : 'N/A'}.`,
-    warn: `This is ${r.pctSavings.toFixed(0)}% of savings — worth pausing before buying.`,
-    bad:  `Can't comfortably afford this yet. Better to save up first.`,
+    good: `Spending ${r.pctSavings.toFixed(0)}% of savings${isFinite(r.weeksRecover) && r.weeksRecover > 0 ? `, recoverable in ${r.weeksRecover.toFixed(1)} weeks` : ''}. The numbers support this.`,
+    warn: `${r.pctSavings.toFixed(0)}% of savings — worth pausing. The financial exposure is real.`,
+    bad:  `Not the right moment for this purchase. Better to save up and come back.`,
   };
   document.getElementById('share-verdict-body').textContent = bodyMap[r.cls];
 
   const stats = document.getElementById('share-stats');
   stats.innerHTML = [
-    r.savings ? `<div class="share-stat-item"><strong>${currencySymbol}${Math.round(r.remaining).toLocaleString()}</strong>left after</div>` : '',
-    r.pctSavings ? `<div class="share-stat-item"><strong>${r.pctSavings.toFixed(0)}%</strong>of savings</div>` : '',
-    isFinite(r.weeksRecover) && r.weeksRecover > 0 ? `<div class="share-stat-item"><strong>${r.weeksRecover.toFixed(1)}w</strong>to recover</div>` : '',
+    r.savings ? `<div class="share-stat-item"><strong style="color:${r.cls==='good'?'var(--good)':r.cls==='warn'?'var(--warn)':'var(--bad)'}">${currencySymbol}${Math.round(r.remaining).toLocaleString()}</strong><span>Remaining</span></div>` : '',
+    isFinite(r.pctSavings) ? `<div class="share-stat-item"><strong style="color:var(--accent-light)">${r.pctSavings.toFixed(0)}%</strong><span>Of Savings</span></div>` : '',
+    isFinite(r.weeksRecover) && r.weeksRecover > 0 ? `<div class="share-stat-item"><strong style="color:rgba(255,255,255,0.7)">${r.weeksRecover.toFixed(1)}w</strong><span>To Recover</span></div>` : '',
   ].filter(Boolean).join('');
 
   document.getElementById('share-overlay').style.display = 'flex';
@@ -5660,12 +6222,12 @@ function closeShare() {
 function copyVerdictText() {
   if (!lastResult) return;
   const r = lastResult;
-  const labelMap = { good: '✅ All Clear', warn: '⚠️ Think Carefully', bad: '🚫 Not Recommended' };
+  const labelMap = { good: 'All Clear', warn: 'Think Carefully', bad: 'Not Recommended' };
   const text = `${labelMap[r.cls]} — ${r.name} (${currencySymbol}${r.price.toLocaleString()})
 
 ${r.pctSavings.toFixed(0)}% of savings · ${isFinite(r.weeksRecover) ? r.weeksRecover.toFixed(1) + ' weeks to recover' : ''} · ${currencySymbol}${Math.round(r.remaining).toLocaleString()} remaining
 
-Analyzed with Should I Buy It? → thinktobuy.netlify.app`;
+Analyzed with Should I Buy It? → himothyjimothy17-tech.github.io/Think-To-Buy`;
 
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('share-copy-confirm');
@@ -5719,7 +6281,7 @@ async function installPWA() {
   const { outcome } = await pwaInstallEvent.userChoice;
   if (outcome === 'accepted') {
     dismissInstallBanner();
-    showNotif('🎉', 'App installed!', 'Find it on your home screen.', 4000);
+    showNotif('✓', 'App installed!', 'Find it on your home screen.', 4000);
   }
   pwaInstallEvent = null;
 }
@@ -5856,8 +6418,8 @@ function toggleVoice() {
   recognition.onstart = () => {
     isListening = true;
     btn.classList.add('listening');
-    btn.textContent = '🔴';
-    status.textContent = '🎤 Listening... speak now';
+    btn.textContent = '●';
+    status.textContent = '● Listening... speak now';
     status.className = 'nl-status';
   };
 
@@ -5872,7 +6434,7 @@ function toggleVoice() {
   recognition.onerror = (e) => {
     isListening = false;
     btn.classList.remove('listening');
-    btn.textContent = '🎤';
+    btn.textContent = 'mic';
     const msgs = {
       'not-allowed':   '⚠ Microphone access denied — allow it in your browser settings and try again.',
       'no-speech':     '⚠ No speech detected — tap the mic and speak clearly.',
@@ -5887,7 +6449,7 @@ function toggleVoice() {
   recognition.onend = () => {
     isListening = false;
     btn.classList.remove('listening');
-    btn.textContent = '🎤';
+    btn.textContent = 'mic';
   };
 
   try {
@@ -5905,113 +6467,113 @@ function toggleVoice() {
 
 const LESSONS = {
   tax: {
-    icon: '💰', title: 'How Taxes Work',
+    icon: '◆', title: 'How Taxes Work',
     eyebrow: 'Taxes',
     body: `Taxes are how governments fund public services — roads, schools, hospitals, police. You pay a percentage of your income, and the rate depends on how much you earn. <br><br><strong>Income tax is progressive</strong> — the more you earn, the higher percentage you pay on the extra income. But here's what most people misunderstand: higher tax brackets only apply to the money in that bracket, not all your income.<br><br><strong>Your employer deducts tax from your paycheck before you receive it</strong> — this is called "withholding." At the end of the year you file a tax return to reconcile what was withheld with what you actually owed.`,
     example: `<div class="lesson-example-label">Real example</div>If you earn $50,000 and the brackets are: 10% on first $10,000 and 20% on $10,001–$50,000 — you pay $1,000 on the first bracket and $8,000 on the second = <strong>$9,000 total</strong>, not $10,000 (20% of all $50,000). This is why "moving into a higher bracket" doesn't mean you pay more on all your income.`,
     points: [
-      { icon: '📋', text: '<strong>W-2/1099:</strong> At year end you get documents showing all income earned. You use these to file your return.' },
-      { icon: '💸', text: '<strong>Tax deductions</strong> reduce your taxable income. Mortgage interest, charitable donations, and student loan interest are common deductions.' },
-      { icon: '🏦', text: '<strong>Tax credits</strong> are even better — they reduce the actual tax you owe dollar-for-dollar, not just your taxable income.' },
-      { icon: '📅', text: '<strong>Tax deadline</strong> is typically April 15 in the US. Missing it without an extension means penalties and interest.' },
+      { icon: '▸', text: '<strong>W-2/1099:</strong> At year end you get documents showing all income earned. You use these to file your return.' },
+      { icon: '◎', text: '<strong>Tax deductions</strong> reduce your taxable income. Mortgage interest, charitable donations, and student loan interest are common deductions.' },
+      { icon: '▸', text: '<strong>Tax credits</strong> are even better — they reduce the actual tax you owe dollar-for-dollar, not just your taxable income.' },
+      { icon: '▸', text: '<strong>Tax deadline</strong> is typically April 15 in the US. Missing it without an extension means penalties and interest.' },
     ],
     quiz: { q: 'If you earn $80,000 and move into a higher tax bracket, which is true?', opts: ['All $80,000 gets taxed at the higher rate', 'Only the income above the bracket threshold is taxed higher', 'You get taxed less because you earned more', 'Tax brackets only apply to businesses'], answer: 1 }
   },
 
   interest: {
-    icon: '📈', title: 'How Interest Works',
+    icon: '↗', title: 'How Interest Works',
     eyebrow: 'Interest Rates',
     body: `Interest is the cost of borrowing money — or the reward for lending it. When you take a loan, you pay interest. When you put money in a savings account, you earn interest.<br><br><strong>Simple interest</strong> is calculated only on the original amount. <strong>Compound interest</strong> is calculated on the original amount plus any interest already earned — this is what makes savings grow exponentially over time, and what makes debt snowball.<br><br>Albert Einstein allegedly called compound interest "the eighth wonder of the world." Whether he said it or not, the math is real: money left to compound doubles roughly every <strong>72 ÷ interest rate</strong> years. At 7%, your money doubles in about 10 years.`,
     example: `<div class="lesson-example-label">Compound interest in action</div>You invest $1,000 at 7% annual return. After 10 years: <strong>$1,967</strong>. After 20 years: <strong>$3,870</strong>. After 30 years: <strong>$7,612</strong>. You did nothing — time and compound interest did the work. This is why starting early matters more than starting with more money.`,
     points: [
-      { icon: '📉', text: '<strong>APR (Annual Percentage Rate)</strong> is what lenders show you. <strong>APY (Annual Percentage Yield)</strong> includes compounding — always compare APY.' },
-      { icon: '💳', text: '<strong>Credit card interest</strong> compounds daily at 20–30% APR. A $1,000 balance unpaid for a year becomes ~$1,200–$1,300.' },
-      { icon: '🏠', text: '<strong>Mortgage interest</strong> is front-loaded — in early years, most of your payment is interest, not principal.' },
-      { icon: '🎯', text: '<strong>The Rule of 72:</strong> divide 72 by your interest rate to find how many years to double your money. At 6% = 12 years.' },
+      { icon: '▸', text: '<strong>APR (Annual Percentage Rate)</strong> is what lenders show you. <strong>APY (Annual Percentage Yield)</strong> includes compounding — always compare APY.' },
+      { icon: '▪', text: '<strong>Credit card interest</strong> compounds daily at 20–30% APR. A $1,000 balance unpaid for a year becomes ~$1,200–$1,300.' },
+      { icon: '▸', text: '<strong>Mortgage interest</strong> is front-loaded — in early years, most of your payment is interest, not principal.' },
+      { icon: '◎', text: '<strong>The Rule of 72:</strong> divide 72 by your interest rate to find how many years to double your money. At 6% = 12 years.' },
     ],
     quiz: { q: 'What makes compound interest more powerful than simple interest?', opts: ['It has a higher rate', 'It earns interest on interest already earned', 'It is only available to wealthy people', 'It pays out monthly instead of yearly'], answer: 1 }
   },
 
   investing: {
-    icon: '🏦', title: 'How Investing Works',
+    icon: '▸', title: 'How Investing Works',
     eyebrow: 'Investing',
     body: `Investing means putting money to work so it grows over time. The most common investments are <strong>stocks</strong> (ownership in a company), <strong>bonds</strong> (loans to governments or companies that pay interest), and <strong>funds</strong> (collections of stocks or bonds).<br><br>The stock market goes up and down constantly — but over long periods, it has historically gone up significantly. The S&P 500 (the 500 largest US companies) has returned roughly 10% per year on average over the past century, or about 7% after inflation.<br><br><strong>The biggest mistake beginners make</strong> is trying to "time the market" — buying at lows and selling at highs. Studies consistently show that "time in the market" beats "timing the market."`,
     example: `<div class="lesson-example-label">Index fund vs stock picking</div>Warren Buffett bet $1,000,000 that a simple S&P 500 index fund would beat a selection of hedge funds over 10 years. He won. The index fund returned 85.4%, the hedge funds averaged 22%. Most professional fund managers fail to beat simple index funds over the long term.`,
     points: [
-      { icon: '📊', text: '<strong>Index funds</strong> buy tiny slices of hundreds of companies. Low cost, diversified, and historically hard to beat. Great starting point for beginners.' },
-      { icon: '🔄', text: '<strong>Diversification</strong> means spreading money across many investments. If one company fails, you don\'t lose everything.' },
+      { icon: '↗', text: '<strong>Index funds</strong> buy tiny slices of hundreds of companies. Low cost, diversified, and historically hard to beat. Great starting point for beginners.' },
+      { icon: '▸', text: '<strong>Diversification</strong> means spreading money across many investments. If one company fails, you don\'t lose everything.' },
       { icon: '⏰', text: '<strong>Time horizon matters.</strong> Money you\'ll need in 1 year should not be in stocks. Money you won\'t need for 20 years can tolerate short-term swings.' },
-      { icon: '💰', text: '<strong>401(k) and IRA</strong> are tax-advantaged retirement accounts. Contributing to these before taxable accounts is almost always the smart move.' },
+      { icon: '◆', text: '<strong>401(k) and IRA</strong> are tax-advantaged retirement accounts. Contributing to these before taxable accounts is almost always the smart move.' },
     ],
     quiz: { q: 'What is an index fund?', opts: ['A fund that only buys government bonds', 'A fund that tracks a market index by owning many companies', 'A savings account with a fixed interest rate', 'A fund managed by the best stock pickers'], answer: 1 }
   },
 
   credit: {
-    icon: '💳', title: 'How Credit Works',
+    icon: '▪', title: 'How Credit Works',
     eyebrow: 'Credit & Credit Scores',
     body: `Your <strong>credit score</strong> is a number (usually 300–850) that represents how reliably you repay debt. Lenders use it to decide whether to lend to you and at what interest rate. A high score means lower rates — a low score means higher rates or rejection.<br><br>Credit scores are calculated from: <strong>payment history (35%)</strong>, amounts owed (30%), length of credit history (15%), new credit (10%), and credit mix (10%). Paying on time is by far the most important factor.<br><br>Building credit takes time — but destroying it can happen quickly. One missed payment can drop your score 100 points and stays on your report for 7 years.`,
     example: `<div class="lesson-example-label">How a credit score affects your mortgage</div>Borrowing $300,000 for a home: with a 760+ score you might get 6.5% interest ($1,896/month). With a 620 score, you might get 8.5% ($2,307/month). That's <strong>$411/month more</strong> — or $148,000 extra over 30 years — for the same house. A good credit score is worth real money.`,
     points: [
-      { icon: '✅', text: '<strong>Pay on time, every time.</strong> Set up autopay for at least the minimum payment so you never miss.' },
-      { icon: '📊', text: '<strong>Keep utilization under 30%.</strong> If your credit limit is $10,000, try not to carry more than $3,000 balance.' },
-      { icon: '🕐', text: '<strong>Don\'t close old accounts.</strong> Length of credit history matters — an old card with no annual fee is worth keeping open.' },
-      { icon: '🔍', text: '<strong>Check your credit report</strong> for free at annualcreditreport.com — errors are common and can be disputed.' },
+      { icon: '✓', text: '<strong>Pay on time, every time.</strong> Set up autopay for at least the minimum payment so you never miss.' },
+      { icon: '↗', text: '<strong>Keep utilization under 30%.</strong> If your credit limit is $10,000, try not to carry more than $3,000 balance.' },
+      { icon: '▸', text: '<strong>Don\'t close old accounts.</strong> Length of credit history matters — an old card with no annual fee is worth keeping open.' },
+      { icon: '◎', text: '<strong>Check your credit report</strong> for free at annualcreditreport.com — errors are common and can be disputed.' },
     ],
     quiz: { q: 'What factor has the biggest impact on your credit score?', opts: ['How much credit you have available', 'Whether you pay on time', 'How many credit cards you have', 'Your income'], answer: 1 }
   },
 
   business: {
-    icon: '🏢', title: 'How Business Works',
+    icon: '▸', title: 'How Business Works',
     eyebrow: 'Business Basics',
     body: `A business makes money by providing something people want at a price higher than it costs to produce. The difference between revenue (money coming in) and costs (money going out) is <strong>profit</strong>.<br><br>There are different business structures: <strong>sole proprietorship</strong> (just you), <strong>LLC</strong> (limited liability — protects your personal assets), and <strong>corporation</strong> (separate legal entity that can sell shares). Most small businesses start as LLCs.<br><br>Understanding financial statements is key: the <strong>income statement</strong> shows profit/loss, the <strong>balance sheet</strong> shows assets and liabilities, and the <strong>cash flow statement</strong> shows actual money movement — because a profitable business can still go bankrupt if it runs out of cash.`,
     example: `<div class="lesson-example-label">Revenue vs profit</div>A bakery earns $100,000/year in sales (revenue). It pays $40,000 in ingredients, $20,000 in rent, $25,000 in staff wages, and $5,000 in other costs = $90,000 total costs. Profit = <strong>$10,000</strong> (10% profit margin). The owner then pays personal income tax on that $10,000.`,
     points: [
-      { icon: '💡', text: '<strong>Gross profit</strong> = revenue minus cost of goods. <strong>Net profit</strong> = what\'s left after ALL expenses including rent, salaries, and taxes.' },
-      { icon: '📈', text: '<strong>Valuation:</strong> companies are typically valued at a multiple of their earnings. A company making $1M/year might be worth $5–15M depending on growth.' },
-      { icon: '🏦', text: '<strong>Equity vs debt:</strong> businesses raise money by either borrowing (debt) or selling ownership stakes (equity). Equity doesn\'t need repaying, but dilutes ownership.' },
-      { icon: '📋', text: '<strong>Cash flow is king.</strong> More businesses fail from cash flow problems than from being unprofitable. You can have profit on paper but no cash to pay suppliers.' },
+      { icon: '→', text: '<strong>Gross profit</strong> = revenue minus cost of goods. <strong>Net profit</strong> = what\'s left after ALL expenses including rent, salaries, and taxes.' },
+      { icon: '↗', text: '<strong>Valuation:</strong> companies are typically valued at a multiple of their earnings. A company making $1M/year might be worth $5–15M depending on growth.' },
+      { icon: '▸', text: '<strong>Equity vs debt:</strong> businesses raise money by either borrowing (debt) or selling ownership stakes (equity). Equity doesn\'t need repaying, but dilutes ownership.' },
+      { icon: '▸', text: '<strong>Cash flow is king.</strong> More businesses fail from cash flow problems than from being unprofitable. You can have profit on paper but no cash to pay suppliers.' },
     ],
     quiz: { q: 'A business has $500,000 in revenue and $450,000 in total costs. What is its profit margin?', opts: ['90%', '50%', '10%', '45%'], answer: 2 }
   },
 
   inflation: {
-    icon: '📊', title: 'How Inflation Works',
+    icon: '↗', title: 'How Inflation Works',
     eyebrow: 'Inflation',
     body: `Inflation is the gradual increase in prices over time — which means the purchasing power of money decreases. If inflation is 3% per year, something that costs $100 today will cost $103 next year. That doesn\'t sound like much, but over 24 years it doubles to $200.<br><br>Inflation is caused by more money chasing the same amount of goods (demand-pull), rising production costs (cost-push), or expectations of future inflation. Central banks like the Federal Reserve target around 2% inflation as healthy for a growing economy.<br><br><strong>Inflation is especially dangerous for cash savers.</strong> Money sitting in a 0% savings account loses real value every year. This is why investing matters.`,
     example: `<div class="lesson-example-label">The real cost of keeping cash</div>In 1990, $10,000 in cash had significant purchasing power. Due to inflation averaging ~2.5%/year, you would need roughly <strong>$22,000 today</strong> to buy the same things that $10,000 bought in 1990. If that $10,000 was invested in an S&P 500 index fund instead, it would be worth approximately <strong>$230,000</strong>.`,
     points: [
-      { icon: '📉', text: '<strong>Real returns</strong> are what you earn after inflation. A 4% savings rate with 3% inflation = 1% real return. Always think in real terms.' },
-      { icon: '🏠', text: '<strong>Assets like property and stocks</strong> tend to keep pace with or beat inflation over time. Cash and bonds are more vulnerable.' },
-      { icon: '🏦', text: '<strong>Central banks fight inflation</strong> by raising interest rates — making borrowing more expensive reduces spending, which slows price rises.' },
-      { icon: '🛒', text: '<strong>CPI (Consumer Price Index)</strong> tracks the average price of a "basket" of goods. It\'s the main measure of inflation reported by governments.' },
+      { icon: '▸', text: '<strong>Real returns</strong> are what you earn after inflation. A 4% savings rate with 3% inflation = 1% real return. Always think in real terms.' },
+      { icon: '▸', text: '<strong>Assets like property and stocks</strong> tend to keep pace with or beat inflation over time. Cash and bonds are more vulnerable.' },
+      { icon: '▸', text: '<strong>Central banks fight inflation</strong> by raising interest rates — making borrowing more expensive reduces spending, which slows price rises.' },
+      { icon: '▸', text: '<strong>CPI (Consumer Price Index)</strong> tracks the average price of a "basket" of goods. It\'s the main measure of inflation reported by governments.' },
     ],
     quiz: { q: 'If inflation is 4% and your savings account pays 1%, what happens to your real wealth?', opts: ['It grows by 5%', 'It stays the same', 'It shrinks by 3%', 'It doubles'], answer: 2 }
   },
 
   budgeting: {
-    icon: '📋', title: 'How Budgeting Works',
+    icon: '▸', title: 'How Budgeting Works',
     eyebrow: 'Budgeting',
     body: `A budget is a plan for your money — telling it where to go instead of wondering where it went. The fundamental rule is simple: spend less than you earn. The gap between the two is what you save and invest.<br><br>There are several budgeting methods. The most popular is the <strong>50/30/20 rule</strong>: 50% of take-home pay to needs, 30% to wants, 20% to savings and debt. But any system you actually stick to is better than a perfect system you abandon.<br><br><strong>The key insight most people miss:</strong> tracking spending is more powerful than restricting it. Most people are shocked when they see where their money actually goes. Awareness alone changes behaviour.`,
     example: `<div class="lesson-example-label">50/30/20 on a $4,000/month take-home</div><strong>$2,000 (50%)</strong> — Needs: rent $1,200, groceries $300, utilities $150, transport $350. <strong>$1,200 (30%)</strong> — Wants: dining out $400, entertainment $300, clothing $300, subscriptions $200. <strong>$800 (20%)</strong> — Savings: emergency fund $300, investment account $400, extra debt repayment $100.`,
     points: [
-      { icon: '📱', text: '<strong>Zero-based budgeting:</strong> give every dollar a job. Income minus expenses equals zero — you\'re intentional about every dollar.' },
-      { icon: '🔄', text: '<strong>Pay yourself first:</strong> automatically transfer savings the moment you get paid, before you can spend it.' },
-      { icon: '📊', text: '<strong>Track for 2 weeks</strong> before setting a budget. You can\'t budget accurately without knowing your actual spending patterns.' },
-      { icon: '🎯', text: '<strong>Budget for fun too.</strong> A budget with no room for enjoyment gets abandoned. Build in spending money so you don\'t feel deprived.' },
+      { icon: '▸', text: '<strong>Zero-based budgeting:</strong> give every dollar a job. Income minus expenses equals zero — you\'re intentional about every dollar.' },
+      { icon: '▸', text: '<strong>Pay yourself first:</strong> automatically transfer savings the moment you get paid, before you can spend it.' },
+      { icon: '↗', text: '<strong>Track for 2 weeks</strong> before setting a budget. You can\'t budget accurately without knowing your actual spending patterns.' },
+      { icon: '◎', text: '<strong>Budget for fun too.</strong> A budget with no room for enjoyment gets abandoned. Build in spending money so you don\'t feel deprived.' },
     ],
     quiz: { q: 'In the 50/30/20 rule, what does the 20% represent?', opts: ['Food and groceries', 'Entertainment and wants', 'Savings and debt repayment', 'Housing costs'], answer: 2 }
   },
 
   retirement: {
-    icon: '🌅', title: 'How Retirement Planning Works',
+    icon: '▸', title: 'How Retirement Planning Works',
     eyebrow: 'Retirement',
     body: `Retirement planning is about building enough wealth that your investments generate more income than you need to live — so you no longer need to work. The earlier you start, the less you actually need to save, because compound interest does more of the work.<br><br>The most powerful retirement vehicles are tax-advantaged accounts. In the US, a <strong>401(k)</strong> lets you contribute pre-tax money (reducing taxable income now), while a <strong>Roth IRA</strong> lets you contribute after-tax money that grows and is withdrawn tax-free. Both grow without paying taxes on gains each year.<br><br>A common rule of thumb: you need roughly <strong>25x your annual expenses</strong> to retire — this is based on a 4% safe withdrawal rate.`,
     example: `<div class="lesson-example-label">The power of starting early</div>Investor A starts at 25, invests $5,000/year for 10 years then stops = $50,000 invested. Investor B starts at 35, invests $5,000/year for 30 years = $150,000 invested. At 65 with 7% returns: Investor A has <strong>$602,000</strong>. Investor B has <strong>$472,000</strong>. Starting 10 years earlier — investing 1/3 as much money — produces more wealth.`,
     points: [
-      { icon: '🏦', text: '<strong>Always get the employer 401(k) match.</strong> It\'s an instant 50–100% return on your money. Leaving it is leaving free salary.' },
-      { icon: '📊', text: '<strong>The 4% rule:</strong> if you withdraw 4% of your portfolio each year, it should last 30+ years in most market scenarios.' },
-      { icon: '🎯', text: '<strong>Target date funds</strong> automatically shift from stocks to bonds as you approach retirement. Simple, set-and-forget investing.' },
-      { icon: '💰', text: '<strong>Social Security</strong> is a supplement, not a retirement plan. Benefits replace roughly 40% of pre-retirement income for average earners.' },
+      { icon: '▸', text: '<strong>Always get the employer 401(k) match.</strong> It\'s an instant 50–100% return on your money. Leaving it is leaving free salary.' },
+      { icon: '↗', text: '<strong>The 4% rule:</strong> if you withdraw 4% of your portfolio each year, it should last 30+ years in most market scenarios.' },
+      { icon: '◎', text: '<strong>Target date funds</strong> automatically shift from stocks to bonds as you approach retirement. Simple, set-and-forget investing.' },
+      { icon: '◆', text: '<strong>Social Security</strong> is a supplement, not a retirement plan. Benefits replace roughly 40% of pre-retirement income for average earners.' },
     ],
     quiz: { q: 'If you need $50,000/year in retirement, roughly how much do you need saved?', opts: ['$500,000', '$1,000,000', '$1,250,000', '$2,000,000'], answer: 2 }
   },
@@ -6040,7 +6602,7 @@ function showLesson(topic, btn) {
           </div>`).join('')}
       </div>
       <div class="lesson-quiz">
-        <div class="lesson-quiz-q">🧠 Quick check: ${lesson.quiz.q}</div>
+        <div class="lesson-quiz-q">Quick check: ${lesson.quiz.q}</div>
         <div class="lesson-quiz-opts">
           ${lesson.quiz.opts.map((opt, i) =>
             `<button class="quiz-opt" onclick="checkQuiz(this, ${i}, ${lesson.quiz.answer})">${opt}</button>`
@@ -6091,7 +6653,7 @@ async function runComparison() {
   document.getElementById('compare-verdict-card').style.display = 'none';
   document.getElementById('compare-result-grid').innerHTML = `
     <div style="text-align:center;padding:48px 20px;">
-      <div style="font-size:28px;margin-bottom:12px;">🔍</div>
+      
       <div style="color:var(--muted);font-size:14px;">Looking up real product data...</div>
     </div>`;
   document.getElementById('compare-result').scrollIntoView({ behavior:'smooth', block:'nearest' });
@@ -6322,7 +6884,7 @@ Be specific and accurate. Include real specs like battery life, noise cancellati
         ${food.nova ? `<div style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.06);color:var(--muted)">${food.nova}</div>` : ''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;">
-        ${[['🔥 Energy',food.energy],['🥩 Protein',food.protein],['🍬 Sugar',food.sugar],['🧈 Fat',food.fat],['🧂 Salt',food.salt]].filter(r=>r[1]).map(([l,v])=>`<div style="font-size:12px;color:var(--muted)">${l}: <strong style="color:var(--text)">${v}</strong></div>`).join('')}
+        ${[['Energy',food.energy],['Protein',food.protein],['Sugar',food.sugar],['Fat',food.fat],['Salt',food.salt]].filter(r=>r[1]).map(([l,v])=>`<div style="font-size:12px;color:var(--muted)">${l}: <strong style="color:var(--text)">${v}</strong></div>`).join('')}
       </div>
       ${food.ingredients?`<div style="font-size:11px;color:var(--muted2);line-height:1.5">Ingredients: ${food.ingredients}...</div>`:''}
       <div style="font-size:10px;color:var(--muted2);margin-top:8px;">Source: Open Food Facts</div>
@@ -6335,7 +6897,7 @@ Be specific and accurate. Include real specs like battery life, noise cancellati
     const winnerName = data.overall_winner === 'a' ? aName : data.overall_winner === 'b' ? bName : 'Tie';
     return `
       <div class="cmp-wiki-card" style="margin-bottom:12px;">
-        <div class="cmp-wiki-title" style="margin-bottom:14px;">📊 Specs & Features</div>
+        <div class="cmp-wiki-title" style="margin-bottom:14px;">Specs & Features</div>
         <div style="display:flex;flex-direction:column;gap:0;">
           ${data.key_specs?.map(s => `
             <div class="cmp-stat-row">
@@ -6347,14 +6909,14 @@ Be specific and accurate. Include real specs like battery life, noise cancellati
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
         <div class="cmp-wiki-card">
-          <div style="font-size:11px;font-weight:800;color:var(--good);margin-bottom:8px;">✅ ${aName} — PROS</div>
+          <div style="font-size:11px;font-weight:800;color:var(--good);margin-bottom:8px;">${aName} — PROS</div>
           ${data.a_pros?.map(p=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${p}</div>`).join('')}
-          ${data.a_cons?.length?`<div style="font-size:11px;font-weight:800;color:var(--bad);margin:8px 0 4px;">❌ CONS</div>${data.a_cons.map(c=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${c}</div>`).join('')}`:''}
+          ${data.a_cons?.length?`<div style="font-size:11px;font-weight:800;color:var(--bad);margin:8px 0 4px;">× CONS</div>${data.a_cons.map(c=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${c}</div>`).join('')}`:''}
         </div>
         <div class="cmp-wiki-card">
-          <div style="font-size:11px;font-weight:800;color:var(--good);margin-bottom:8px;">✅ ${bName} — PROS</div>
+          <div style="font-size:11px;font-weight:800;color:var(--good);margin-bottom:8px;">${bName} — PROS</div>
           ${data.b_pros?.map(p=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${p}</div>`).join('')}
-          ${data.b_cons?.length?`<div style="font-size:11px;font-weight:800;color:var(--bad);margin:8px 0 4px;">❌ CONS</div>${data.b_cons.map(c=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${c}</div>`).join('')}`:''}
+          ${data.b_cons?.length?`<div style="font-size:11px;font-weight:800;color:var(--bad);margin:8px 0 4px;">× CONS</div>${data.b_cons.map(c=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;">▸ ${c}</div>`).join('')}`:''}
         </div>
       </div>
       <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:12px;">Specs are AI-generated estimates · Always verify before purchasing</div>`;
@@ -6364,9 +6926,9 @@ Be specific and accurate. Include real specs like battery life, noise cancellati
   const statsHTML = `
     <div class="cmp-vs-grid" style="margin-bottom:12px;">
       <div class="cmp-vs-headers">
-        <div class="cmp-vs-head ${aPrice<=bPrice?'winner':''}">${aName}<br><span style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold)">${currencySymbol}${aPrice.toLocaleString()}</span>${aPrice<=bPrice?'<div class="cmp-best-badge">BETTER VALUE</div>':''}</div>
+        <div class="cmp-vs-head ${aPrice<=bPrice?'winner':''}">${aName}<br><span style="font-family:'Inter',sans-serif;font-size:20px;color:var(--gold)">${currencySymbol}${aPrice.toLocaleString()}</span>${aPrice<=bPrice?'<div class="cmp-best-badge">BETTER VALUE</div>':''}</div>
         <div class="cmp-vs-divider">VS</div>
-        <div class="cmp-vs-head ${bPrice<=aPrice?'winner':''}">${bName}<br><span style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold)">${currencySymbol}${bPrice.toLocaleString()}</span>${bPrice<=aPrice?'<div class="cmp-best-badge">BETTER VALUE</div>':''}</div>
+        <div class="cmp-vs-head ${bPrice<=aPrice?'winner':''}">${bName}<br><span style="font-family:'Inter',sans-serif;font-size:20px;color:var(--gold)">${currencySymbol}${bPrice.toLocaleString()}</span>${bPrice<=aPrice?'<div class="cmp-best-badge">BETTER VALUE</div>':''}</div>
       </div>
       <div class="cmp-stats-col">
         <div class="cmp-stat-row">
