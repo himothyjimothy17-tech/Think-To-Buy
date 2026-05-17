@@ -2396,7 +2396,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
           <div style="font-size:11px;color:var(--muted);">8th Grade · San Jose, CA</div>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px;">Built Think To Buy to help people make smarter spending decisions — before they open their wallet. Aspiring to Wharton.</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px;">Built Think To Buy to help people make smarter spending decisions before they open their wallet.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="https://github.com/himothyjimothy17-tech/Think-To-Buy" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-light);text-decoration:none;border:1px solid rgba(123,44,191,0.25);border-radius:50px;padding:5px 12px;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(123,44,191,0.25)'">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -3039,6 +3039,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
         <button class="learn-topic-btn" onclick="showLesson('interest',this)">Interest</button>
         <button class="learn-topic-btn" onclick="showLesson('investing',this)">Investing</button>
         <button class="learn-topic-btn" onclick="showLesson('credit',this)">Credit</button>
+        <button class="learn-topic-btn" onclick="showLesson('cards',this)">Credit vs Debit</button>
         <button class="learn-topic-btn" onclick="showLesson('business',this)">Business</button>
         <button class="learn-topic-btn" onclick="showLesson('inflation',this)">Inflation</button>
         <button class="learn-topic-btn" onclick="showLesson('budgeting',this)">Budgeting</button>
@@ -3126,16 +3127,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
-  // Clear all local auth state
-  try {
-    const keys = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('sib4_supabase'));
-    keys.forEach(k => localStorage.removeItem(k));
-  } catch(e) {}
-  // Sign out from supabase if available then reload
-  if (typeof sb !== 'undefined' && sb && sb.auth) {
-    sb.auth.signOut().catch(() => {}).finally(() => location.reload());
-  } else {
+  // Sign out from Supabase first, then clear everything and reload
+  const doReload = () => {
+    try {
+      // Clear all supabase-related keys regardless of naming pattern
+      Object.keys(localStorage)
+        .filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('sib4_supabase'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
     location.reload();
+  };
+  if (typeof sb !== 'undefined' && sb && sb.auth) {
+    sb.auth.signOut().catch(() => {}).finally(doReload);
+  } else {
+    doReload();
   }
 }
 let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
@@ -6599,6 +6604,21 @@ const LESSONS = {
       { icon: '◆', text: '<strong>Social Security</strong> is a supplement, not a retirement plan. Benefits replace roughly 40% of pre-retirement income for average earners.' },
     ],
     quiz: { q: 'If you need $50,000/year in retirement, roughly how much do you need saved?', opts: ['$500,000', '$1,000,000', '$1,250,000', '$2,000,000'], answer: 2 }
+  },
+
+  cards: {
+    icon: '▪', title: 'Credit Card vs Debit Card',
+    eyebrow: 'Cards & Payments',
+    body: `Both cards look identical and swipe the same way — but they work completely differently and the choice between them has real financial consequences.<br><br>A <strong>debit card</strong> pulls money directly from your bank account. You can only spend what you have. There's no bill at the end of the month, no interest, and no debt. Simple and safe — but if someone steals your card number, they're stealing your actual cash, and getting it back is harder.<br><br>A <strong>credit card</strong> lets you borrow money from the card issuer for each purchase. You pay it back at the end of the month. Used correctly — meaning you pay the full balance every month — you pay zero interest and get rewards (cashback, travel points). Used incorrectly, credit card debt can spiral fast: most cards charge 20–30% APR on unpaid balances.`,
+    example: `<div class="lesson-example-label">The same $500 purchase, two outcomes</div><strong>Paid in full:</strong> You charge $500 to your credit card, get 2% cashback ($10), pay the full balance on due date. Total cost: $490. You came out ahead.<br><br><strong>Carried as debt:</strong> You charge $500, only pay the minimum each month. At 24% APR it takes 2+ years to pay off and costs over $150 in interest. The $500 item actually cost you $650+.`,
+    points: [
+      { icon: '✓', text: '<strong>Use credit for the rewards and protections — but only if you pay in full every month.</strong> If you can\'t do that consistently, debit is safer.' },
+      { icon: '▸', text: '<strong>Credit cards have stronger fraud protection.</strong> If your number is stolen, the bank\'s money is at risk, not yours. Debit card fraud means your actual money is gone while the bank investigates.' },
+      { icon: '◎', text: '<strong>Credit cards help build your credit score.</strong> Debit cards don\'t. Responsible credit card use is one of the best ways to build credit as a young person.' },
+      { icon: '!', text: '<strong>Never carry a balance if you can avoid it.</strong> 20–30% APR is one of the most expensive forms of debt that exists. Even a small unpaid balance compounds quickly.' },
+      { icon: '▸', text: '<strong>Which should you get first?</strong> Start with a secured credit card or a student card with a low limit. Use it for one recurring purchase, pay it off automatically every month. Build the habit before you increase the limit.' },
+    ],
+    quiz: { q: 'What is the main advantage of paying your credit card balance in full every month?', opts: ['You get a higher credit limit', 'You pay zero interest and keep any rewards earned', 'The bank gives you a cash bonus', 'Your credit score drops less'], answer: 1 }
   },
 };
 
