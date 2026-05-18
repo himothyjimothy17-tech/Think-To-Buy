@@ -27,15 +27,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Think to Buy">
 <meta name="mobile-web-app-capable" content="yes">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
-<script>
-// Fallback if unpkg fails
-if (typeof supabase === 'undefined') {
-  document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"><\/script>');
-}
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cwicodhdcwcnbrhhcftj.supabase.co">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js" defer></script>
+
 <style>
 /* ─── DESIGN SYSTEM v2 ─── */
 :root {
@@ -139,6 +137,8 @@ body::before {
   position: absolute; border-radius: 50%;
   filter: blur(120px); opacity: 0.1;
   animation: drift 18s ease-in-out infinite alternate;
+  will-change: transform;
+  contain: strict;
 }
 .amb-orb:nth-child(1) {
   width: 700px; height: 700px;
@@ -351,7 +351,8 @@ header {
 .tab:not(.active):hover { color: var(--text-2); background: var(--glass); }
 
 /* ─── PANELS ─── */
-.panel { display: none; }
+.panel { display: none; content-visibility: auto; }
+.panel.active { display: block; content-visibility: visible; }
 .panel.active { display: block; animation: rise 0.28s var(--ease); }
 @keyframes rise {
   from { opacity: 0; transform: translateY(10px); }
@@ -548,7 +549,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .verdict-card.bad::before { background: var(--bad); }
 .verdict-card.bad::after { background: var(--bad); }
 
-.v-emoji { display: none; }
 .v-content { flex: 1; }
 .v-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
 .v-label.good { color: var(--good); }
@@ -854,7 +854,41 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @keyframes bob { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
 /* ─── LIGHT MODE ─── */
-/* ─── MARKETS ─── */
+/* ─── WISHLIST ─── */
+.wl-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--bg-2);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  transition: border-color 0.2s;
+}
+.wl-item.good  { border-color: rgba(131,197,190,0.3); }
+.wl-item.warn  { border-color: rgba(230,204,178,0.3); }
+.wl-item.bad   { border-color: rgba(244,63,94,0.3); }
+.wl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.wl-dot.good { background: var(--good); }
+.wl-dot.warn { background: var(--warn); }
+.wl-dot.bad  { background: var(--bad); }
+.wl-name { flex: 1; font-size: 13px; font-weight: 600; }
+.wl-price { font-size: 13px; font-weight: 800; font-family: 'Inter', sans-serif; color: var(--text-2); }
+.wl-verdict { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 50px; }
+.wl-verdict.good { color: var(--good); background: rgba(131,197,190,0.1); }
+.wl-verdict.warn { color: var(--warn); background: rgba(230,204,178,0.1); }
+.wl-verdict.bad  { color: var(--bad);  background: rgba(244,63,94,0.1); }
+.wl-remove { background: none; border: none; color: var(--muted2); font-size: 14px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.wl-remove:hover { color: var(--bad); }
+.wl-combo {
+  padding: 12px 14px; border-radius: var(--r-md);
+  border: 1px solid var(--border); background: var(--bg-2);
+}
+.wl-combo.good { border-color: rgba(131,197,190,0.25); background: rgba(131,197,190,0.04); }
+.wl-combo.warn { border-color: rgba(230,204,178,0.25); background: rgba(230,204,178,0.04); }
+.wl-combo.bad  { border-color: rgba(244,63,94,0.2);   background: rgba(244,63,94,0.04); }
+.wl-combo-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
+.wl-combo-label.good { color: var(--good); }
+.wl-combo-label.warn { color: var(--warn); }
+.wl-combo-label.bad  { color: var(--bad); }
+.wl-combo-items { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.wl-combo-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
 .market-card {
   background: var(--glass);
   border: 1px solid var(--border);
@@ -1074,7 +1108,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @media (max-width: 480px) { .sentiment-divider { display: none; } }
 /* ─── LOGO ─── */
 .logo-wrap { display: flex; align-items: center; gap: 10px; }
-.logo-icon { display: none; }
 .wordmark {
   font-family: 'DM Sans', sans-serif;
   font-size: 20px; font-weight: 600;
@@ -1386,7 +1419,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transition: border-color 0.2s, transform 0.2s;
 }
 .feature-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
-.feature-emoji { font-size: 28px; margin-bottom: 12px; }
 .feature-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
 .feature-desc { font-size: 12px; color: var(--muted); line-height: 1.65; }
 
@@ -1405,7 +1437,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: rgba(131,197,190,0.06); border: 1px solid rgba(131,197,190,0.2);
   border-radius: var(--r-md); padding: 18px; margin-bottom: 14px;
 }
-.preview-emoji { font-size: 32px; flex-shrink: 0; }
 .preview-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--good); margin-bottom: 4px; }
 .preview-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 900; margin-bottom: 6px; }
 .preview-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
@@ -1812,7 +1843,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: 50%; background: var(--accent);
 }
 .share-app-name em { color: rgba(255,255,255,0.35); font-style: normal; }
-.share-emoji { display: none; }
 .share-verdict-label {
   font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
   text-transform: uppercase; margin-bottom: 6px;
@@ -1873,7 +1903,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: rise 0.4s var(--ease);
   max-width: 360px; width: calc(100% - 40px);
 }
-.pwa-icon { font-size: 22px; flex-shrink: 0; }
 .pwa-text { flex: 1; }
 .pwa-text strong { display: block; font-size: 13px; color: var(--text); font-weight: 700; }
 .pwa-text span { font-size: 11px; color: var(--muted); }
@@ -2262,7 +2291,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 
   <div class="landing-footer">
-    Built with care · <strong>himothyjimothy17-tech.github.io/Think-To-Buy</strong> · Free forever
+    Think To Buy &nbsp;·&nbsp; <strong>Created by Aarav Aprameyan</strong> &nbsp;·&nbsp; San Jose, CA &nbsp;·&nbsp; Free forever
   </div>
 </div>
 
@@ -2520,6 +2549,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     <button class="tab" onclick="go('bills',this)" title="Bills"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span class="tab-label"> Bills</span></button>
     <button class="tab tab-new" onclick="go('learn',this)" id="tab-learn" title="Learn"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="tab-label"> Learn</span></button>
     <button class="tab tab-new" onclick="go('compare',this)" id="tab-compare" title="Compare"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><span class="tab-label"> Compare</span></button>
+    <button class="tab tab-new" onclick="go('wishlist',this)" id="tab-wishlist" title="Wishlist"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M15 2h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M9 12h6M9 8h6M9 16h4"/></svg></span><span class="tab-label"> Wishlist</span></button>
   </div>
 
   <!-- ══ ANALYZE ══ -->
@@ -3122,37 +3152,204 @@ input[type="range"]::-webkit-slider-thumb:hover {
     </div>
   </div>
 
+  <!-- ══ WISHLIST ══ -->
+  <div id="panel-wishlist" class="panel">
+    <div class="card">
+      <div class="card-eyebrow">Wishlist Heat Map</div>
+      <div class="card-title">What can you actually afford?</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;">Add items you're considering buying. The app stacks them against your budget and tells you which combinations make financial sense.</p>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div class="input-shell" style="flex:1"><span class="input-prefix">Item</span><input type="text" class="has-prefix" id="wl-name" placeholder="e.g. AirPods Pro" style="padding-left:46px;" onkeydown="if(event.key==='Enter')addWishlistItem()"></div>
+        <div class="input-shell" style="width:120px"><span class="input-prefix" id="wl-prefix">$</span><input type="number" class="has-prefix" id="wl-price" placeholder="250" min="0" onkeydown="if(event.key==='Enter')addWishlistItem()"></div>
+        <button onclick="addWishlistItem()" style="background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;padding:0 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
+      </div>
+      <div id="wl-list" style="margin-top:16px;display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div class="card" id="wl-summary-card" style="display:none;">
+      <div class="card-eyebrow">Budget Analysis</div>
+      <div class="card-title" id="wl-summary-title">Your options</div>
+      <div id="wl-combos" style="display:flex;flex-direction:column;gap:10px;margin-top:4px;"></div>
+      <div id="wl-total-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:var(--muted);">Total if you bought everything</span>
+        <span id="wl-grand-total" style="font-size:18px;font-weight:800;color:var(--bad);font-family:'Inter',sans-serif;"></span>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
-  // Sign out from Supabase first, then clear everything and reload
-  const doReload = () => {
-    try {
-      // Clear all supabase-related keys regardless of naming pattern
-      Object.keys(localStorage)
-        .filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('sib4_supabase'))
-        .forEach(k => localStorage.removeItem(k));
-    } catch(e) {}
-    location.reload();
-  };
+  // Wipe all localStorage immediately — don't wait for network
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if (k.includes('supabase') || k.includes('sb-') || k.includes('sib4_')) {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch(e) {}
+
+  // Also clear session storage
+  try { sessionStorage.clear(); } catch(e) {}
+
+  // Force landing screen immediately
+  document.getElementById('user-bar').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('landing-screen').style.display = 'flex';
+  document.getElementById('auth-screen').style.display = 'none';
+  closeHMenu();
+
+  // Sign out with local scope — wipes client state regardless of server/JWT status
   if (typeof sb !== 'undefined' && sb && sb.auth) {
-    sb.auth.signOut().catch(() => {}).finally(doReload);
+    sb.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => {
+      // Hard reload to clear any in-memory state
+      window.location.reload();
+    });
   } else {
-    doReload();
+    window.location.reload();
   }
 }
 let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
 let goals   = JSON.parse(localStorage.getItem('sib4_goals') || '[]');
 let lastResult = null;
 let charts = {};
-let lightMode = false; // dark mode only — kept for chart color compatibility
 let isNeed = false;
 let currencySymbol = localStorage.getItem('sib4_currency') || '$';
-let chatHistory = []; // kept for compatibility
 
-/* ─── PAYMENT METHOD ─── */
+/* ─── WISHLIST HEAT MAP ─── */
+let wishlist = JSON.parse(localStorage.getItem('sib4_wishlist') || '[]');
+
+function saveWishlist() {
+  localStorage.setItem('sib4_wishlist', JSON.stringify(wishlist));
+}
+
+function getVerdict(price, savings) {
+  if (!savings || savings <= 0) return 'warn';
+  const pct = price / savings * 100;
+  if (pct <= 15) return 'good';
+  if (pct <= 35) return 'warn';
+  return 'bad';
+}
+
+function addWishlistItem() {
+  const name  = document.getElementById('wl-name').value.trim();
+  const price = parseFloat(document.getElementById('wl-price').value);
+  if (!name || !price || price <= 0) {
+    document.getElementById('wl-name').focus();
+    return;
+  }
+  wishlist.push({ id: Date.now(), name, price });
+  saveWishlist();
+  document.getElementById('wl-name').value  = '';
+  document.getElementById('wl-price').value = '';
+  document.getElementById('wl-name').focus();
+  renderWishlist();
+}
+
+function removeWishlistItem(id) {
+  wishlist = wishlist.filter(w => w.id !== id);
+  saveWishlist();
+  renderWishlist();
+}
+
+function renderWishlist() {
+  const savings = parseFloat(localStorage.getItem('sib4_savings') ||
+    document.getElementById('savings')?.value || '0') || 0;
+  const income  = parseFloat(localStorage.getItem('sib4_income')  ||
+    document.getElementById('income-num')?.value || '0') || 0;
+
+  const list = document.getElementById('wl-list');
+  const summaryCard = document.getElementById('wl-summary-card');
+
+  if (!wishlist.length) {
+    list.innerHTML = `<div class="empty"><div class="ei">—</div><div class="empty-text">Add items you're considering buying</div></div>`;
+    summaryCard.style.display = 'none';
+    return;
+  }
+
+  // Render individual items
+  list.innerHTML = wishlist.map(w => {
+    const cls = getVerdict(w.price, savings);
+    const labelMap = { good: 'Affordable', warn: 'Stretch', bad: 'Out of range' };
+    return `<div class="wl-item ${cls}">
+      <div class="wl-dot ${cls}"></div>
+      <div class="wl-name">${w.name}</div>
+      <div class="wl-verdict ${cls}">${labelMap[cls]}</div>
+      <div class="wl-price">${currencySymbol}${w.price.toLocaleString()}</div>
+      <button class="wl-remove" onclick="removeWishlistItem(${w.id})">✕</button>
+    </div>`;
+  }).join('');
+
+  // Build combinations analysis
+  summaryCard.style.display = 'block';
+  const grandTotal = wishlist.reduce((s, w) => s + w.price, 0);
+  document.getElementById('wl-grand-total').textContent = fmt(grandTotal);
+
+  const combos = [];
+
+  // All green (fully affordable) items together
+  const greenItems = wishlist.filter(w => getVerdict(w.price, savings) === 'good');
+  const greenTotal = greenItems.reduce((s, w) => s + w.price, 0);
+  if (greenItems.length > 1) {
+    combos.push({
+      cls: 'good',
+      label: 'Best combination',
+      items: greenItems.map(w => w.name).join(' + '),
+      detail: `Total ${fmt(greenTotal)} — leaves ${fmt(Math.round(savings - greenTotal))} in savings. All individually affordable.`
+    });
+  }
+
+  // Single most affordable item
+  const sorted = [...wishlist].sort((a, b) => a.price - b.price);
+  if (sorted.length) {
+    const cheapest = sorted[0];
+    const cls = getVerdict(cheapest.price, savings);
+    combos.push({
+      cls,
+      label: 'Lowest commitment',
+      items: cheapest.name,
+      detail: `${fmt(cheapest.price)} alone. ${savings > 0 ? `That's ${(cheapest.price/savings*100).toFixed(0)}% of your savings.` : 'Add your savings for a full picture.'}`
+    });
+  }
+
+  // Most expensive single item
+  if (sorted.length > 1) {
+    const priciest = sorted[sorted.length - 1];
+    const cls = getVerdict(priciest.price, savings);
+    combos.push({
+      cls,
+      label: 'Biggest splurge',
+      items: priciest.name,
+      detail: `${fmt(priciest.price)} alone${savings > 0 ? ` — ${(priciest.price/savings*100).toFixed(0)}% of savings` : ''}. ${cls === 'bad' ? 'Not recommended right now.' : cls === 'warn' ? 'Doable but tight.' : 'Affordable on its own.'}`
+    });
+  }
+
+  // Everything combo
+  if (wishlist.length > 1) {
+    const allCls = getVerdict(grandTotal, savings);
+    combos.push({
+      cls: allCls,
+      label: 'Buy everything',
+      items: wishlist.map(w => w.name).join(' + '),
+      detail: `Total ${fmt(grandTotal)}. ${savings > 0 ? `Would leave ${fmt(Math.max(0, Math.round(savings - grandTotal)))} in savings.` : 'Add your savings to see if this is realistic.'} ${allCls === 'bad' ? 'Not recommended.' : allCls === 'warn' ? 'Stretching your budget.' : 'Within range.'}`
+    });
+  }
+
+  // Render combos
+  const labelMap = { good: 'Go for it', warn: 'Think carefully', bad: 'Not recommended' };
+  document.getElementById('wl-combos').innerHTML = combos.map(c => `
+    <div class="wl-combo ${c.cls}">
+      <div class="wl-combo-label ${c.cls}">${c.label}</div>
+      <div class="wl-combo-items">${c.items}</div>
+      <div class="wl-combo-detail">${c.detail}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('wl-summary-title').textContent =
+    savings > 0 ? `Here are your options with ${fmt(Math.round(savings))} saved` : 'Your options';
+}
 let payMethod = localStorage.getItem('sib4_paymethod') || 'none';
 function setPayMethod(method) {
   // Toggle off if already active (makes it optional)
@@ -3338,7 +3535,7 @@ function setCurrency(sym, code, silent) {
   localStorage.setItem('sib4_currency', sym);
   localStorage.setItem('sib4_currencyCode', code);
   // Update all prefix elements
-  ['price-prefix','savings-prefix','gtarget-prefix','gsaved-prefix','cmp-a-prefix','cmp-b-prefix'].forEach(id => {
+  ['price-prefix','savings-prefix','gtarget-prefix','gsaved-prefix','cmp-a-prefix','cmp-b-prefix','wl-prefix'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = sym;
   });
@@ -3386,6 +3583,7 @@ function go(id, el) {
   if (id === 'history') { renderHistory(); document.getElementById('tab-history')?.classList.remove('tab-new'); }
   if (id === 'goals') renderGoals();
   if (id === 'analyze' && lastResult) setTimeout(() => redrawCharts(lastResult), 50);
+  if (id === 'wishlist') renderWishlist();
   if (id === 'ai') renderInsights();
   if (id === 'bills') renderBills();
   if (id === 'markets') { document.getElementById('tab-markets')?.classList.remove('tab-new'); renderMarkets(); }
@@ -5282,6 +5480,9 @@ if (sb) sb.auth.onAuthStateChange(async (event, session) => {
 
   } else if (event === 'SIGNED_OUT') {
     currentUser = null;
+    // Reset all app state
+    const appEl = document.querySelector('.app');
+    if (appEl) appEl.style.display = 'none';
     document.getElementById('landing-screen').style.display = 'flex';
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('user-bar').style.display = 'none';
@@ -5948,26 +6149,37 @@ function showAuthFromLanding() {
   }
 
   try {
-    // First try to get existing session
-    let { data: { session } } = await sb.auth.getSession();
+    // Check localStorage for a cached session first to avoid network round trip
+    const cachedKey = Object.keys(localStorage).find(k => k.includes('sb-') && k.includes('auth-token'));
+    const cached = cachedKey ? JSON.parse(localStorage.getItem(cachedKey) || 'null') : null;
+    const cachedSession = cached?.access_token && cached?.expires_at > Date.now()/1000 + 60 ? cached : null;
 
-    // If no session but we have a stored key, try refreshing
-    if (!session) {
-      const stored = localStorage.getItem('sib4_supabase_session');
-      if (stored) {
-        const { data: refreshed } = await sb.auth.refreshSession();
-        session = refreshed?.session;
-      }
-    }
-
-    if (session && session.user) {
-      // onAuthStateChange will handle INITIAL_SESSION — just show the app shell
-      // to avoid flickering. The listener above does the heavy lifting.
+    if (cachedSession) {
+      // Cached session is valid — show app immediately, verify in background
       document.getElementById('user-bar').style.display = 'flex';
       const emailEl = document.getElementById('user-email-display');
-      if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
+      if (emailEl && cached?.user?.email) emailEl.textContent = cached.user.email.split('@')[0];
+      // Background verify
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (!session) { document.getElementById('user-bar').style.display = 'none'; document.getElementById('landing-screen').style.display = 'flex'; }
+      }).catch(() => {});
     } else {
-      document.getElementById('landing-screen').style.display = 'flex';
+      // No valid cache — do full network check
+      let { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const stored = localStorage.getItem('sib4_supabase_session');
+        if (stored) {
+          const { data: refreshed } = await sb.auth.refreshSession();
+          session = refreshed?.session;
+        }
+      }
+      if (session && session.user) {
+        document.getElementById('user-bar').style.display = 'flex';
+        const emailEl = document.getElementById('user-email-display');
+        if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
+      } else {
+        document.getElementById('landing-screen').style.display = 'flex';
+      }
     }
   } catch (e) {
     console.error('[Session restore error]', e);
