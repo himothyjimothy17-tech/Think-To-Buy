@@ -6133,56 +6133,39 @@ function renderSuggestions(name, cat, price, cls) {
 /* ─── LANDING PAGE ─── */
 function showAuthFromLanding() {
   document.getElementById('landing-screen').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
+  // If already logged in, go straight to app
+  if (window._hasValidSession) {
+    const appEl = document.querySelector('.app');
+    if (appEl) appEl.style.display = 'block';
+    document.getElementById('user-bar').style.display = 'flex';
+    const emailEl = document.getElementById('user-email-display');
+    if (emailEl && window._cachedUserEmail) emailEl.textContent = window._cachedUserEmail.split('@')[0];
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
 }
 
-// On load — restore session if it exists, skip landing + auth screens
+// On load — always show landing page first
 (async () => {
-  // Start with everything hidden
-  document.getElementById('landing-screen').style.display = 'none';
+  // Hide everything except landing
+  document.getElementById('landing-screen').style.display = 'flex';
   document.getElementById('auth-screen').style.display = 'none';
   const appEl = document.querySelector('.app');
   if (appEl) appEl.style.display = 'none';
+  document.getElementById('user-bar').style.display = 'none';
 
-  if (!sb) {
-    document.getElementById('landing-screen').style.display = 'flex';
-    return;
-  }
+  if (!sb) return;
 
+  // Check silently if already logged in — if so, skip landing when they hit Get Started
   try {
     const cachedKey = Object.keys(localStorage).find(k => k.includes('sb-') && k.includes('auth-token'));
     const cached = cachedKey ? JSON.parse(localStorage.getItem(cachedKey) || 'null') : null;
-    const cachedSession = cached?.access_token && cached?.expires_at > Date.now()/1000 + 60 ? cached : null;
-
-    if (cachedSession) {
-      // Valid cached session — show app immediately
-      if (appEl) appEl.style.display = 'block';
-      document.getElementById('user-bar').style.display = 'flex';
-      const emailEl = document.getElementById('user-email-display');
-      if (emailEl && cached?.user?.email) emailEl.textContent = cached.user.email.split('@')[0];
-      // Verify in background
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          if (appEl) appEl.style.display = 'none';
-          document.getElementById('user-bar').style.display = 'none';
-          document.getElementById('landing-screen').style.display = 'flex';
-        }
-      }).catch(() => {});
-    } else {
-      // No cache — full network check
-      let { data: { session } } = await sb.auth.getSession();
-      if (session && session.user) {
-        if (appEl) appEl.style.display = 'block';
-        document.getElementById('user-bar').style.display = 'flex';
-        const emailEl = document.getElementById('user-email-display');
-        if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
-      } else {
-        document.getElementById('landing-screen').style.display = 'flex';
-      }
-    }
-  } catch (e) {
-    console.error('[Session restore error]', e);
-    document.getElementById('landing-screen').style.display = 'flex';
+    const hasValidSession = cached?.access_token && cached?.expires_at > Date.now()/1000 + 60;
+    // Store for use when they click Get Started
+    window._hasValidSession = hasValidSession;
+    window._cachedUserEmail = cached?.user?.email || null;
+  } catch(e) {
+    window._hasValidSession = false;
   }
 })();
 
