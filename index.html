@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://cwicodhdcwcnbrhhcftj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 
 <style>
 /* ─── DESIGN SYSTEM v2 ─── */
@@ -1619,7 +1619,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 #auth-screen {
   position: fixed; inset: 0; z-index: 200;
   background: radial-gradient(ellipse at top left, #0d1f3c 0%, #080e1c 40%, #060910 100%);
-  display: flex; align-items: center; justify-content: center;
+  display: none; align-items: center; justify-content: center;
   padding: 24px;
 }
 .auth-card {
@@ -2296,7 +2296,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 </div>
 
 <!-- AUTH SCREEN -->
-<div id="auth-screen">
+<div id="auth-screen" style="display:none;">
   <div class="auth-card">
     <div class="auth-logo">Should I <em>Buy It</em><sup>?</sup></div>
     <div class="auth-tagline">Smart Spending Decisions</div>
@@ -5305,18 +5305,27 @@ const SUPABASE_URL  = 'https://cwicodhdcwcnbrhhcftj.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3aWNvZGhkY3djbmJyaGhjZnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTg3NTksImV4cCI6MjA5MDI5NDc1OX0.1sEpZ4MbAQagSyVs12gmWu-zgP01xMtF5ccZKOUWUwc';
 
 let sb = null;
-try {
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: 'sib4_supabase_session',
-      storage: window.localStorage,
-    }
-  });
-} catch(e) {
-  console.error('Supabase failed to load:', e);
+const _initSb = () => {
+  try {
+    if (typeof supabase === 'undefined') return false;
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'sib4_supabase_session',
+        storage: window.localStorage,
+      }
+    });
+    return true;
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    return false;
+  }
+};
+if (!_initSb()) {
+  // Retry once after 500ms in case CDN was still loading
+  setTimeout(() => { _initSb(); }, 500);
 }
 let currentUser = null;
 let saveTimeout = null;
@@ -6154,7 +6163,10 @@ function showAuthFromLanding() {
   if (appEl) appEl.style.display = 'none';
   document.getElementById('user-bar').style.display = 'none';
 
-  if (!sb) return;
+  if (!sb) {
+    document.getElementById('landing-screen').style.display = 'flex';
+    return;
+  }
 
   // Check silently if already logged in — if so, skip landing when they hit Get Started
   try {
