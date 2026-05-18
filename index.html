@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://cwicodhdcwcnbrhhcftj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js" defer></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 
 <style>
 /* ─── DESIGN SYSTEM v2 ─── */
@@ -2117,7 +2117,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 </div>
 
 <!-- LANDING PAGE -->
-<div id="landing-screen">
+<div id="landing-screen" style="display:none;">
   <nav class="landing-nav">
     <div class="landing-logo">Should I <em>Buy It</em><sup>?</sup></div>
     <button class="landing-nav-btn" onclick="showAuthFromLanding()">Get Started →</button>
@@ -2375,7 +2375,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 </div>
 
-<div class="app">
+<div class="app" style="display:none;">
 
   <!-- HAMBURGER MENU OVERLAY -->
   <div class="hmenu-overlay" id="hmenu-overlay" onclick="closeHMenu()"></div>
@@ -6138,42 +6138,41 @@ function showAuthFromLanding() {
 
 // On load — restore session if it exists, skip landing + auth screens
 (async () => {
+  // Start with everything hidden
   document.getElementById('landing-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
+  const appEl = document.querySelector('.app');
+  if (appEl) appEl.style.display = 'none';
 
   if (!sb) {
-    document.getElementById('auth-screen').style.display = 'flex';
-    const err = document.getElementById('auth-error');
-    if (err) { err.textContent = '⚠ Could not connect. Check your internet and reload.'; err.style.display = 'block'; }
+    document.getElementById('landing-screen').style.display = 'flex';
     return;
   }
 
   try {
-    // Check localStorage for a cached session first to avoid network round trip
     const cachedKey = Object.keys(localStorage).find(k => k.includes('sb-') && k.includes('auth-token'));
     const cached = cachedKey ? JSON.parse(localStorage.getItem(cachedKey) || 'null') : null;
     const cachedSession = cached?.access_token && cached?.expires_at > Date.now()/1000 + 60 ? cached : null;
 
     if (cachedSession) {
-      // Cached session is valid — show app immediately, verify in background
+      // Valid cached session — show app immediately
+      if (appEl) appEl.style.display = 'block';
       document.getElementById('user-bar').style.display = 'flex';
       const emailEl = document.getElementById('user-email-display');
       if (emailEl && cached?.user?.email) emailEl.textContent = cached.user.email.split('@')[0];
-      // Background verify
+      // Verify in background
       sb.auth.getSession().then(({ data: { session } }) => {
-        if (!session) { document.getElementById('user-bar').style.display = 'none'; document.getElementById('landing-screen').style.display = 'flex'; }
+        if (!session) {
+          if (appEl) appEl.style.display = 'none';
+          document.getElementById('user-bar').style.display = 'none';
+          document.getElementById('landing-screen').style.display = 'flex';
+        }
       }).catch(() => {});
     } else {
-      // No valid cache — do full network check
+      // No cache — full network check
       let { data: { session } } = await sb.auth.getSession();
-      if (!session) {
-        const stored = localStorage.getItem('sib4_supabase_session');
-        if (stored) {
-          const { data: refreshed } = await sb.auth.refreshSession();
-          session = refreshed?.session;
-        }
-      }
       if (session && session.user) {
+        if (appEl) appEl.style.display = 'block';
         document.getElementById('user-bar').style.display = 'flex';
         const emailEl = document.getElementById('user-email-display');
         if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
