@@ -6271,7 +6271,22 @@ function showAuthFromLanding() {
 
 // On load — landing page is visible by default. Silently check if already logged in.
 (async () => {
-  if (!sb) return; // landing stays visible, that's fine
+  if (!sb) return;
+
+  // Check if this is an OAuth callback (Google redirect back to app)
+  const hash = window.location.hash;
+  const params = new URLSearchParams(window.location.search);
+  const isOAuthCallback = hash.includes('access_token') || hash.includes('error') ||
+                          params.has('code') || params.has('error');
+
+  if (isOAuthCallback) {
+    // Hide landing, show loading state while Supabase processes the OAuth code
+    document.getElementById('landing-screen').style.display = 'none';
+    // Supabase onAuthStateChange will handle showing the app once session is established
+    // Clean up URL
+    try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+    return;
+  }
 
   try {
     const cachedKey = Object.keys(localStorage).find(k => k.includes('sb-') && k.includes('auth-token'));
