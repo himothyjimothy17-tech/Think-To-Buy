@@ -3279,7 +3279,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
-  // Wipe all localStorage immediately — don't wait for network
+  // Wipe all localStorage immediately
   try {
     Object.keys(localStorage).forEach(k => {
       if (k.includes('supabase') || k.includes('sb-') || k.includes('sib4_')) {
@@ -3287,25 +3287,19 @@ function signOutNow() {
       }
     });
   } catch(e) {}
-
-  // Also clear session storage
   try { sessionStorage.clear(); } catch(e) {}
 
-  // Force landing screen immediately
+  // Show landing immediately
   document.getElementById('user-bar').style.display = 'none';
-  document.getElementById('app').style.display = 'none';
+  const appEl = document.querySelector('.app');
+  if (appEl) appEl.style.display = 'none';
   document.getElementById('landing-screen').style.display = 'flex';
   document.getElementById('auth-screen').style.display = 'none';
   closeHMenu();
 
-  // Sign out with local scope — wipes client state regardless of server/JWT status
+  // Sign out from Supabase in background — no reload needed
   if (typeof sb !== 'undefined' && sb && sb.auth) {
-    sb.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => {
-      // Hard reload to clear any in-memory state
-      window.location.reload();
-    });
-  } else {
-    window.location.reload();
+    sb.auth.signOut({ scope: 'local' }).catch(() => {});
   }
 }
 let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
