@@ -3293,7 +3293,8 @@ function signOutNow() {
 
   // Force landing screen immediately
   document.getElementById('user-bar').style.display = 'none';
-  document.getElementById('app').style.display = 'none';
+  const appEl = document.querySelector('.app');
+  if (appEl) appEl.style.display = 'none';
   document.getElementById('landing-screen').style.display = 'flex';
   document.getElementById('auth-screen').style.display = 'none';
   closeHMenu();
