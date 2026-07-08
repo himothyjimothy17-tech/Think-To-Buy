@@ -31,8 +31,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cwicodhdcwcnbrhhcftj.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 
 <style>
 /* ─── DESIGN SYSTEM v2 ─── */
@@ -1618,57 +1618,118 @@ input[type="range"]::-webkit-slider-thumb:hover {
 <style>
 #auth-screen {
   position: fixed; inset: 0; z-index: 200;
-  background: radial-gradient(ellipse at top left, #0d1f3c 0%, #080e1c 40%, #060910 100%);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
+  display: none; flex-direction: row;
+  background: #060910;
 }
-.auth-card {
-  width: 100%; max-width: 380px;
-  background: rgba(13,20,40,0.9);
-  border: 1px solid var(--border-hi);
-  border-radius: var(--r-lg);
-  padding: 36px 32px;
-  backdrop-filter: blur(24px);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(123,44,191,0.1);
-  text-align: center;
+.auth-left {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  padding: 60px 48px;
+  background: radial-gradient(ellipse at 20% 50%, rgba(123,44,191,0.15) 0%, transparent 60%),
+              #07070d;
+  border-right: 1px solid var(--border);
+  position: relative; overflow: hidden;
 }
-.auth-logo {
+.auth-left::before {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(123,44,191,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123,44,191,0.03) 1px, transparent 1px);
+  background-size: 48px 48px; pointer-events: none;
+}
+.auth-brand {
   font-family: 'DM Sans', sans-serif;
-  font-size: 24px; font-weight: 600;
-  letter-spacing: -0.03em;
-  margin-bottom: 4px;
+  font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 48px; position: relative; z-index: 1;
 }
-.auth-logo em { font-style: normal; color: var(--gold); font-weight: 700; }
-.auth-logo sup { font-size: 14px; color: var(--gold); vertical-align: super; }
-.auth-tagline { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 28px; }
-.auth-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.auth-brand em { font-style: normal; color: var(--accent-light); }
+.auth-brand sup { font-size: 12px; color: var(--accent-light); vertical-align: super; }
+.auth-headline {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(28px, 3.5vw, 42px);
+  font-weight: 900; letter-spacing: -0.04em;
+  line-height: 1.1; margin-bottom: 16px;
+  color: var(--text); position: relative; z-index: 1;
+}
+.auth-headline em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent-light), var(--teal));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.auth-tagline {
+  font-size: 15px; color: var(--muted); line-height: 1.7;
+  margin-bottom: 48px; max-width: 380px;
+  position: relative; z-index: 1;
+}
+.auth-props { display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 1; }
+.auth-prop { display: flex; align-items: flex-start; gap: 14px; }
+.auth-prop-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-light); flex-shrink: 0; margin-top: 7px; }
+.auth-prop-text { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+.auth-prop-text strong { color: var(--text); font-weight: 600; }
+.auth-right {
+  width: 420px; flex-shrink: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 48px 40px;
+  background: var(--bg-card);
+  overflow-y: auto;
+}
+.auth-right-logo {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; color: var(--muted);
+  margin-bottom: 32px; letter-spacing: -0.01em;
+}
+.auth-right-logo em { font-style: normal; color: var(--accent-light); }
+.auth-card { width: 100%; }
+.auth-logo { display: none; }
+.auth-tagline-small { display: none; }
+.auth-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.03em; }
 .auth-sub { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
 .auth-field { margin-bottom: 14px; text-align: left; }
-.auth-field label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+.auth-field label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
 .auth-field input {
-  width: 100%; background: var(--glass-2); border: 1px solid var(--border);
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 13px 14px;
   color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.auth-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(123,44,191,0.1); }
+.auth-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123,44,191,0.1); }
 .auth-btn {
   width: 100%; padding: 14px;
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
   border: none; border-radius: var(--r-sm);
-  color: #08090d; font-family: 'DM Sans', sans-serif;
+  color: #fff; font-family: 'DM Sans', sans-serif;
   font-size: 14px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(123,44,191,0.25);
+  box-shadow: 0 4px 20px rgba(123,44,191,0.3);
   transition: opacity 0.15s, transform 0.1s;
   margin-top: 4px;
 }
 .auth-btn:hover { opacity: 0.9; }
 .auth-btn:active { transform: scale(0.99); }
 .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.auth-switch { margin-top: 18px; font-size: 12px; color: var(--muted); }
-.auth-switch a { color: var(--gold); cursor: pointer; text-decoration: none; font-weight: 600; }
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 18px 0; font-size: 11px; color: var(--muted);
+}
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.auth-google-btn {
+  width: 100%; padding: 13px 14px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.auth-google-btn:hover { border-color: var(--border-hi); background: var(--bg-3); }
+.auth-switch { margin-top: 16px; font-size: 12px; color: var(--muted); text-align: center; }
+.auth-switch a { color: var(--accent-light); cursor: pointer; text-decoration: none; font-weight: 600; }
 .auth-switch a:hover { text-decoration: underline; }
 .auth-error { font-size: 12px; color: var(--bad); background: rgba(240,79,106,0.08); border: 1px solid rgba(240,79,106,0.2); border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 14px; display: none; }
+@media (max-width: 700px) {
+  #auth-screen { flex-direction: column; }
+  .auth-left { display: none; }
+  .auth-right { width: 100%; padding: 40px 24px; justify-content: flex-start; padding-top: 60px; }
+  .auth-right-logo { display: block; }
+}
 .auth-user-bar {
   display: flex; align-items: center; gap: 10px;
   background: var(--glass); border: 1px solid var(--border);
@@ -2296,37 +2357,73 @@ input[type="range"]::-webkit-slider-thumb:hover {
 </div>
 
 <!-- AUTH SCREEN -->
-<div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-logo">Should I <em>Buy It</em><sup>?</sup></div>
-    <div class="auth-tagline">Smart Spending Decisions</div>
-
-    <div id="auth-error" class="auth-error"></div>
-
-    <div id="auth-login-view">
-      <div class="auth-title">Welcome back</div>
-      <div class="auth-sub">Sign in to access your goals, history, and spending tracker.</div>
-      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
-      <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
-      <div class="auth-switch">No account? <a onclick="showSignup()">Create one free</a></div>
-      <div class="auth-switch" style="margin-top:8px;"><a onclick="doForgot()">Forgot password?</a></div>
+<div id="auth-screen" style="display:none;">
+  <!-- Left panel — value props -->
+  <div class="auth-left">
+    <div class="auth-brand">Think <em>To Buy</em><sup>?</sup></div>
+    <h2 class="auth-headline">Stop guessing.<br><em>Start knowing.</em></h2>
+    <p class="auth-tagline">Get a green, yellow, or red verdict on any purchase before you open your wallet. No bank account needed.</p>
+    <div class="auth-props">
+      <div class="auth-prop">
+        <div class="auth-prop-dot"></div>
+        <div class="auth-prop-text"><strong>Pre-purchase verdict</strong> — know before you spend, not after</div>
+      </div>
+      <div class="auth-prop">
+        <div class="auth-prop-dot"></div>
+        <div class="auth-prop-text"><strong>No bank account required</strong> — your data stays private</div>
+      </div>
+      <div class="auth-prop">
+        <div class="auth-prop-dot"></div>
+        <div class="auth-prop-text"><strong>AI financial advisor</strong> — real answers based on your numbers</div>
+      </div>
+      <div class="auth-prop">
+        <div class="auth-prop-dot"></div>
+        <div class="auth-prop-text"><strong>Free forever</strong> — no credit card, no paywall</div>
+      </div>
     </div>
+  </div>
 
-    <div id="auth-signup-view" style="display:none;">
-      <div class="auth-title">Create account</div>
-      <div class="auth-sub">Free forever. Your data syncs across all your devices.</div>
-      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="At least 8 characters"></div>
-      <button class="auth-btn" id="signup-btn" onclick="doSignup()">Create Account →</button>
-      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
-    </div>
+  <!-- Right panel — auth form -->
+  <div class="auth-right">
+    <div class="auth-right-logo">Think <em>To Buy</em></div>
 
-    <div id="auth-confirm-view" style="display:none;">
-      
-      <div class="auth-title">Check your email</div>
-      <div class="auth-sub">We sent a confirmation link to your email. Click it to activate your account, then come back and sign in.</div>
-      <button class="auth-btn" onclick="showLogin()">Back to Sign In</button>
+    <div class="auth-card">
+      <div id="auth-error" class="auth-error"></div>
+
+      <div id="auth-login-view">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Sign in to access your goals, history, and spending tracker.</div>
+        <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+        <div class="auth-divider">or</div>
+        <button class="auth-google-btn" onclick="doGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-switch">No account? <a onclick="showSignup()">Create one free</a></div>
+        <div class="auth-switch" style="margin-top:8px;"><a onclick="doForgot()">Forgot password?</a></div>
+      </div>
+
+      <div id="auth-signup-view" style="display:none;">
+        <div class="auth-title">Create account</div>
+        <div class="auth-sub">Free forever. Your data syncs across all your devices.</div>
+        <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="At least 8 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <button class="auth-btn" id="signup-btn" onclick="doSignup()">Create Account →</button>
+        <div class="auth-divider">or</div>
+        <button class="auth-google-btn" onclick="doGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+      </div>
+
+      <div id="auth-confirm-view" style="display:none;">
+        <div class="auth-title">Check your email</div>
+        <div class="auth-sub">We sent a confirmation link to your email. Click it to activate your account, then come back and sign in.</div>
+        <button class="auth-btn" onclick="showLogin()">Back to Sign In</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2375,7 +2472,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 </div>
 
-<div class="app">
+<div class="app" style="display:none;">
 
   <!-- HAMBURGER MENU OVERLAY -->
   <div class="hmenu-overlay" id="hmenu-overlay" onclick="closeHMenu()"></div>
@@ -3182,6 +3279,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
+  // Wipe all localStorage immediately — don't wait for network
   try {
     Object.keys(localStorage).forEach(k => {
       if (k.includes('supabase') || k.includes('sb-') || k.includes('sib4_')) {
@@ -3189,11 +3287,25 @@ function signOutNow() {
       }
     });
   } catch(e) {}
+
+  // Also clear session storage
   try { sessionStorage.clear(); } catch(e) {}
+
+  // Force landing screen immediately
+  document.getElementById('user-bar').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('landing-screen').style.display = 'flex';
+  document.getElementById('auth-screen').style.display = 'none';
+  closeHMenu();
+
+  // Sign out with local scope — wipes client state regardless of server/JWT status
   if (typeof sb !== 'undefined' && sb && sb.auth) {
-    sb.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => location.reload());
+    sb.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => {
+      // Hard reload to clear any in-memory state
+      window.location.reload();
+    });
   } else {
-    location.reload();
+    window.location.reload();
   }
 }
 let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
@@ -5290,24 +5402,53 @@ const SUPABASE_URL  = 'https://cwicodhdcwcnbrhhcftj.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3aWNvZGhkY3djbmJyaGhjZnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTg3NTksImV4cCI6MjA5MDI5NDc1OX0.1sEpZ4MbAQagSyVs12gmWu-zgP01xMtF5ccZKOUWUwc';
 
 let sb = null;
-try {
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: 'sib4_supabase_session',
-      storage: window.localStorage,
-    }
-  });
-} catch(e) {
-  console.error('Supabase failed to load:', e);
+const _initSb = () => {
+  try {
+    if (typeof supabase === 'undefined') return false;
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'sib4_supabase_session',
+        storage: window.localStorage,
+      }
+    });
+    return true;
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    return false;
+  }
+};
+if (!_initSb()) {
+  // Retry once after 500ms in case CDN was still loading
+  setTimeout(() => { _initSb(); }, 500);
 }
 let currentUser = null;
 let saveTimeout = null;
 
 /* ── Auth UI ── */
-function showLogin()  { document.getElementById('auth-login-view').style.display=''; document.getElementById('auth-signup-view').style.display='none'; document.getElementById('auth-confirm-view').style.display='none'; clearAuthError(); }
+async function doGoogleLogin() {
+  if (!sb) { showAuthError('Connection error — try again.'); return; }
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://himothyjimothy17-tech.github.io/Think-To-Buy'
+      }
+    });
+    if (error) showAuthError(error.message);
+  } catch(e) {
+    showAuthError('Could not connect to Google. Check your internet and try again.');
+  }
+}
+
+function showLogin() {
+  document.getElementById('auth-login-view').style.display='';
+  document.getElementById('auth-signup-view').style.display='none';
+  document.getElementById('auth-confirm-view').style.display='none';
+  clearAuthError();
+}
 function showSignup() { document.getElementById('auth-signup-view').style.display=''; document.getElementById('auth-login-view').style.display='none'; document.getElementById('auth-confirm-view').style.display='none'; clearAuthError(); }
 function showConfirm(){ document.getElementById('auth-confirm-view').style.display=''; document.getElementById('auth-login-view').style.display='none'; document.getElementById('auth-signup-view').style.display='none'; }
 function showAuthError(msg) { const e = document.getElementById('auth-error'); e.textContent = '⚠ ' + msg; e.style.display = 'block'; }
@@ -6118,31 +6259,29 @@ function renderSuggestions(name, cat, price, cls) {
 /* ─── LANDING PAGE ─── */
 function showAuthFromLanding() {
   document.getElementById('landing-screen').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
+  // If already logged in, go straight to app
+  if (window._hasValidSession) {
+    const appEl = document.querySelector('.app');
+    if (appEl) appEl.style.display = 'block';
+    document.getElementById('user-bar').style.display = 'flex';
+    const emailEl = document.getElementById('user-email-display');
+    if (emailEl && window._cachedUserEmail) emailEl.textContent = window._cachedUserEmail.split('@')[0];
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
 }
 
-// On load — restore session if it exists, skip landing + auth screens
+// On load — landing page is visible by default. Silently check if already logged in.
 (async () => {
-  document.getElementById('landing-screen').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'none';
-
-  if (!sb) {
-    document.getElementById('auth-screen').style.display = 'flex';
-    return;
-  }
+  if (!sb) return; // landing stays visible, that's fine
 
   try {
-    let { data: { session } } = await sb.auth.getSession();
-    if (session && session.user) {
-      document.getElementById('user-bar').style.display = 'flex';
-      const emailEl = document.getElementById('user-email-display');
-      if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
-    } else {
-      document.getElementById('landing-screen').style.display = 'flex';
-    }
-  } catch (e) {
-    console.error('[Session restore error]', e);
-    document.getElementById('landing-screen').style.display = 'flex';
+    const cachedKey = Object.keys(localStorage).find(k => k.includes('sb-') && k.includes('auth-token'));
+    const cached = cachedKey ? JSON.parse(localStorage.getItem(cachedKey) || 'null') : null;
+    window._hasValidSession = cached?.access_token && cached?.expires_at > Date.now()/1000 + 60;
+    window._cachedUserEmail = cached?.user?.email || null;
+  } catch(e) {
+    window._hasValidSession = false;
   }
 })();
 
