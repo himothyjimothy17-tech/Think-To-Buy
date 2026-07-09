@@ -1327,130 +1327,230 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* ─── LANDING PAGE ─── */
 #landing-screen {
   position: fixed; inset: 0; z-index: 190;
-  background: radial-gradient(ellipse at top left, #0d1f3c 0%, #080e1c 50%, #060910 100%);
+  background: #07070d;
   overflow-y: auto; display: flex; flex-direction: column;
 }
+
+/* Landing canvas wave background */
+#landing-wave-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* Nav */
 .landing-nav {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 32px; position: sticky; top: 0; z-index: 2;
-  background: rgba(6,9,16,0.7); backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  padding: 18px 48px; position: sticky; top: 0; z-index: 10;
+  background: rgba(7,7,13,0.6); backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-.landing-logo { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
-.landing-logo em { font-style: normal; color: var(--gold); font-weight: 700; }
-.landing-logo sup { font-size: 11px; color: var(--gold); vertical-align: super; }
+.landing-logo { font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.landing-logo em { font-style: normal; color: var(--accent-light); font-weight: 700; }
+.landing-logo sup { font-size: 11px; color: var(--accent-light); vertical-align: super; }
+.landing-nav-center {
+  display: flex; gap: 24px; align-items: center;
+  font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em;
+}
+.landing-nav-stat { display: flex; align-items: center; gap: 6px; }
+.landing-nav-stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: pulse-dot 2s infinite; }
 .landing-nav-btn {
   padding: 9px 22px; border-radius: 50px;
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
-  border: none; color: #08090d; font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  border: none; color: #fff; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(123,44,191,0.25);
-  transition: opacity 0.15s;
+  box-shadow: 0 4px 20px rgba(123,44,191,0.35);
+  transition: opacity 0.15s, transform 0.1s;
 }
-.landing-nav-btn:hover { opacity: 0.88; }
+.landing-nav-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+/* Hero — split layout */
 .landing-hero {
-  text-align: center; padding: 80px 24px 60px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center; gap: 60px;
+  padding: 100px 72px 80px;
   position: relative; z-index: 1;
+  min-height: calc(100vh - 61px);
 }
+@media (max-width: 860px) {
+  .landing-hero { grid-template-columns: 1fr; padding: 60px 28px; min-height: auto; }
+  .landing-hero-right { display: none; }
+  .landing-nav { padding: 16px 24px; }
+  .landing-nav-center { display: none; }
+}
+.landing-hero-left { display: flex; flex-direction: column; align-items: flex-start; }
 .landing-eyebrow {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--gold);
-  margin-bottom: 20px; display: flex; align-items: center;
-  justify-content: center; gap: 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--accent-light);
+  margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
 }
-.landing-eyebrow::before, .landing-eyebrow::after {
-  content: ''; width: 32px; height: 1px; background: var(--gold-dim);
+.landing-eyebrow::before {
+  content: ''; width: 28px; height: 1px; background: var(--accent-light); opacity: 0.5;
 }
 .landing-h1 {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(36px, 7vw, 64px);
-  font-weight: 900; line-height: 1.1;
-  letter-spacing: -0.02em; margin-bottom: 20px;
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 900; line-height: 1.05;
+  letter-spacing: -0.04em; margin-bottom: 24px;
 }
 .landing-h1 em {
   font-style: normal;
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--teal) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .landing-sub {
-  font-size: 17px; color: var(--muted); line-height: 1.7;
-  max-width: 520px; margin: 0 auto 36px;
+  font-size: 17px; color: var(--muted); line-height: 1.75;
+  max-width: 440px; margin-bottom: 40px;
 }
-.landing-cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.landing-cta-group { display: flex; gap: 12px; flex-wrap: wrap; }
 .landing-cta-primary {
   padding: 16px 36px;
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
   border: none; border-radius: 50px;
-  color: #08090d; font-family: 'DM Sans', sans-serif;
+  color: #fff; font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 6px 28px rgba(123,44,191,0.3);
+  box-shadow: 0 6px 32px rgba(123,44,191,0.4);
   transition: opacity 0.15s, transform 0.1s;
 }
-.landing-cta-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.landing-cta-primary:hover { opacity: 0.9; transform: translateY(-2px); }
 .landing-cta-secondary {
   padding: 16px 36px; border-radius: 50px;
-  background: transparent; border: 1px solid var(--border-hi);
-  color: var(--gold); font-family: 'DM Sans', sans-serif;
+  background: transparent; border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-2); font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 600; cursor: pointer;
   transition: all 0.15s;
 }
-.landing-cta-secondary:hover { background: rgba(123,44,191,0.08); }
+.landing-cta-secondary:hover { border-color: var(--accent); color: var(--accent-light); }
 
-/* Feature showcase */
+/* Trust strip */
+.landing-trust {
+  display: flex; gap: 28px; align-items: center;
+  margin-top: 40px; flex-wrap: wrap;
+}
+.landing-trust-item {
+  font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px;
+}
+.landing-trust-check {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(131,197,190,0.12); border: 1px solid rgba(131,197,190,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--good);
+}
+
+/* Right side — app mockup */
+.landing-hero-right {
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+.landing-mockup {
+  background: rgba(13,18,35,0.85);
+  border: 1px solid rgba(123,44,191,0.25);
+  border-radius: 20px; padding: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 32px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06);
+  width: 100%; max-width: 400px;
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.mockup-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent-light); text-transform: uppercase; margin-bottom: 16px; opacity: 0.7; }
+.mockup-verdict-card {
+  background: rgba(131,197,190,0.06);
+  border: 1px solid rgba(131,197,190,0.2);
+  border-left: 3px solid var(--good);
+  border-radius: 12px; padding: 18px; margin-bottom: 16px;
+}
+.mockup-verdict-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--good); margin-bottom: 6px; }
+.mockup-verdict-title { font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.02em; }
+.mockup-verdict-body { font-size: 11px; color: var(--muted); line-height: 1.65; }
+.mockup-stats {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+}
+.mockup-stat {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 12px 8px; text-align: center;
+}
+.mockup-stat-val { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; color: var(--accent-light); letter-spacing: -0.02em; }
+.mockup-stat-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+.mockup-glow {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(123,44,191,0.12) 0%, transparent 70%);
+  pointer-events: none; z-index: -1;
+}
+
+/* Ticker strip */
+.landing-ticker-wrap {
+  position: relative; z-index: 1;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 14px 0; overflow: hidden;
+  background: rgba(255,255,255,0.015);
+}
+.landing-ticker {
+  display: flex; gap: 60px; width: max-content;
+  animation: ticker 30s linear infinite;
+}
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 500;
+}
+.ticker-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 50px;
+}
+.ticker-badge.good { background: rgba(131,197,190,0.12); color: var(--good); border: 1px solid rgba(131,197,190,0.2); }
+.ticker-badge.warn { background: rgba(230,204,178,0.1); color: var(--warn); border: 1px solid rgba(230,204,178,0.2); }
+.ticker-badge.bad  { background: rgba(244,63,94,0.08); color: var(--bad); border: 1px solid rgba(244,63,94,0.15); }
+
+/* Features — numbered */
 .landing-features {
-  padding: 20px 24px 60px; max-width: 900px; margin: 0 auto; width: 100%;
+  padding: 80px 72px 60px; max-width: 1100px; margin: 0 auto; width: 100%;
+  position: relative; z-index: 1;
+  box-sizing: border-box;
 }
+@media (max-width: 860px) { .landing-features { padding: 60px 28px 40px; } }
 .features-label {
-  text-align: center; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
-  margin-bottom: 32px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 48px;
+  display: flex; align-items: center; gap: 14px;
 }
+.features-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .features-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
   margin-bottom: 40px;
 }
 @media (max-width: 640px) { .features-grid { grid-template-columns: 1fr; } }
 @media (max-width: 900px) and (min-width: 641px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
 .feature-card {
-  background: rgba(13,20,40,0.8);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: 22px 20px;
-  transition: border-color 0.2s, transform 0.2s;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 28px 24px;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  position: relative; overflow: hidden;
 }
-.feature-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
-.feature-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-.feature-desc { font-size: 12px; color: var(--muted); line-height: 1.65; }
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.feature-card:hover { border-color: rgba(123,44,191,0.25); transform: translateY(-3px); background: rgba(123,44,191,0.03); }
+.feature-card:hover::before { opacity: 1; }
+.feature-num { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent-light); opacity: 0.5; margin-bottom: 16px; letter-spacing: 0.1em; }
+.feature-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.feature-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
-/* Mock verdict preview */
-.landing-preview {
-  background: rgba(13,20,40,0.9);
-  border: 1px solid var(--border-hi);
-  border-radius: var(--r-lg); padding: 24px;
-  margin: 0 24px 40px; max-width: 860px;
-  margin-left: auto; margin-right: auto;
-  box-shadow: 0 16px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(123,44,191,0.1);
-}
-.preview-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
-.preview-verdict {
-  display: flex; align-items: flex-start; gap: 16px;
-  background: rgba(131,197,190,0.06); border: 1px solid rgba(131,197,190,0.2);
-  border-radius: var(--r-md); padding: 18px; margin-bottom: 14px;
-}
-.preview-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--good); margin-bottom: 4px; }
-.preview-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 900; margin-bottom: 6px; }
-.preview-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
-.preview-stats {
-  display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
-}
-@media (max-width: 480px) { .preview-stats { grid-template-columns: repeat(2,1fr); } }
-.preview-stat {
-  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 12px; text-align: center;
-}
-.preview-stat-val { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); }
-.preview-stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+/* Mock verdict preview — keep for compat */
+.landing-preview { display: none; }
+.preview-eyebrow, .preview-verdict, .preview-stats, .preview-stat,
+.preview-stat-val, .preview-stat-label, .preview-label, .preview-title, .preview-body { display: none; }
 
+/* Landing differentiators */
 /* Landing differentiators */
 .diff-section {
   padding: 0 24px 60px; max-width: 860px; margin: 0 auto; width: 100%;
@@ -2179,37 +2279,78 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 <!-- LANDING PAGE -->
 <div id="landing-screen" style="display:flex;">
+
+  <!-- Wave background canvas -->
+  <canvas id="landing-wave-bg"></canvas>
+
+  <!-- Nav -->
   <nav class="landing-nav">
-    <div class="landing-logo">Should I <em>Buy It</em><sup>?</sup></div>
+    <div class="landing-logo">Think <em>To Buy</em><sup>?</sup></div>
+    <div class="landing-nav-center">
+      <div class="landing-nav-stat">
+        <div class="landing-nav-stat-dot"></div>
+        <span>30+ users</span>
+      </div>
+      <div class="landing-nav-stat">Google indexed</div>
+      <div class="landing-nav-stat">Free forever</div>
+    </div>
     <button class="landing-nav-btn" onclick="showAuthFromLanding()">Get Started →</button>
   </nav>
 
+  <!-- Hero split -->
   <div class="landing-hero">
-    <div class="landing-eyebrow">Smart Spending Decisions</div>
-    <h1 class="landing-h1">Stop guessing.<br><em>Start knowing.</em></h1>
-    <p class="landing-sub">Get a green, yellow, or red verdict on any purchase — before you open your wallet. No bank account needed. Free forever.</p>
-    <div class="landing-cta-group">
-      <button class="landing-cta-primary" onclick="showAuthFromLanding()">Start for free →</button>
-      <button class="landing-cta-secondary" onclick="document.getElementById('landing-features').scrollIntoView({behavior:'smooth'})">See how it works</button>
+    <div class="landing-hero-left">
+      <div class="landing-eyebrow">Financial intelligence for Gen Z</div>
+      <h1 class="landing-h1">Stop guessing.<br><em>Start knowing.</em></h1>
+      <p class="landing-sub">Get a green, yellow, or red verdict on any purchase before you open your wallet. No bank account needed.</p>
+      <div class="landing-cta-group">
+        <button class="landing-cta-primary" onclick="showAuthFromLanding()">Start for free →</button>
+        <button class="landing-cta-secondary" onclick="document.getElementById('landing-features').scrollIntoView({behavior:'smooth'})">See how it works</button>
+      </div>
+      <div class="landing-trust">
+        <div class="landing-trust-item"><div class="landing-trust-check">✓</div>No bank account needed</div>
+        <div class="landing-trust-item"><div class="landing-trust-check">✓</div>Free forever</div>
+        <div class="landing-trust-item"><div class="landing-trust-check">✓</div>Google indexed</div>
+      </div>
+    </div>
+
+    <div class="landing-hero-right">
+      <div class="mockup-glow"></div>
+      <div class="landing-mockup">
+        <div class="mockup-eyebrow">Live verdict — AirPods Pro · $249</div>
+        <div class="mockup-verdict-card">
+          <div class="mockup-verdict-label">All Clear</div>
+          <div class="mockup-verdict-title">This is a smart purchase</div>
+          <div class="mockup-verdict-body">You're spending 20% of savings and will recover it in ~2.5 weeks. $951 stays untouched — a healthy cushion.</div>
+        </div>
+        <div class="mockup-stats">
+          <div class="mockup-stat"><div class="mockup-stat-val">$951</div><div class="mockup-stat-label">Remaining</div></div>
+          <div class="mockup-stat"><div class="mockup-stat-val">20%</div><div class="mockup-stat-label">Of Savings</div></div>
+          <div class="mockup-stat"><div class="mockup-stat-val">2.5w</div><div class="mockup-stat-label">To Recover</div></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- MOCK VERDICT PREVIEW -->
-  <div class="landing-preview">
-    <div class="preview-eyebrow">Live example — AirPods Pro · $249 · $1,200 savings</div>
-    <div class="preview-verdict">
-      
-      <div>
-        <div class="preview-label">All Clear</div>
-        <div class="preview-title">This is a smart purchase</div>
-        <div class="preview-body">You're spending 20% of savings and will recover it in ~2.5 weeks. $951 stays untouched — a healthy cushion.</div>
-      </div>
-    </div>
-    <div class="preview-stats">
-      <div class="preview-stat"><div class="preview-stat-val">$951</div><div class="preview-stat-label">Remaining</div></div>
-      <div class="preview-stat"><div class="preview-stat-val">20%</div><div class="preview-stat-label">Of Savings</div></div>
-      <div class="preview-stat"><div class="preview-stat-val">2.5w</div><div class="preview-stat-label">To Recover</div></div>
-      <div class="preview-stat"><div class="preview-stat-val">4.8w</div><div class="preview-stat-label">Emergency Runway</div></div>
+  <!-- Ticker strip -->
+  <div class="landing-ticker-wrap">
+    <div class="landing-ticker">
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>AirPods Pro · $249</div>
+      <div class="ticker-item"><span class="ticker-badge warn">Think Twice</span>Nike Dunks · $180</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Kindle Paperwhite · $140</div>
+      <div class="ticker-item"><span class="ticker-badge bad">Not Now</span>MacBook Pro · $2,499</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Spotify Premium · $11/mo</div>
+      <div class="ticker-item"><span class="ticker-badge warn">Think Twice</span>PS5 · $499</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Book Bundle · $45</div>
+      <div class="ticker-item"><span class="ticker-badge bad">Not Now</span>Supreme Hoodie · $380</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>AirPods Pro · $249</div>
+      <div class="ticker-item"><span class="ticker-badge warn">Think Twice</span>Nike Dunks · $180</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Kindle Paperwhite · $140</div>
+      <div class="ticker-item"><span class="ticker-badge bad">Not Now</span>MacBook Pro · $2,499</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Spotify Premium · $11/mo</div>
+      <div class="ticker-item"><span class="ticker-badge warn">Think Twice</span>PS5 · $499</div>
+      <div class="ticker-item"><span class="ticker-badge good">Smart Buy</span>Book Bundle · $45</div>
+      <div class="ticker-item"><span class="ticker-badge bad">Not Now</span>Supreme Hoodie · $380</div>
     </div>
   </div>
 
@@ -2218,43 +2359,37 @@ input[type="range"]::-webkit-slider-thumb:hover {
     <div class="features-label">Everything you need to spend smarter</div>
     <div class="features-grid">
       <div class="feature-card">
-        
+        <div class="feature-num">01</div>
         <div class="feature-title">Purchase Analyzer</div>
         <div class="feature-desc">Get a green, yellow, or red verdict instantly. See exactly how long recovery takes and what percentage of your savings is at risk.</div>
       </div>
       <div class="feature-card">
-        
+        <div class="feature-num">02</div>
         <div class="feature-title">Savings Goals</div>
-        <div class="feature-desc">Set targets for what you're saving toward. Track progress, add funds, and see how many weeks until you get there.</div>
+        <div class="feature-desc">Set targets for what you're saving toward. Track progress and see how many weeks until you get there based on your income.</div>
       </div>
       <div class="feature-card">
-        
-        <div class="feature-title">Spending History</div>
-        <div class="feature-desc">Every decision you save is logged with charts. See your spending patterns by category over time.</div>
+        <div class="feature-num">03</div>
+        <div class="feature-title">AI Financial Advisor</div>
+        <div class="feature-desc">Ask real money questions and get answers based on your actual numbers — not generic tips. Powered by Llama 3.3 70B.</div>
       </div>
       <div class="feature-card">
-        
-        <div class="feature-title">Smart Advisor</div>
-        <div class="feature-desc">Ask any money question and get advice tailored to your actual numbers — not generic tips.</div>
+        <div class="feature-num">04</div>
+        <div class="feature-title">Bills Tracker</div>
+        <div class="feature-desc">Add recurring expenses and instantly see your true disposable income after everything is accounted for.</div>
       </div>
       <div class="feature-card">
-        
-        <div class="feature-title">Markets</div>
-        <div class="feature-desc">Track live stocks and crypto with your own Buy, Neutral, or Don't Buy verdict on each asset.</div>
-      </div>
-      <div class="feature-card">
-        
-        <div class="feature-title">Bill Tracker</div>
-        <div class="feature-desc">Add your recurring bills and see exactly what's left after expenses each week based on your income.</div>
-      </div>
-      <div class="feature-card">
-        
+        <div class="feature-num">05</div>
         <div class="feature-title">Financial Education</div>
-        <div class="feature-desc">8 plain-English lessons on taxes, investing, credit, and more — things school never taught you. Each with real examples and a quiz.</div>
+        <div class="feature-desc">Lessons on taxes, investing, credit cards, and more — things most of us were never taught in school. With real examples and quizzes.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">06</div>
+        <div class="feature-title">Live Markets</div>
+        <div class="feature-desc">Real-time stock and crypto charts with plain English breakdowns. No finance degree required to understand what you're looking at.</div>
       </div>
     </div>
   </div>
-
   <!-- WHY THINK TO BUY -->
   <div class="diff-section">
     <div class="diff-label">What makes us different</div>
@@ -2428,11 +2563,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 </div>
 
-<div class="ambient">
-  <div class="amb-orb"></div>
-  <div class="amb-orb"></div>
-  <div class="amb-orb"></div>
-</div>
+  <!-- ANIMATED WAVE BACKGROUND -->
+  <canvas id="waveBg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.85;"></canvas>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
@@ -7395,6 +7527,196 @@ if (localStorage.getItem('sib4_hist_hint')) { const el = document.getElementById
 rotateTip();
 initFact();
 showLesson('tax', null);
+
+/* ─── LANDING WAVE BACKGROUND ─── */
+(function() {
+  const canvas = document.getElementById('landing-wave-bg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, t = 0, active = true;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function wave(time, x, amp, freq, phase, yBase) {
+    return yBase + Math.sin(x * freq + time + phase) * amp
+                 + Math.sin(x * freq * 0.55 + time * 0.65 + phase + 1.2) * amp * 0.3;
+  }
+
+  const wLayers = [
+    { amp:0.12, freq:0.005, phase:0,   yFrac:0.55, color:'rgba(45,14,95,0.45)',  speed:0.32 },
+    { amp:0.08, freq:0.007, phase:2.1, yFrac:0.65, color:'rgba(75,25,140,0.38)', speed:0.42 },
+    { amp:0.06, freq:0.009, phase:1.0, yFrac:0.74, color:'rgba(28,75,72,0.40)',  speed:0.52 },
+    { amp:0.04, freq:0.012, phase:3.2, yFrac:0.82, color:'rgba(48,108,100,0.42)', speed:0.62 },
+  ];
+
+  function render() {
+    if (!active) return;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.fillStyle = '#07070d';
+    ctx.fillRect(0, 0, W, H);
+
+    // Ambient top glow
+    const g = ctx.createRadialGradient(W*0.5, H*0.1, 0, W*0.5, H*0.1, W*0.4);
+    g.addColorStop(0, 'rgba(123,44,191,0.08)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // Right side glow
+    const g2 = ctx.createRadialGradient(W*0.85, H*0.4, 0, W*0.85, H*0.4, W*0.25);
+    g2.addColorStop(0, 'rgba(131,197,190,0.05)');
+    g2.addColorStop(1, 'transparent');
+    ctx.fillStyle = g2;
+    ctx.fillRect(0, 0, W, H);
+
+    wLayers.forEach(w => {
+      const amp = w.amp * H, yBase = w.yFrac * H;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 4) {
+        const y = wave(t * w.speed, x, amp, w.freq, w.phase, yBase);
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+
+    // Subtle curve overlays
+    [[0.08,0.006,0.4,0.55,'rgba(168,85,247,0.15)',0.25],[0.05,0.008,2.5,0.65,'rgba(131,197,190,0.12)',0.38]].forEach(([amp,freq,phase,yFrac,color,speed]) => {
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 4) {
+        const y = wave(t*speed, x, amp*H, freq, phase, yFrac*H);
+        x===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+    });
+
+    // Dot grid top-left
+    ctx.fillStyle = 'rgba(123,44,191,0.15)';
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) {
+      ctx.beginPath(); ctx.arc(40+c*20, 40+r*20, 1.1, 0, Math.PI*2); ctx.fill();
+    }
+    // Dot grid top-right
+    ctx.fillStyle = 'rgba(131,197,190,0.12)';
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) {
+      ctx.beginPath(); ctx.arc(W-140+c*20, 40+r*20, 1.1, 0, Math.PI*2); ctx.fill();
+    }
+
+    t += 0.009;
+    requestAnimationFrame(render);
+  }
+
+  // Only run when landing screen visible
+  const obs = new MutationObserver(() => {
+    const ls = document.getElementById('landing-screen');
+    active = ls && ls.style.display !== 'none';
+  });
+  obs.observe(document.getElementById('landing-screen') || document.body, { attributes: true, attributeFilter: ['style'] });
+
+  render();
+})();
+
+/* ─── ANIMATED WAVE BACKGROUND ─── */
+(function() {
+  const canvas = document.getElementById('waveBg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, t = 0;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function wave(time, x, amp, freq, phase, yBase) {
+    return yBase + Math.sin(x * freq + time + phase) * amp
+                 + Math.sin(x * freq * 0.6 + time * 0.7 + phase + 1) * amp * 0.35;
+  }
+
+  function drawBars(startX, count, gap, color, time, baseY) {
+    ctx.fillStyle = color;
+    for (let i = 0; i < count; i++) {
+      const h = 55 + Math.sin(time * 0.8 + i * 0.4) * 22;
+      ctx.fillRect(startX + i * gap, baseY - h, 1.5, h);
+    }
+  }
+
+  const waveLayers = [
+    { amp:0.13, freq:0.006, phase:0,   yFrac:0.62, color:'rgba(55,18,105,0.38)',  speed:0.38 },
+    { amp:0.09, freq:0.008, phase:2,   yFrac:0.70, color:'rgba(85,30,155,0.32)',  speed:0.48 },
+    { amp:0.07, freq:0.010, phase:1.2, yFrac:0.78, color:'rgba(35,85,80,0.36)',   speed:0.58 },
+    { amp:0.05, freq:0.013, phase:3.5, yFrac:0.85, color:'rgba(55,120,110,0.4)',  speed:0.68 },
+  ];
+
+  const curveLayers = [
+    { amp:0.09, freq:0.007, phase:0.5, yFrac:0.60, color:'rgba(168,85,247,0.22)', speed:0.28 },
+    { amp:0.06, freq:0.009, phase:2.8, yFrac:0.70, color:'rgba(131,197,190,0.18)', speed:0.42 },
+  ];
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.fillStyle = '#07070d';
+    ctx.fillRect(0, 0, W, H);
+
+    const grd = ctx.createRadialGradient(W*0.5, H*0.15, 0, W*0.5, H*0.15, W*0.35);
+    grd.addColorStop(0, 'rgba(123,44,191,0.06)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    waveLayers.forEach(w => {
+      const amp = w.amp * H, yBase = w.yFrac * H;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        const y = wave(t * w.speed, x, amp, w.freq, w.phase, yBase);
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+
+    curveLayers.forEach(c => {
+      const amp = c.amp * H, yBase = c.yFrac * H;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        const y = wave(t * c.speed, x, amp, c.freq, c.phase, yBase);
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = c.color;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    });
+
+    const dotColor1 = 'rgba(123,44,191,0.18)';
+    const dotColor2 = 'rgba(131,197,190,0.15)';
+    [[30,30,dotColor1],[W-160,30,dotColor2],[W*0.55,H*0.4,dotColor1]].forEach(([dx,dy,dc]) => {
+      ctx.fillStyle = dc;
+      for (let r = 0; r < 8; r++) for (let c2 = 0; c2 < 8; c2++) {
+        ctx.beginPath();
+        ctx.arc(dx + c2*18, dy + r*18, 1.1, 0, Math.PI*2);
+        ctx.fill();
+      }
+    });
+
+    drawBars(28, 16, 6, 'rgba(168,85,247,0.16)', t, H*0.92);
+    drawBars(W-125, 12, 6, 'rgba(131,197,190,0.14)', t+1, H*0.92);
+
+    t += 0.010;
+    requestAnimationFrame(render);
+  }
+
+  render();
+})();
 </script>
 </body>
 </html>
