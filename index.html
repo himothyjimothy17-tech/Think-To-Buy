@@ -5404,6 +5404,7 @@ const _initSb = () => {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'implicit',
         storageKey: 'sib4_supabase_session',
         storage: window.localStorage,
       }
@@ -6280,9 +6281,27 @@ function showAuthFromLanding() {
                           params.has('code') || params.has('error');
 
   if (isOAuthCallback) {
-    // Hide landing, show loading state while Supabase processes the OAuth code
+    // Hide landing while we process the OAuth callback
     document.getElementById('landing-screen').style.display = 'none';
-    // Supabase onAuthStateChange will handle showing the app once session is established
+    try {
+      // Give Supabase time to process the hash/code
+      await new Promise(r => setTimeout(r, 500));
+      const { data: { session } } = await sb.auth.getSession();
+      if (session && session.user) {
+        // Session found — onAuthStateChange will handle showing the app
+        // but let's also show it directly in case it already fired
+        const appEl = document.querySelector('.app');
+        if (appEl) appEl.style.display = 'block';
+        document.getElementById('user-bar').style.display = 'flex';
+        const emailEl = document.getElementById('user-email-display');
+        if (emailEl) emailEl.textContent = session.user.email.split('@')[0];
+      } else {
+        // No session — go back to landing
+        document.getElementById('landing-screen').style.display = 'flex';
+      }
+    } catch(e) {
+      document.getElementById('landing-screen').style.display = 'flex';
+    }
     // Clean up URL
     try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
     return;
