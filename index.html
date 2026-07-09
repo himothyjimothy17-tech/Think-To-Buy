@@ -1333,7 +1333,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* Landing canvas wave background */
 #landing-wave-bg {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   z-index: 0; pointer-events: none;
 }
 
@@ -1482,7 +1482,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* Ticker strip */
 .landing-ticker-wrap {
-  position: relative; z-index: 1;
+  position: relative; z-index: 2;
   border-top: 1px solid rgba(255,255,255,0.05);
   border-bottom: 1px solid rgba(255,255,255,0.05);
   padding: 14px 0; overflow: hidden;
@@ -1511,7 +1511,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Features — numbered */
 .landing-features {
   padding: 80px 72px 60px; max-width: 1100px; margin: 0 auto; width: 100%;
-  position: relative; z-index: 1;
+  position: relative; z-index: 2;
   box-sizing: border-box;
 }
 @media (max-width: 860px) { .landing-features { padding: 60px 28px 40px; } }
@@ -1554,6 +1554,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Landing differentiators */
 .diff-section {
   padding: 0 24px 60px; max-width: 860px; margin: 0 auto; width: 100%;
+  position: relative; z-index: 2;
 }
 .diff-label {
   text-align: center; font-size: 10px; font-weight: 700;
@@ -7536,7 +7537,8 @@ showLesson('tax', null);
   let W, H, t = 0, active = true;
 
   function resize() {
-    W = canvas.width  = window.innerWidth;
+    const ls = document.getElementById('landing-screen');
+    W = canvas.width  = ls ? ls.scrollWidth : window.innerWidth;
     H = canvas.height = window.innerHeight;
   }
   window.addEventListener('resize', resize);
@@ -7548,7 +7550,6 @@ showLesson('tax', null);
   }
 
   const wLayers = [
-    { amp:0.12, freq:0.005, phase:0,   yFrac:0.55, color:'rgba(45,14,95,0.45)',  speed:0.32 },
     { amp:0.08, freq:0.007, phase:2.1, yFrac:0.65, color:'rgba(75,25,140,0.38)', speed:0.42 },
     { amp:0.06, freq:0.009, phase:1.0, yFrac:0.74, color:'rgba(28,75,72,0.40)',  speed:0.52 },
     { amp:0.04, freq:0.012, phase:3.2, yFrac:0.82, color:'rgba(48,108,100,0.42)', speed:0.62 },
