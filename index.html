@@ -30,9 +30,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cwicodhdcwcnbrhhcftj.supabase.co">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- Font CSS loaded non-render-blocking: swapped to "all" once fetched, with a noscript fallback -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
 <style>
 /* ─── DESIGN SYSTEM v2 ─── */
@@ -549,6 +551,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .verdict-card.bad::before { background: var(--bad); }
 .verdict-card.bad::after { background: var(--bad); }
 
+/* Soft one-shot glow when a fresh verdict lands — reinforces the read at a glance */
+@keyframes verdict-glow-good { 0% { box-shadow: 0 0 0 0 rgba(131,197,190,0.38); } 100% { box-shadow: 0 0 0 28px rgba(131,197,190,0); } }
+@keyframes verdict-glow-warn { 0% { box-shadow: 0 0 0 0 rgba(230,204,178,0.32); } 100% { box-shadow: 0 0 0 28px rgba(230,204,178,0); } }
+@keyframes verdict-glow-bad  { 0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.32);  } 100% { box-shadow: 0 0 0 28px rgba(244,63,94,0);  } }
+.verdict-card.good { animation: verdict-glow-good 0.9s var(--ease); }
+.verdict-card.warn { animation: verdict-glow-warn 0.9s var(--ease); }
+.verdict-card.bad  { animation: verdict-glow-bad 0.9s var(--ease); }
+
 .v-content { flex: 1; }
 .v-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
 .v-label.good { color: var(--good); }
@@ -692,6 +702,37 @@ input[type="range"]::-webkit-slider-thumb:hover {
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
 .adj-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+.goal-confidence {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  margin-top: 7px; font-size: 11px; color: var(--muted); line-height: 1.5;
+}
+.confidence-pill {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  padding: 2px 9px; border-radius: 50px;
+  background: var(--accent-glow); border: 1px solid rgba(123,44,191,0.3);
+  color: var(--accent-light); font-weight: 700; font-size: 10px;
+  letter-spacing: 0.02em; white-space: nowrap;
+}
+.confidence-pill.high { background: rgba(131,197,190,0.1); border-color: rgba(131,197,190,0.3); color: var(--good); }
+.confidence-pill.low  { background: rgba(230,204,178,0.1); border-color: rgba(230,204,178,0.3); color: var(--warn); }
+
+/* Money value flash — a quick, subtle highlight pulse whenever a stat changes */
+@keyframes value-pulse {
+  0%   { color: var(--accent-light); text-shadow: 0 0 0 rgba(123,44,191,0); transform: scale(1); }
+  30%  { color: var(--accent-light); text-shadow: 0 0 18px rgba(123,44,191,0.5); transform: scale(1.08); }
+  100% { color: inherit; text-shadow: 0 0 0 rgba(123,44,191,0); transform: scale(1); }
+}
+.value-pulse { display: inline-block; animation: value-pulse 0.7s var(--ease); }
+
+/* Goal-complete celebration */
+@keyframes goal-complete-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.015); box-shadow: 0 0 0 0 rgba(131,197,190,0.45), 0 12px 40px rgba(131,197,190,0.18); }
+  100% { transform: scale(1); box-shadow: 0 0 0 26px rgba(131,197,190,0), 0 0 0 0 rgba(131,197,190,0); }
+}
+.goal-card.just-completed { animation: goal-complete-pop 1s var(--ease); border-color: rgba(131,197,190,0.35); }
+.goal-card.just-completed .goal-pct.done { animation: pill-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; }
 
 /* ─── HISTORY ─── */
 .hist-header {
@@ -1359,9 +1400,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border: none; color: #fff; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer;
   box-shadow: 0 4px 20px rgba(123,44,191,0.35);
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
-.landing-nav-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.landing-nav-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 26px rgba(123,44,191,0.5); }
+.landing-nav-btn:active { transform: translateY(0) scale(0.96); }
 
 /* Hero — split layout */
 .landing-hero {
@@ -1410,17 +1452,26 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: #fff; font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 700; cursor: pointer;
   box-shadow: 0 6px 32px rgba(123,44,191,0.4);
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  position: relative; overflow: hidden;
 }
-.landing-cta-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+.landing-cta-primary::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 60%);
+  opacity: 0; transition: opacity 0.2s var(--ease);
+}
+.landing-cta-primary:hover { opacity: 0.96; transform: translateY(-2px); box-shadow: 0 12px 44px rgba(123,44,191,0.55); }
+.landing-cta-primary:hover::after { opacity: 1; }
+.landing-cta-primary:active { transform: translateY(0) scale(0.98); box-shadow: 0 6px 24px rgba(123,44,191,0.4); }
 .landing-cta-secondary {
   padding: 16px 36px; border-radius: 50px;
   background: transparent; border: 1px solid rgba(255,255,255,0.12);
   color: var(--text-2); font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s var(--ease);
 }
-.landing-cta-secondary:hover { border-color: var(--accent); color: var(--accent-light); }
+.landing-cta-secondary:hover { border-color: var(--accent); color: var(--accent-light); background: rgba(123,44,191,0.06); transform: translateY(-2px); }
+.landing-cta-secondary:active { transform: translateY(0); }
 
 /* Trust strip */
 .landing-trust {
@@ -1429,13 +1480,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 .landing-trust-item {
   font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px;
+  transition: color 0.2s var(--ease);
 }
+.landing-trust-item:hover { color: var(--text-2); }
 .landing-trust-check {
   width: 16px; height: 16px; border-radius: 50%;
   background: rgba(131,197,190,0.12); border: 1px solid rgba(131,197,190,0.3);
   display: flex; align-items: center; justify-content: center;
   font-size: 9px; color: var(--good);
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease);
 }
+.landing-trust-item:hover .landing-trust-check { background: rgba(131,197,190,0.22); border-color: rgba(131,197,190,0.5); transform: scale(1.1); }
 
 /* Right side — app mockup */
 .landing-hero-right {
@@ -1470,7 +1525,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .mockup-stat {
   background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
   border-radius: 10px; padding: 12px 8px; text-align: center;
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
 }
+.mockup-stat:hover { transform: translateY(-2px); border-color: rgba(123,44,191,0.35); background: rgba(123,44,191,0.06); }
 .mockup-stat-val { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; color: var(--accent-light); letter-spacing: -0.02em; }
 .mockup-stat-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
 .mockup-glow {
@@ -1581,9 +1638,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--r-lg); padding: 22px 20px;
   position: relative; overflow: hidden;
-  transition: border-color 0.2s;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
-.diff-card:hover { border-color: var(--border-hi); }
+.diff-card:hover { border-color: var(--border-hi); transform: translateY(-4px); box-shadow: 0 18px 44px rgba(0,0,0,0.35); }
 .diff-card::before {
   content: ''; position: absolute;
   top: 0; left: 0; right: 0; height: 2px;
@@ -1619,6 +1676,47 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .diff-check { color: var(--good); font-weight: 700; font-size: 15px; }
 .diff-cross { color: var(--muted2); font-size: 15px; }
 .diff-us-col { color: var(--accent-light) !important; font-weight: 700; font-size: 13px; }
+
+/* ─── DEDICATED TRUST SECTION ─── */
+.landing-trust-section {
+  padding: 20px 24px 70px; max-width: 1000px; margin: 0 auto; width: 100%;
+  position: relative; z-index: 2;
+}
+.trust-section-label {
+  text-align: center; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 14px;
+}
+.trust-section-headline {
+  text-align: center; font-family: 'Inter', sans-serif;
+  font-size: clamp(21px, 3vw, 27px); font-weight: 900; letter-spacing: -0.03em;
+  margin-bottom: 40px; color: var(--text);
+}
+.trust-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+@media (max-width: 900px) { .trust-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .trust-grid { grid-template-columns: 1fr; } }
+.trust-card {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 26px 22px;
+  text-align: center;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.trust-card:hover {
+  border-color: rgba(131,197,190,0.3); transform: translateY(-4px);
+  background: rgba(131,197,190,0.03); box-shadow: 0 18px 44px rgba(0,0,0,0.35);
+}
+.trust-icon {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(131,197,190,0.1); border: 1px solid rgba(131,197,190,0.25);
+  color: var(--teal);
+  transition: transform 0.25s var(--ease), background 0.25s var(--ease);
+}
+.trust-card:hover .trust-icon { transform: scale(1.08) rotate(-4deg); background: rgba(131,197,190,0.18); }
+.trust-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.trust-body { font-size: 12px; color: var(--muted); line-height: 1.65; }
 
 /* Landing footer */
 .landing-footer {
@@ -1957,6 +2055,50 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
 .hint-close-btn:hover { background: rgba(62,207,207,0.1); }
+
+/* ─── "WHAT TO DO NEXT" ACTION CARD (History dashboard) ─── */
+.next-action-card {
+  display: flex; align-items: flex-start; gap: 16px;
+  background: linear-gradient(135deg, rgba(123,44,191,0.1), rgba(131,197,190,0.05));
+  border: 1px solid rgba(123,44,191,0.25);
+  border-radius: var(--r-lg); padding: 20px 22px;
+  margin-bottom: 16px; position: relative; overflow: hidden;
+  animation: rise 0.35s var(--ease);
+}
+.next-action-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--accent-light), var(--teal));
+}
+.next-action-card.tone-bad::before  { background: var(--bad); }
+.next-action-card.tone-warn::before { background: var(--warn); }
+.next-action-card.tone-good::before { background: var(--good); }
+.next-action-icon {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-glow); border: 1px solid rgba(123,44,191,0.3);
+  font-size: 16px; color: var(--accent-light);
+}
+.next-action-card.tone-bad  .next-action-icon { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.3); color: var(--bad); }
+.next-action-card.tone-warn .next-action-icon { background: rgba(230,204,178,0.1); border-color: rgba(230,204,178,0.3); color: var(--warn); }
+.next-action-card.tone-good .next-action-icon { background: rgba(131,197,190,0.1); border-color: rgba(131,197,190,0.3); color: var(--good); }
+.next-action-body { flex: 1; min-width: 0; }
+.next-action-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-light); margin-bottom: 6px; }
+.next-action-title { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 5px; color: var(--text); }
+.next-action-text { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+.next-action-cta {
+  flex-shrink: 0; align-self: center;
+  padding: 9px 18px; border-radius: 50px; border: none;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(123,44,191,0.35);
+  transition: opacity 0.15s, transform 0.1s;
+}
+.next-action-cta:hover { opacity: 0.9; transform: translateY(-2px); }
+@media (max-width: 560px) {
+  .next-action-card { flex-wrap: wrap; }
+  .next-action-cta { width: 100%; }
+}
 .nl-hint {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   font-size: 12px; color: var(--muted); margin-top: 8px;
@@ -2485,6 +2627,34 @@ input[type="range"]::-webkit-slider-thumb:hover {
     <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:900;margin-bottom:12px;letter-spacing:-0.03em;">Ready to spend smarter?</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:28px;">Free forever. Your data syncs across all your devices.</div>
     <button class="landing-cta-primary" onclick="showAuthFromLanding()">Create your free account →</button>
+  </div>
+
+  <!-- TRUST SECTION -->
+  <div class="landing-trust-section">
+    <div class="trust-section-label">Why you can trust it</div>
+    <div class="trust-section-headline">Built to earn trust, not just installs.</div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="trust-title">Bank-level privacy</div>
+        <div class="trust-body">We never ask you to link a bank account. Your numbers stay yours — nothing to hack, sell, or leak.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="trust-title">Secure by design</div>
+        <div class="trust-body">Accounts and sync run on Supabase with encrypted storage, plus optional sign-in with Google.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+        <div class="trust-title">No hidden costs</div>
+        <div class="trust-body">Free forever — no credit card, no trial period, no upgrade wall waiting behind a feature you need.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
+        <div class="trust-title">Built in the open</div>
+        <div class="trust-body">Independently built by one person in San Jose, CA — not a growth team optimizing for engagement.</div>
+      </div>
+    </div>
   </div>
 
   <div class="landing-footer">
@@ -3025,6 +3195,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
       <button onclick="document.getElementById('history-hint').style.display='none';localStorage.setItem('sib4_hist_hint','1')" class="hint-close-btn">Got it ✓</button>
     </div>
 
+    <!-- WHAT TO DO NEXT -->
+    <div class="next-action-card" id="next-action-card" style="display:none;">
+      <div class="next-action-icon" id="next-action-icon"></div>
+      <div class="next-action-body">
+        <div class="next-action-eyebrow">What to do next</div>
+        <div class="next-action-title" id="next-action-title"></div>
+        <div class="next-action-text" id="next-action-text"></div>
+      </div>
+      <button class="next-action-cta" id="next-action-cta" style="display:none;"></button>
+    </div>
+
     <!-- TOP STATS ROW -->
     <div id="hist-summary" class="dash-stats" style="display:none;">
       <div class="dash-stat">
@@ -3409,6 +3590,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 </div><!-- /app -->
 
+<!-- Loaded here (end of body) instead of <head> so they no longer block the initial paint of the page above. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
@@ -3437,6 +3621,8 @@ function signOutNow() {
 }
 let purchaseHistory = JSON.parse(localStorage.getItem('sib4_hist') || '[]');
 let goals   = JSON.parse(localStorage.getItem('sib4_goals') || '[]');
+let celebratedGoals = new Set(JSON.parse(localStorage.getItem('sib4_goal_celebrated') || '[]'));
+let lastMoneySavedShown = null; // tracks the last "money saved" figure rendered, so we only pulse on real changes
 let lastResult = null;
 let charts = {};
 let isNeed = false;
@@ -3820,6 +4006,14 @@ const fmt = n => currencySymbol + Number(n).toLocaleString('en-US', { minimumFra
 const tc  = (a=1) => `rgba(238,240,244,${a})`;
 const gc  = ()   => 'rgba(255,255,255,0.06)';
 
+// Micro-interaction: brief highlight flash on a value that just changed.
+function pulseText(el) {
+  if (!el) return;
+  el.classList.remove('value-pulse');
+  void el.offsetWidth; // force reflow so the animation restarts even if it just ran
+  el.classList.add('value-pulse');
+}
+
 Chart.defaults.color = tc(0.55);
 Chart.defaults.borderColor = gc();
 Chart.defaults.font.family = 'Outfit';
@@ -4149,6 +4343,81 @@ function setFilter(f, el) {
 }
 function setSortOrder(v) { histSort = v; renderHistList(); }
 
+// ── "What to do next" — one clear, prioritized recommendation for the History dashboard,
+// instead of leaving the user to read charts and figure it out themselves.
+function getTopHistoryAction() {
+  if (!purchaseHistory.length) return null;
+  const income   = parseFloat(localStorage.getItem('sib4_income') || '0');
+  const allBuys  = purchaseHistory.filter(h => h.cls !== 'bad');
+  const avoided  = purchaseHistory.filter(h => h.cls === 'bad');
+  const goodCount = purchaseHistory.filter(h => h.cls === 'good').length;
+  const warnCount = purchaseHistory.filter(h => h.cls === 'warn').length;
+  const smartPct  = Math.round((goodCount / purchaseHistory.length) * 100);
+  const moneySaved = avoided.reduce((s,h) => s+h.price, 0);
+
+  const cats = {};
+  allBuys.forEach(h => { cats[h.cat] = (cats[h.cat]||0) + h.price; });
+  const topCat = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  const totalSpent = allBuys.reduce((s,h)=>s+h.price, 0);
+
+  // Priority 1 — spending discipline is off track
+  if (purchaseHistory.length >= 3 && smartPct < 40) {
+    return { tone: 'bad', icon: '!', title: 'Pause non-essential spending for now',
+      text: `Only ${smartPct}% of your logged purchases have been smart buys. Before your next purchase, run it through the Analyze tab first — it takes 10 seconds and could steer you away from another risky buy.`,
+      cta: { label: 'Go to Analyze', action: "go('analyze', document.querySelectorAll('.tab')[0])" } };
+  }
+  // Priority 2 — one category is dominating spend
+  if (topCat && totalSpent > 0 && Object.keys(cats).length > 1 && (topCat[1] / totalSpent) > 0.45) {
+    const catShare = Math.round(topCat[1] / totalSpent * 100);
+    return { tone: 'warn', icon: '▪', title: `${topCat[0]} is eating your budget`,
+      text: `${catShare}% of your spending is going to ${topCat[0]} (${fmt(Math.round(topCat[1]))} total). Try setting yourself an informal monthly cap for this category and redirect the difference to savings.`,
+      cta: null };
+  }
+  // Priority 3 — lots of "think twice" purchases relative to smart ones
+  if (warnCount >= 3 && warnCount > goodCount) {
+    return { tone: 'warn', icon: '↗', title: 'A lot of "risky" calls lately',
+      text: `${warnCount} of your logged purchases landed in the Think Twice zone. That usually means your savings buffer is thinner than it should be — consider building it back up before your next discretionary buy.`,
+      cta: { label: 'Set a goal', action: "go('goals', document.querySelectorAll('.tab')[1])" } };
+  }
+  // Priority 4 — no income set yet, the single biggest unlock for this dashboard
+  if (!income) {
+    return { tone: 'neutral', icon: '→', title: 'Add your income for sharper insights',
+      text: `You've logged ${purchaseHistory.length} purchase${purchaseHistory.length>1?'s':''} but haven't set a weekly income yet. Add it once and this dashboard unlocks recovery timelines and the 50/30/20 breakdown below.`,
+      cta: { label: 'Add income', action: "askForIncome(()=>{renderHistory();})" } };
+  }
+  // Priority 5 — doing well: reinforce it and point at goals
+  if (smartPct >= 70) {
+    return { tone: 'good', icon: '✓', title: 'Your spending discipline is strong',
+      text: `${smartPct}% smart buys, and ${fmt(Math.round(moneySaved))} saved by saying no. Put that momentum to work — set a savings goal so the money you're not spending has somewhere to go.`,
+      cta: { label: 'Set a goal', action: "go('goals', document.querySelectorAll('.tab')[1])" } };
+  }
+  // Fallback
+  return { tone: 'neutral', icon: '◎', title: 'Keep logging purchases',
+    text: `The more purchases you log through the Analyze tab, the sharper these insights get. Check back after a few more decisions for personalized patterns.`,
+    cta: null };
+}
+
+function renderHistoryAction() {
+  const card = document.getElementById('next-action-card');
+  if (!card) return;
+  const action = getTopHistoryAction();
+  if (!action) { card.style.display = 'none'; return; }
+  card.className = 'next-action-card tone-' + action.tone;
+  card.style.display = 'flex';
+  document.getElementById('next-action-icon').textContent = action.icon;
+  document.getElementById('next-action-title').textContent = action.title;
+  document.getElementById('next-action-text').textContent = action.text;
+  const cta = document.getElementById('next-action-cta');
+  if (action.cta) {
+    cta.style.display = 'inline-block';
+    cta.textContent = action.cta.label;
+    cta.setAttribute('onclick', action.cta.action);
+  } else {
+    cta.style.display = 'none';
+    cta.removeAttribute('onclick');
+  }
+}
+
 function renderHistory() {
   const empty     = document.getElementById('hist-empty');
   const summary   = document.getElementById('hist-summary');
@@ -4167,6 +4436,8 @@ function renderHistory() {
     if (histCharts) histCharts.style.display = 'none';
     document.getElementById('history-list').innerHTML = '';
     empty.style.display = 'block';
+    const nextActionCard = document.getElementById('next-action-card');
+    if (nextActionCard) nextActionCard.style.display = 'none';
     return;
   }
 
@@ -4187,6 +4458,13 @@ function renderHistory() {
   document.getElementById('hs-saved').textContent    = fmt(Math.round(moneySaved));
   document.getElementById('hs-smart-pct').textContent = smartPct + '%';
   document.getElementById('hs-count').textContent    = purchaseHistory.length;
+
+  // Micro-interaction: pulse "money saved" whenever the figure actually changes (not on every tab visit)
+  if (lastMoneySavedShown !== null && moneySaved !== lastMoneySavedShown) {
+    pulseText(document.getElementById('hs-saved'));
+    pulseText(document.getElementById('saved-amount'));
+  }
+  lastMoneySavedShown = moneySaved;
 
   // ── Money saved card ──
   if (savedCard) {
@@ -4247,6 +4525,7 @@ function renderHistory() {
     document.getElementById('rule-bars').innerHTML = `<p style="font-size:13px;color:var(--muted);line-height:1.7;">${nudgeHTML('income-num','weekly income','Enter your')} to see how your spending compares to the 50/30/20 rule.</p>`;
   }
 
+  renderHistoryAction();
   renderHistList();
   renderHistChart();
   renderVerdictsChart();
@@ -4382,8 +4661,28 @@ function updateGoalSaved(id, delta) {
   g.saved = Math.max(0, Math.min(g.target, g.saved + (delta * amt)));
   localStorage.setItem('sib4_goals', JSON.stringify(goals));
   renderGoals();
+  // Micro-interaction: flash the updated amount so the change is felt, not just read.
+  const savedEl = document.getElementById('goal-saved-' + id);
+  if (savedEl) savedEl.classList.add('value-pulse');
   if (typeof scheduleSave === 'function') scheduleSave();
   if (typeof renderInsights === 'function') renderInsights();
+  if (typeof checkGoalAlerts === 'function') checkGoalAlerts();
+}
+
+// ── Confidence estimator — a transparent heuristic (not a statistical model) used to
+// give goals and the advisor a "how sure are we" signal based on income and pace.
+function estimateGoalConfidence(target, saved, income, weeklyBills) {
+  if (!income || income <= 0 || !target || target <= 0) return null;
+  const netWeekly = weeklyBills > 0 ? income - weeklyBills : income;
+  if (netWeekly <= 0) return 25;
+  const progress = Math.max(0, Math.min(1, saved / target));
+  const weeksLeft = Math.max(target - saved, 0) / netWeekly;
+  let pct = 62 + progress * 22;
+  if (weeksLeft <= 4) pct += 14;
+  else if (weeksLeft <= 12) pct += 6;
+  else if (weeksLeft > 26) pct -= 16;
+  else if (weeksLeft > 12) pct -= 5;
+  return Math.max(35, Math.min(97, Math.round(pct)));
 }
 
 function renderGoals() {
@@ -4396,13 +4695,22 @@ function renderGoals() {
   const income = parseFloat(document.getElementById('income-num')?.value) ||
                  parseFloat(document.getElementById('income')?.value) ||
                  parseFloat(localStorage.getItem('sib4_income') || '0') || 0;
+  const weeklyBills = (typeof bills !== 'undefined' ? bills : []).reduce((s,b) => s + toMonthly(b.amount, b.freq), 0) * 12 / 52;
   goals.forEach(g => {
     const pct = Math.min((g.saved / g.target)*100, 100);
     const done = pct >= 100;
     const left = Math.max(g.target - g.saved, 0);
-    const weeksLeft = income > 0 ? (left/income).toFixed(1)+' weeks at current income' : nudgeHTML('income-num','weekly income','Add your') + ' for a timeline';
+    const weeksLeftNum = income > 0 ? (left/income) : null;
+    const weeksLeft = weeksLeftNum !== null ? weeksLeftNum.toFixed(1)+' weeks at current income' : nudgeHTML('income-num','weekly income','Add your') + ' for a timeline';
+    const confidence = !done ? estimateGoalConfidence(g.target, g.saved, income, weeklyBills) : null;
+    const confClass = confidence === null ? '' : confidence >= 75 ? 'high' : confidence < 50 ? 'low' : '';
+    const justCompleted = done && !celebratedGoals.has(g.id);
+    if (justCompleted) {
+      celebratedGoals.add(g.id);
+      localStorage.setItem('sib4_goal_celebrated', JSON.stringify([...celebratedGoals]));
+    }
     const d = document.createElement('div');
-    d.className = 'goal-card';
+    d.className = 'goal-card' + (justCompleted ? ' just-completed' : '');
     d.innerHTML = `
       <div class="goal-top">
         <span class="goal-name">${g.name}</span>
@@ -4413,10 +4721,11 @@ function renderGoals() {
       </div>
       <div class="track"><div class="fill" style="width:${pct}%"></div></div>
       <div class="goal-meta">
-        <span>${fmt(g.saved)} saved of ${fmt(g.target)}</span>
+        <span id="goal-saved-${g.id}">${fmt(g.saved)} saved of ${fmt(g.target)}</span>
         <span>${fmt(left)} to go</span>
       </div>
       <div class="goal-weekly">~${weeksLeft}</div>
+      ${confidence !== null ? `<div class="goal-confidence"><span class="confidence-pill ${confClass}">${confidence}% confidence</span>Based on your income, we're ${confidence}% confident you'll hit this in ~${weeksLeftNum.toFixed(1)} weeks.</div>` : ''}
       <div class="goal-adjust">
         <div class="input-shell" style="flex:1">
           <span class="input-prefix">${currencySymbol}</span>
@@ -4679,6 +4988,14 @@ function buildResponse(topic, ctx, q) {
         let r = `You've got ${goals.length} goal${goals.length > 1 ? 's' : ''} set up. `;
         if (totalLeft > 0) r += `You still need ${fmt2(totalLeft)} across all goals. `;
         if (ctx.price && totalLeft > 0) r += `This ${fmt2(ctx.price)} purchase would delay reaching your goals ${ctx.income ? `by about ${Math.ceil(ctx.price / ctx.income)} weeks` : 'noticeably'}. `;
+        if (ctx.income > 0) {
+          const closest = goals.filter(g => g.saved < g.target).sort((a,b) => (a.target-a.saved)-(b.target-b.saved))[0];
+          if (closest) {
+            const wks = ((closest.target - closest.saved) / ctx.income).toFixed(1);
+            const conf = estimateGoalConfidence(closest.target, closest.saved, ctx.income, ctx.weeklyBills);
+            if (conf !== null) r += `Based on your income, we're ${conf}% confident you'll hit "${closest.name}" in about ${wks} weeks. `;
+          }
+        }
         r += `Goals work best when they're specific — a named target with a timeline beats a vague intention every time.`;
         return r;
       }
@@ -5137,6 +5454,9 @@ function renderMarkets() {
   const list = document.getElementById('market-list');
   if (!list) return;
   list.innerHTML = '';
+  // Only fetch the (heavy) TradingView embeds once the Markets tab is actually open —
+  // at initial load, or when rendered off-tab, iframes get a data-src and load lazily on tab open.
+  const marketsTabActive = document.getElementById('panel-markets')?.classList.contains('active');
   marketAssets.forEach(asset => {
     const analysis = getAssetAnalysis(asset.symbol, asset.exchange);
     const riskColor = { 'Low': 'var(--good)', 'Low-Medium': 'var(--good)', 'Medium': 'var(--warn)', 'Medium-High': 'var(--warn)', 'High': 'var(--bad)', 'Very High': 'var(--bad)', 'Extreme': 'var(--bad)', 'Speculative': 'var(--bad)' }[analysis.risk] || 'var(--muted)';
@@ -5159,7 +5479,7 @@ function renderMarkets() {
         </div>
       </div>
       <div class="market-chart">
-        <iframe src="${tvChartUrl(asset)}"
+        <iframe ${marketsTabActive ? `src="${tvChartUrl(asset)}"` : `data-src="${tvChartUrl(asset)}"`}
           loading="lazy"
           allowtransparency="true"
           scrolling="no"
@@ -6618,7 +6938,9 @@ function generateInsights() {
       const closestGoal = goals.filter(g => g.saved < g.target).sort((a,b) => (a.target-a.saved) - (b.target-b.saved))[0];
       if (closestGoal) {
         const weeksLeft = ((closestGoal.target - closestGoal.saved) / income).toFixed(1);
-        insights.push({ icon: '⏱️', type: 'good', text: `Your closest goal is <strong>${closestGoal.name}</strong> — only ${fmt(closestGoal.target - closestGoal.saved)} to go. At your current income, about <strong>${weeksLeft} weeks</strong> away.` });
+        const goalWeeklyBills = bills.reduce((s,b) => s + toMonthly(b.amount, b.freq), 0) * 12 / 52;
+        const goalConf = estimateGoalConfidence(closestGoal.target, closestGoal.saved, income, goalWeeklyBills);
+        insights.push({ icon: '⏱️', type: 'good', text: `Your closest goal is <strong>${closestGoal.name}</strong> — only ${fmt(closestGoal.target - closestGoal.saved)} to go. At your current income, about <strong>${weeksLeft} weeks</strong> away${goalConf !== null ? ` — we're <strong>${goalConf}% confident</strong> you'll hit it on that timeline` : ''}.` });
       }
     }
   }
@@ -7534,7 +7856,7 @@ showLesson('tax', null);
   const canvas = document.getElementById('landing-wave-bg');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let W, H, t = 0, active = true;
+  let W, H, t = 0, active = false, looping = false;
 
   function resize() {
     const ls = document.getElementById('landing-screen');
@@ -7556,7 +7878,7 @@ showLesson('tax', null);
   ];
 
   function render() {
-    if (!active) return;
+    if (!active) { looping = false; return; }
     ctx.clearRect(0, 0, W, H);
 
     ctx.fillStyle = '#07070d';
@@ -7613,14 +7935,21 @@ showLesson('tax', null);
     requestAnimationFrame(render);
   }
 
-  // Only run when landing screen visible
-  const obs = new MutationObserver(() => {
+  // Only run when the landing screen is visible AND the tab is in the foreground —
+  // fully stops the rAF loop otherwise (rather than just skipping drawing) to save CPU/GPU.
+  function syncActive() {
     const ls = document.getElementById('landing-screen');
-    active = ls && ls.style.display !== 'none';
-  });
-  obs.observe(document.getElementById('landing-screen') || document.body, { attributes: true, attributeFilter: ['style'] });
+    const shouldRun = !document.hidden && !!ls && ls.style.display !== 'none';
+    if (shouldRun === active) return;
+    active = shouldRun;
+    if (active && !looping) { looping = true; render(); }
+  }
 
-  render();
+  const obs = new MutationObserver(syncActive);
+  obs.observe(document.getElementById('landing-screen') || document.body, { attributes: true, attributeFilter: ['style'] });
+  document.addEventListener('visibilitychange', syncActive);
+
+  syncActive();
 })();
 
 /* ─── ANIMATED WAVE BACKGROUND ─── */
@@ -7628,7 +7957,7 @@ showLesson('tax', null);
   const canvas = document.getElementById('waveBg');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let W, H, t = 0;
+  let W, H, t = 0, active = false, looping = false;
 
   function resize() {
     W = canvas.width  = window.innerWidth;
@@ -7663,6 +7992,7 @@ showLesson('tax', null);
   ];
 
   function render() {
+    if (!active) { looping = false; return; }
     ctx.clearRect(0, 0, W, H);
 
     ctx.fillStyle = '#07070d';
@@ -7716,7 +8046,27 @@ showLesson('tax', null);
     requestAnimationFrame(render);
   }
 
-  render();
+  // Only run while the main app is on screen (not hidden behind the opaque landing/auth
+  // overlays) AND the tab is in the foreground — stops the rAF loop entirely otherwise.
+  function syncActive() {
+    const landing = document.getElementById('landing-screen');
+    const auth    = document.getElementById('auth-screen');
+    const shouldRun = !document.hidden &&
+      (!landing || landing.style.display === 'none') &&
+      (!auth    || auth.style.display    === 'none');
+    if (shouldRun === active) return;
+    active = shouldRun;
+    if (active && !looping) { looping = true; render(); }
+  }
+
+  const obs = new MutationObserver(syncActive);
+  ['landing-screen', 'auth-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) obs.observe(el, { attributes: true, attributeFilter: ['style'] });
+  });
+  document.addEventListener('visibilitychange', syncActive);
+
+  syncActive();
 })();
 </script>
 </body>
