@@ -3790,13 +3790,39 @@ body.gsap-ready .reveal { opacity: 0; }
 
 </div><!-- /app -->
 
-<!-- Loaded here (end of body) instead of <head> so they no longer block the initial paint of the page above. -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Supabase loads immediately (auth needs it). Chart.js and GSAP are lazy-loaded to speed up mobile. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
-<!-- GSAP + ScrollTrigger for landing-page motion. All usage is feature-detected so the app
-     still works fully (auth included) if these fail to load. -->
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+/* Lazy-load helper — loads a script on demand, returns a promise */
+window._loadedScripts = {};
+function lazyScript(src) {
+  if (window._loadedScripts[src]) return window._loadedScripts[src];
+  window._loadedScripts[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return window._loadedScripts[src];
+}
+/* Ensure Chart.js is loaded before charting */
+async function ensureChart() {
+  if (typeof Chart !== 'undefined') return;
+  await lazyScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
+}
+/* Load GSAP after the page is idle so it never blocks first paint */
+function loadGSAP() {
+  return Promise.all([
+    lazyScript('https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js'),
+    lazyScript('https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js')
+  ]);
+}
+// Load GSAP after first paint, when browser is idle
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()));
+} else {
+  setTimeout(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()), 800);
+}
+</script>
 <script>
 /* ─── STATE ─── */
 function signOutNow() {
@@ -4450,7 +4476,8 @@ function analyze() {
 }
 
 /* ─── CHARTS ─── */
-function redrawCharts(r) {
+async function redrawCharts(r) {
+  await ensureChart();
   const textColor = tc(0.6);
   const gridColor = gc();
   const borderCol = '#080b10';
@@ -4781,12 +4808,13 @@ function delHist(id) {
   if (typeof renderInsights === 'function') renderInsights();
 }
 
-function renderHistChart() {
+async function renderHistChart() {
   const cats = {};
   purchaseHistory.filter(h=>h.cls!=='bad').forEach(h => { cats[h.cat] = (cats[h.cat]||0) + h.price; });
   const labels = Object.keys(cats), data = Object.values(cats);
-  destroyChart('hist');
   if (!labels.length) return;
+  await ensureChart();
+  destroyChart('hist');
   const colors = ['#7B2CBF','#83C5BE','#E6CCB2','#f43f5e','#a855f7','#5a9e98','#f87171','#c4b5fd'];
   charts.hist = new Chart(document.getElementById('cHist').getContext('2d'), {
     type: 'bar',
@@ -4802,13 +4830,14 @@ function renderHistChart() {
   });
 }
 
-function renderVerdictsChart() {
+async function renderVerdictsChart() {
   const good = purchaseHistory.filter(h=>h.cls==='good').length;
   const warn = purchaseHistory.filter(h=>h.cls==='warn').length;
   const bad  = purchaseHistory.filter(h=>h.cls==='bad').length;
-  destroyChart('verdicts');
   const canvas = document.getElementById('cVerdicts');
   if (!canvas || (!good && !warn && !bad)) return;
+  await ensureChart();
+  destroyChart('verdicts');
   charts.verdicts = new Chart(canvas.getContext('2d'), {
     type: 'doughnut',
     data: {
@@ -8388,7 +8417,14 @@ showLesson('tax', null);
   function initLanding() {
     loadLiveUserCount();
     initMagnetic();
-    initGsapMotion();
+    // GSAP is lazy-loaded. If it's ready, animate now; otherwise wait for the ready callback.
+    if (window.gsap) {
+      initGsapMotion();
+    } else {
+      window._gsapReady = initGsapMotion;
+      // Safety: if GSAP never loads within 2.5s, reveal everything anyway
+      setTimeout(() => { if (!window.gsap) document.querySelectorAll('.reveal').forEach(el => el.style.opacity = '1'); }, 2500);
+    }
   }
 
   if (document.readyState === 'loading') {
