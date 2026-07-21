@@ -3806,8 +3806,10 @@ function lazyScript(src) {
 }
 /* Ensure Chart.js is loaded before charting */
 async function ensureChart() {
-  if (typeof Chart !== 'undefined') return;
-  await lazyScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
+  if (typeof Chart === 'undefined') {
+    await lazyScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
+  }
+  if (typeof applyChartDefaults === 'function') applyChartDefaults();
 }
 /* Load GSAP after the page is idle so it never blocks first paint */
 function loadGSAP() {
@@ -4244,9 +4246,14 @@ function pulseText(el) {
   el.classList.add('value-pulse');
 }
 
-Chart.defaults.color = tc(0.55);
-Chart.defaults.borderColor = gc();
-Chart.defaults.font.family = 'Outfit';
+let _chartDefaultsSet = false;
+function applyChartDefaults() {
+  if (_chartDefaultsSet || typeof Chart === 'undefined') return;
+  Chart.defaults.color = tc(0.55);
+  Chart.defaults.borderColor = gc();
+  Chart.defaults.font.family = 'Outfit';
+  _chartDefaultsSet = true;
+}
 
 function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
 
