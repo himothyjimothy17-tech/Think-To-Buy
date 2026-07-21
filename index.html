@@ -1434,8 +1434,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   min-height: calc(100vh - 63px);
 }
 /* Ambient purple-to-teal glow bleeding from behind the headline */
-/* No CSS animation here on purpose — GSAP takes over the drift once it loads (see doGsapEntrance).
-   Animating this with CSS first and then handing off to GSAP caused a visible jump/CLS hit. */
 .hero-glow {
   position: absolute; z-index: -1; pointer-events: none;
   left: -6%; top: 34%; transform: translateY(-50%);
@@ -1444,6 +1442,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     radial-gradient(circle at 32% 42%, rgba(123,44,191,0.42) 0%, transparent 58%),
     radial-gradient(circle at 68% 66%, rgba(131,197,190,0.26) 0%, transparent 62%);
   filter: blur(38px); opacity: 0.9;
+  animation: hero-glow-drift 14s ease-in-out infinite alternate;
+}
+@keyframes hero-glow-drift {
+  from { transform: translateY(-50%) translateX(0) scale(1); }
+  to   { transform: translateY(-52%) translateX(34px) scale(1.08); }
 }
 @media (max-width: 860px) {
   .landing-hero { grid-template-columns: 1fr; padding: 54px 26px 40px; min-height: auto; gap: 44px; }
@@ -1963,136 +1966,6 @@ body.gsap-ready .reveal { opacity: 0; }
 .nl-parse-btn:hover { opacity: 0.88; }
 .nl-status { font-size: 12px; color: var(--teal); margin-top: 8px; min-height: 16px; }
 .nl-status.error { color: var(--bad); }
-
-/* ═══════════════════════════════════════════════════════════════
-   METALLIC LAYER — anodized violet, champagne gold, brushed gunmetal, silver
-   Applied per element so each surface reads as intentional metal.
-   ═══════════════════════════════════════════════════════════════ */
-:root {
-  --metal-violet: linear-gradient(157deg,#b98be6 0%,#8b46c9 23%,#5e2597 45%,#a869e2 55%,#4a1a7a 79%,#7d3cc0 100%);
-  --metal-gold:   linear-gradient(157deg,#f8e6b4 0%,#e6c07d 22%,#c99a4e 44%,#f4dc9c 54%,#b9843b 78%,#ecd08d 100%);
-  --metal-gun:    linear-gradient(157deg,#23232f 0%,#16161f 32%,#0e0e15 56%,#1b1b24 79%,#0c0c12 100%);
-  --metal-silver: linear-gradient(157deg,#eef1f6 0%,#c4cad7 22%,#9098a8 46%,#e7ebf2 55%,#7c8496 80%,#c9cfdb 100%);
-  --metal-rim:    inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 1px rgba(0,0,0,0.5);
-  --metal-rim-lo: inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 1px rgba(0,0,0,0.4);
-}
-
-/* — Anodized violet chrome: primary CTA — */
-.landing-cta-primary {
-  background: var(--metal-violet);
-  background-size: 100% 200%; background-position: 0% 0%;
-  box-shadow: var(--metal-rim), 0 8px 34px rgba(123,44,191,0.42);
-  transition: background-position 0.5s var(--ease), box-shadow 0.25s var(--ease);
-}
-.landing-cta-primary:hover {
-  background-position: 0% 100%;
-  box-shadow: var(--metal-rim), 0 14px 48px rgba(123,44,191,0.6);
-}
-
-/* — Champagne gold metal: all accent action buttons — */
-.add-btn, .ai-send, .tutorial-next, .nl-parse-btn, .share-btn, .pwa-install-btn {
-  background: var(--metal-gold) !important;
-  background-size: 100% 200% !important; background-position: 0% 0%;
-  box-shadow: var(--metal-rim), 0 4px 16px rgba(201,154,78,0.28);
-  transition: background-position 0.5s var(--ease), box-shadow 0.2s, opacity 0.15s;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
-}
-.add-btn:hover, .ai-send:hover, .tutorial-next:hover, .nl-parse-btn:hover, .share-btn:hover, .pwa-install-btn:hover {
-  background-position: 0% 100%;
-  opacity: 1;
-}
-
-/* — Brushed gunmetal: cards, panels, nav — */
-.card, .whynow-card, .founder-card, .stat-pill {
-  background: var(--metal-gun);
-  border: 1px solid transparent;
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04) 40%, rgba(0,0,0,0.3)) 1;
-  box-shadow: var(--metal-rim-lo), 0 4px 24px rgba(0,0,0,0.45);
-}
-.card:hover, .whynow-card:hover, .founder-card:hover, .stat-pill:hover {
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.4), rgba(255,255,255,0.08) 45%, rgba(0,0,0,0.3)) 1;
-  box-shadow: var(--metal-rim-lo), 0 8px 32px rgba(0,0,0,0.55);
-}
-.landing-nav {
-  background: linear-gradient(180deg, rgba(28,28,38,0.82), rgba(10,10,16,0.72));
-  box-shadow: var(--metal-rim-lo), 0 1px 0 rgba(0,0,0,0.4);
-}
-
-/* — Silver / champagne pops: logo mark, eyebrow rules, dots — */
-.landing-logo em {
-  background: var(--metal-silver);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.landing-eyebrow .eyebrow-dot,
-.card-eyebrow::before,
-.eyebrow-dot {
-  background: var(--metal-gold) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-cta-primary, .add-btn, .ai-send, .tutorial-next,
-  .nl-parse-btn, .share-btn, .pwa-install-btn, .cta {
-    transition: box-shadow 0.2s, opacity 0.15s;
-  }
-}
-
-/* ── In-app surfaces ── */
-/* Main analyze / compare action button → anodized violet chrome */
-.cta, .analyze-btn {
-  background: var(--metal-violet);
-  background-size: 100% 200%; background-position: 0% 0%;
-  box-shadow: var(--metal-rim), 0 4px 24px rgba(124,106,245,0.38);
-  transition: background-position 0.5s var(--ease), box-shadow 0.2s, transform 0.1s;
-}
-.cta:hover, .analyze-btn:hover { background-position: 0% 100%; opacity: 1; }
-
-/* Tab bar → gunmetal track, active tab lifts as brushed metal */
-.tabs {
-  background: linear-gradient(180deg, #16161f, #0c0c12);
-  box-shadow: var(--metal-rim-lo);
-  border: 1px solid transparent;
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(0,0,0,0.3)) 1;
-}
-.tab.active {
-  background: linear-gradient(180deg, #2a2a38, #1a1a24);
-  border: 1px solid transparent;
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.3), rgba(0,0,0,0.3)) 1;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 8px rgba(0,0,0,0.4);
-}
-
-/* Verdict result card → gunmetal base (keeps its colored status bar + tint) */
-.verdict-card {
-  background: var(--metal-gun);
-  box-shadow: var(--metal-rim-lo), 0 6px 28px rgba(0,0,0,0.5);
-}
-
-/* Content cards across the app → brushed gunmetal */
-.goal-card, .wl-item, .bill-item, .market-card, .lesson-card {
-  background: var(--metal-gun);
-  border: 1px solid transparent;
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 45%, rgba(0,0,0,0.3)) 1;
-  box-shadow: var(--metal-rim-lo), 0 4px 20px rgba(0,0,0,0.4);
-}
-.goal-card:hover, .wl-item:hover, .bill-item:hover, .market-card:hover, .lesson-card:hover {
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.34), rgba(255,255,255,0.06) 45%, rgba(0,0,0,0.3)) 1;
-}
-
-/* Small metal: chips + user bar pill */
-.chip, .auth-user-bar {
-  background: linear-gradient(180deg, #1c1c26, #0e0e15);
-  border: 1px solid transparent;
-  border-image: linear-gradient(160deg, rgba(255,255,255,0.18), rgba(0,0,0,0.3)) 1;
-  box-shadow: var(--metal-rim-lo);
-}
-
-/* In-app wordmark → silver metallic (matches landing logo) */
-.wordmark em {
-  background: var(--metal-silver);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
 </style>
 <style>
 #auth-screen {
@@ -3962,10 +3835,9 @@ function loadGSAP() {
     lazyScript('https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js')
   ]);
 }
-// Load GSAP after first paint, when browser is idle — but cap the wait so the
-// scroll-reveal timing stays consistent across loads (timeout guarantees it fires).
+// Load GSAP after first paint, when browser is idle
 if ('requestIdleCallback' in window) {
-  requestIdleCallback(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()), { timeout: 1200 });
+  requestIdleCallback(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()));
 } else {
   setTimeout(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()), 800);
 }
@@ -8536,31 +8408,22 @@ showLesson('tax', null);
     gsap.set(heroReveals, { y: 26 });
     gsap.to(heroReveals, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', stagger: 0.09, delay: 0.12 });
 
-    // Ambient glow: GSAP drives the drift (CSS no longer animates it — see .hero-glow comment)
+    // Ambient glow: take over drift from CSS so we can also parallax it
     const glow = document.querySelector('.hero-glow');
     if (glow) {
+      glow.style.animation = 'none';
       gsap.to(glow, { xPercent: 8, yPercent: -6, duration: 7, ease: 'sine.inOut', yoyo: true, repeat: -1 });
     }
 
     if (hasST) {
-      // Make sure ScrollTrigger measures against a settled layout (GSAP loaded late)
-      ScrollTrigger.refresh();
-      const revealLine = window.innerHeight * 0.88;
-      let inViewIdx = 0;
+      // Scroll-triggered reveals for every section below the hero
       gsap.utils.toArray('.reveal').forEach(el => {
         if (el.closest('.landing-hero')) return;
         gsap.set(el, { y: 32 });
-        // If the element is already at/above the reveal line when GSAP finishes loading,
-        // animate it in right now (with a small stagger). ScrollTrigger would otherwise
-        // snap it to visible with no tween — the cause of the "random" missing animations.
-        if (el.getBoundingClientRect().top < revealLine) {
-          gsap.to(el, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: (inViewIdx++) * 0.06 });
-        } else {
-          gsap.to(el, {
-            opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 88%', once: true }
-          });
-        }
+        gsap.to(el, {
+          opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+        });
       });
       // Parallax — glow (y is free of the drift tween's x) and hero copy column
       if (glow) {
