@@ -7185,7 +7185,21 @@ function showAuthFromLanding() {
 
 // On load — landing page is visible by default. Silently check if already logged in.
 (async () => {
-  if (!sb) return;
+  // Wait up to 3s for sb to initialize (Supabase CDN may not have loaded yet
+  // when this IIFE first runs). Without this wait, an OAuth redirect back to
+  // the app with #access_token in the URL would silently leave the page blank
+  // because we'd bail before processing the callback.
+  let waited = 0;
+  while (!sb && waited < 3000) {
+    await new Promise(r => setTimeout(r, 100));
+    waited += 100;
+  }
+  if (!sb) {
+    // Supabase never loaded — make sure the landing screen is at least visible
+    const ls = document.getElementById('landing-screen');
+    if (ls) ls.style.display = 'flex';
+    return;
+  }
 
   // Check if this is an OAuth callback (Google redirect back to app)
   const hash = window.location.hash;
@@ -7197,9 +7211,15 @@ function showAuthFromLanding() {
     // Hide landing while we process the OAuth callback
     document.getElementById('landing-screen').style.display = 'none';
     try {
-      // Give Supabase time to process the hash/code
-      await new Promise(r => setTimeout(r, 500));
-      const { data: { session } } = await sb.auth.getSession();
+      // Poll for the session — detectSessionInUrl consumes the hash
+      // asynchronously and can take a couple of retries to land.
+      let session = null;
+      for (let i = 0; i < 12; i++) {
+        await new Promise(r => setTimeout(r, 250));
+        const res = await sb.auth.getSession();
+        session = res?.data?.session;
+        if (session && session.user) break;
+      }
       if (session && session.user) {
         // Session found — onAuthStateChange will handle showing the app
         // but let's also show it directly in case it already fired
