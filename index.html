@@ -1434,6 +1434,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   min-height: calc(100vh - 63px);
 }
 /* Ambient purple-to-teal glow bleeding from behind the headline */
+/* No CSS animation here on purpose — GSAP takes over the drift once it loads (see doGsapEntrance).
+   Animating this with CSS first and then handing off to GSAP caused a visible jump/CLS hit. */
 .hero-glow {
   position: absolute; z-index: -1; pointer-events: none;
   left: -6%; top: 34%; transform: translateY(-50%);
@@ -1442,11 +1444,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
     radial-gradient(circle at 32% 42%, rgba(123,44,191,0.42) 0%, transparent 58%),
     radial-gradient(circle at 68% 66%, rgba(131,197,190,0.26) 0%, transparent 62%);
   filter: blur(38px); opacity: 0.9;
-  animation: hero-glow-drift 14s ease-in-out infinite alternate;
-}
-@keyframes hero-glow-drift {
-  from { transform: translateY(-50%) translateX(0) scale(1); }
-  to   { transform: translateY(-52%) translateX(34px) scale(1.08); }
 }
 @media (max-width: 860px) {
   .landing-hero { grid-template-columns: 1fr; padding: 54px 26px 40px; min-height: auto; gap: 44px; }
@@ -1966,6 +1963,209 @@ body.gsap-ready .reveal { opacity: 0; }
 .nl-parse-btn:hover { opacity: 0.88; }
 .nl-status { font-size: 12px; color: var(--teal); margin-top: 8px; min-height: 16px; }
 .nl-status.error { color: var(--bad); }
+
+/* ═══════════════════════════════════════════════════════════════
+   METALLIC LAYER — anodized violet, champagne gold, brushed gunmetal, silver
+   Applied per element so each surface reads as intentional metal.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --metal-violet: linear-gradient(157deg,#b98be6 0%,#8b46c9 23%,#5e2597 45%,#a869e2 55%,#4a1a7a 79%,#7d3cc0 100%);
+  --metal-gold:   linear-gradient(157deg,#f8e6b4 0%,#e6c07d 22%,#c99a4e 44%,#f4dc9c 54%,#b9843b 78%,#ecd08d 100%);
+  --metal-gun:    linear-gradient(157deg,#23232f 0%,#16161f 32%,#0e0e15 56%,#1b1b24 79%,#0c0c12 100%);
+  --metal-silver: linear-gradient(157deg,#eef1f6 0%,#c4cad7 22%,#9098a8 46%,#e7ebf2 55%,#7c8496 80%,#c9cfdb 100%);
+  --metal-rim:    inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 1px rgba(0,0,0,0.5);
+  --metal-rim-lo: inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 1px rgba(0,0,0,0.4);
+}
+
+/* — Anodized violet chrome: primary CTA — */
+.landing-cta-primary {
+  background: var(--metal-violet);
+  background-size: 100% 200%; background-position: 0% 0%;
+  box-shadow: var(--metal-rim), 0 8px 34px rgba(123,44,191,0.42);
+  transition: background-position 0.5s var(--ease), box-shadow 0.25s var(--ease);
+}
+.landing-cta-primary:hover {
+  background-position: 0% 100%;
+  box-shadow: var(--metal-rim), 0 14px 48px rgba(123,44,191,0.6);
+}
+
+/* — Champagne gold metal: all accent action buttons — */
+.add-btn, .ai-send, .tutorial-next, .nl-parse-btn, .share-btn, .pwa-install-btn {
+  background: var(--metal-gold) !important;
+  background-size: 100% 200% !important; background-position: 0% 0%;
+  box-shadow: var(--metal-rim), 0 4px 16px rgba(201,154,78,0.28);
+  transition: background-position 0.5s var(--ease), box-shadow 0.2s, opacity 0.15s;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+}
+.add-btn:hover, .ai-send:hover, .tutorial-next:hover, .nl-parse-btn:hover, .share-btn:hover, .pwa-install-btn:hover {
+  background-position: 0% 100%;
+  opacity: 1;
+}
+
+/* — Brushed gunmetal: cards, panels, nav — */
+.card, .whynow-card, .founder-card, .stat-pill {
+  background: var(--metal-gun);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04) 40%, rgba(0,0,0,0.3)) 1;
+  box-shadow: var(--metal-rim-lo), 0 4px 24px rgba(0,0,0,0.45);
+}
+.card:hover, .whynow-card:hover, .founder-card:hover, .stat-pill:hover {
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.4), rgba(255,255,255,0.08) 45%, rgba(0,0,0,0.3)) 1;
+  box-shadow: var(--metal-rim-lo), 0 8px 32px rgba(0,0,0,0.55);
+}
+.landing-nav {
+  background: linear-gradient(180deg, rgba(28,28,38,0.82), rgba(10,10,16,0.72));
+  box-shadow: var(--metal-rim-lo), 0 1px 0 rgba(0,0,0,0.4);
+}
+
+/* — Silver / champagne pops: logo mark, eyebrow rules, dots — */
+.landing-logo em {
+  background: var(--metal-silver);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.landing-eyebrow .eyebrow-dot,
+.card-eyebrow::before,
+.eyebrow-dot {
+  background: var(--metal-gold) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-cta-primary, .add-btn, .ai-send, .tutorial-next,
+  .nl-parse-btn, .share-btn, .pwa-install-btn, .cta {
+    transition: box-shadow 0.2s, opacity 0.15s;
+  }
+}
+
+/* ── In-app surfaces ── */
+/* Main analyze / compare action button → anodized violet chrome */
+.cta, .analyze-btn {
+  background: var(--metal-violet);
+  background-size: 100% 200%; background-position: 0% 0%;
+  box-shadow: var(--metal-rim), 0 4px 24px rgba(124,106,245,0.38);
+  transition: background-position 0.5s var(--ease), box-shadow 0.2s, transform 0.1s;
+}
+.cta:hover, .analyze-btn:hover { background-position: 0% 100%; opacity: 1; }
+
+/* Tab bar → gunmetal track, active tab lifts as brushed metal */
+.tabs {
+  background: linear-gradient(180deg, #16161f, #0c0c12);
+  box-shadow: var(--metal-rim-lo);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(0,0,0,0.3)) 1;
+}
+.tab.active {
+  background: linear-gradient(180deg, #2a2a38, #1a1a24);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.3), rgba(0,0,0,0.3)) 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Verdict result card → gunmetal base (keeps its colored status bar + tint) */
+.verdict-card {
+  background: var(--metal-gun);
+  box-shadow: var(--metal-rim-lo), 0 6px 28px rgba(0,0,0,0.5);
+}
+
+/* Content cards across the app → brushed gunmetal */
+.goal-card, .wl-item, .bill-item, .market-card, .lesson-card {
+  background: var(--metal-gun);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 45%, rgba(0,0,0,0.3)) 1;
+  box-shadow: var(--metal-rim-lo), 0 4px 20px rgba(0,0,0,0.4);
+}
+.goal-card:hover, .wl-item:hover, .bill-item:hover, .market-card:hover, .lesson-card:hover {
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.34), rgba(255,255,255,0.06) 45%, rgba(0,0,0,0.3)) 1;
+}
+
+/* Small metal: chips + user bar pill */
+.chip, .auth-user-bar {
+  background: linear-gradient(180deg, #1c1c26, #0e0e15);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.18), rgba(0,0,0,0.3)) 1;
+  box-shadow: var(--metal-rim-lo);
+}
+
+/* In-app wordmark → silver metallic (matches landing logo) */
+.wordmark em {
+  background: var(--metal-silver);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INTERACTIVE COACH-MARK TUTORIAL (game-style guided tour)
+   ═══════════════════════════════════════════════════════════════ */
+#coach-catcher {
+  position: fixed; inset: 0; z-index: 9998; display: none;
+  cursor: pointer;
+}
+#coach-catcher.on { display: block; }
+#coach-ring {
+  position: fixed; z-index: 9999; border-radius: 12px; pointer-events: none;
+  display: none; top: 0; left: 0; width: 0; height: 0;
+  box-shadow:
+    0 0 0 9999px rgba(3,3,7,0.74),
+    inset 0 0 0 2px rgba(255,255,255,0.9),
+    0 0 24px 5px rgba(168,85,247,0.65);
+  transition: top .3s var(--ease), left .3s var(--ease), width .3s var(--ease), height .3s var(--ease);
+}
+#coach-ring.on { display: block; }
+#coach-ring.pulse { animation: coach-pulse 0.4s var(--ease); }
+@keyframes coach-pulse {
+  0%,100% { box-shadow: 0 0 0 9999px rgba(3,3,7,0.74), inset 0 0 0 2px rgba(255,255,255,0.9), 0 0 24px 5px rgba(168,85,247,0.65); }
+  50%     { box-shadow: 0 0 0 9999px rgba(3,3,7,0.74), inset 0 0 0 3px #fff, 0 0 34px 9px rgba(168,85,247,0.95); }
+}
+#coach-tip {
+  position: fixed; z-index: 10000; display: none;
+  width: min(300px, calc(100vw - 28px));
+  background: var(--metal-gun);
+  border: 1px solid transparent;
+  border-image: linear-gradient(160deg, rgba(255,255,255,0.3), rgba(0,0,0,0.3)) 1;
+  border-radius: 16px; padding: 16px 18px;
+  box-shadow: var(--metal-rim-lo), 0 16px 44px rgba(0,0,0,0.6);
+  transition: top .3s var(--ease), left .3s var(--ease);
+}
+#coach-tip.on { display: block; }
+.coach-tip-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent-light); margin-bottom: 7px; display: flex; align-items: center; gap: 7px;
+}
+.coach-tip-eyebrow::before {
+  content: ''; width: 14px; height: 1px; background: var(--accent-light); opacity: 0.7;
+}
+.coach-tip-title { font-family: 'Inter','Inter Fallback',sans-serif; font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; }
+.coach-tip-body  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.coach-tip-body strong { color: var(--text); font-weight: 600; }
+.coach-tip-cue {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+  font-size: 12px; font-weight: 600; color: var(--accent-light);
+}
+.coach-tip-cue .tap-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--accent-light);
+  box-shadow: 0 0 0 0 rgba(168,85,247,0.6); animation: coach-tap 1.3s infinite;
+}
+@keyframes coach-tap {
+  0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(168,85,247,0); }
+  100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+}
+.coach-tip-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; }
+.coach-skip { background: none; border: none; color: var(--muted2); font-family: 'Inter',sans-serif; font-size: 12px; cursor: pointer; padding: 0; }
+.coach-skip:hover { color: var(--muted); }
+.coach-count { font-size: 11px; color: var(--muted2); font-variant-numeric: tabular-nums; }
+.coach-next {
+  padding: 9px 20px; border-radius: 50px; border: none; cursor: pointer;
+  background: var(--metal-gold); background-size: 100% 200%;
+  color: #08090d; font-family: 'DM Sans','DM Sans Fallback',sans-serif;
+  font-size: 12px; font-weight: 700; text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: var(--metal-rim);
+}
+@media (prefers-reduced-motion: reduce) {
+  #coach-ring, #coach-tip { transition: none; }
+  #coach-ring.pulse, .coach-tip-cue .tap-dot { animation: none; }
+}
 </style>
 <style>
 #auth-screen {
@@ -2559,19 +2759,21 @@ body.gsap-ready .reveal { opacity: 0; }
 <div id="notif-container"></div>
 
 <!-- TUTORIAL OVERLAY -->
-<div id="tutorial-overlay">
-  <div class="tutorial-card">
-    <div class="tutorial-steps" id="tut-dots"></div>
-    <div class="tutorial-icon" id="tut-icon"></div>
-    <div class="tutorial-title" id="tut-title"></div>
-    <div class="tutorial-body" id="tut-body"></div>
-    <div class="tutorial-actions">
-      <button class="tutorial-skip" onclick="closeTutorial()">Skip tutorial</button>
-      <span class="tutorial-counter" id="tut-counter"></span>
-      <button class="tutorial-next" id="tut-next-btn" onclick="tutorialNext()">Next →</button>
-    </div>
+<!-- INTERACTIVE COACH-MARK TUTORIAL -->
+<div id="coach-catcher"></div>
+<div id="coach-ring"></div>
+<div id="coach-tip">
+  <div class="coach-tip-eyebrow" id="coach-eyebrow">Getting started</div>
+  <div class="coach-tip-title" id="coach-title"></div>
+  <div class="coach-tip-body" id="coach-body"></div>
+  <div class="coach-tip-cue" id="coach-cue"><span class="tap-dot"></span><span id="coach-cue-text">Tap the highlighted button</span></div>
+  <div class="coach-tip-row">
+    <button class="coach-skip" onclick="endCoach()">Skip tour</button>
+    <span class="coach-count" id="coach-count"></span>
+    <button class="coach-next" id="coach-next" onclick="coachNext()">Next →</button>
   </div>
 </div>
+
 
 <!-- LANDING PAGE -->
 <div id="landing-screen" style="display:flex;">
@@ -2600,7 +2802,7 @@ body.gsap-ready .reveal { opacity: 0; }
     <div class="landing-hero-left">
       <div class="landing-eyebrow reveal"><span class="eyebrow-dot"></span>Financial intelligence for Gen Z</div>
       <h1 class="landing-h1 reveal">Stop guessing.<br><span class="grad">Start knowing.</span></h1>
-      <p class="landing-sub reveal">A green, yellow, or red verdict on any purchase — before you open your wallet. No bank account, no spreadsheets, no lectures. Just a clear answer in seconds.</p>
+      <p class="landing-sub reveal">A green, yellow, or red verdict on any purchase, before you open your wallet. No bank account, no spreadsheets, no lectures. Just a clear answer in seconds.</p>
       <div class="landing-cta-group reveal">
         <button class="landing-cta-primary magnetic" onclick="showAuthFromLanding()">Start for free</button>
         <button class="landing-cta-secondary magnetic" onclick="document.getElementById('landing-features').scrollIntoView({behavior:'smooth'})">See how it works</button>
@@ -3158,12 +3360,12 @@ body.gsap-ready .reveal { opacity: 0; }
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="go('analyze',this)" title="Analyze"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><span class="tab-label"> Analyze</span></button>
-    <button class="tab" onclick="go('goals',this)" title="Goals"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span><span class="tab-label"> Goals</span></button>
+    <button class="tab active" id="tab-analyze" onclick="go('analyze',this)" title="Analyze"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><span class="tab-label"> Analyze</span></button>
+    <button class="tab" id="tab-goals" onclick="go('goals',this)" title="Goals"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span><span class="tab-label"> Goals</span></button>
     <button class="tab tab-new" onclick="go('history',this)" id="tab-history" title="History"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></span><span class="tab-label"> History</span></button>
-    <button class="tab" onclick="go('ai',this)" title="Advisor"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/></svg></span><span class="tab-label"> Advisor</span></button>
+    <button class="tab" id="tab-ai" onclick="go('ai',this)" title="Advisor"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/></svg></span><span class="tab-label"> Advisor</span></button>
     <button class="tab tab-new" onclick="go('markets',this)" id="tab-markets" title="Markets"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><span class="tab-label"> Markets</span></button>
-    <button class="tab" onclick="go('bills',this)" title="Bills"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span class="tab-label"> Bills</span></button>
+    <button class="tab" id="tab-bills" onclick="go('bills',this)" title="Bills"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span class="tab-label"> Bills</span></button>
     <button class="tab tab-new" onclick="go('learn',this)" id="tab-learn" title="Learn"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="tab-label"> Learn</span></button>
     <button class="tab tab-new" onclick="go('compare',this)" id="tab-compare" title="Compare"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><span class="tab-label"> Compare</span></button>
     <button class="tab tab-new" onclick="go('wishlist',this)" id="tab-wishlist" title="Wishlist"><span class="tab-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M15 2h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M9 12h6M9 8h6M9 16h4"/></svg></span><span class="tab-label"> Wishlist</span></button>
@@ -3835,9 +4037,10 @@ function loadGSAP() {
     lazyScript('https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js')
   ]);
 }
-// Load GSAP after first paint, when browser is idle
+// Load GSAP after first paint, when browser is idle — but cap the wait so the
+// scroll-reveal timing stays consistent across loads (timeout guarantees it fires).
 if ('requestIdleCallback' in window) {
-  requestIdleCallback(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()));
+  requestIdleCallback(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()), { timeout: 1200 });
 } else {
   setTimeout(() => loadGSAP().then(() => window._gsapReady && window._gsapReady()), 800);
 }
@@ -7069,82 +7272,169 @@ function checkGoalAlerts() {
 }
 
 /* ═══════════════════════════════════════════════
-   ONBOARDING TUTORIAL
+   INTERACTIVE COACH-MARK TUTORIAL
+   Game-style guided tour that highlights real tabs
+   and the menu, and prompts you to click them.
    ═══════════════════════════════════════════════ */
 
-const TUTORIAL_STEPS = [
+const COACH_STEPS = [
   {
-    icon: '✦',
-    title: 'Welcome to Think To Buy',
-    body: 'Most finance apps tell you where your money went. This one helps you decide <strong>before it goes anywhere</strong>. Here\'s everything in 60 seconds.',
+    sel: '#tab-analyze', eyebrow: 'Tab 1 of the tour',
+    title: 'Analyze — your home base',
+    body: 'Type or describe any purchase and get a <strong>green, yellow, or red</strong> verdict in seconds, with the reason why.',
   },
   {
-    icon: '◎',
-    title: 'Type or speak anything',
-    body: 'Use the bar at the top of the Analyze tab. Type <em>"thinking of buying AirPods for $249"</em> and it fills the form for you. Or tap <strong>mic</strong> and just say it out loud.',
+    sel: '#tab-goals', eyebrow: 'Goals',
+    title: 'Set what you\'re saving for',
+    body: 'Add a goal and the app tells you <strong>exactly how many weeks</strong> until you reach it, and nudges you along the way.',
   },
   {
-    icon: '◎',
-    title: 'Get a verdict, not just a number',
-    body: 'Hit <strong>Analyze Purchase</strong>. You get green, yellow, or red — with a specific reason why, how long it takes to recover, and what that money becomes if invested instead. Not just "you have $X left."',
+    sel: '#tab-ai', eyebrow: 'Advisor',
+    title: 'Ask real money questions',
+    body: 'The Advisor answers from <strong>your actual numbers</strong>, not generic tips. Ask "should I buy this on credit?" and get a straight answer.',
   },
   {
-    icon: '◎',
-    title: 'Ask the Advisor anything',
-    body: 'The <strong>Advisor tab</strong> answers real money questions based on your numbers — not generic tips. Ask "should I buy this on credit?" or "what\'s my opportunity cost?" and get a straight answer.',
-  },
-  {
-    icon: '◎',
-    title: 'Set goals, track progress',
-    body: 'Add what you\'re saving toward on the <strong>Goals tab</strong>. The app tells you exactly how many weeks until you get there — and nudges you at 50%, 75%, and when you hit 100%.',
-  },
-  {
-    icon: '◎',
+    sel: '#tab-history', eyebrow: 'History',
     title: 'See your spending truth',
-    body: 'The <strong>History tab</strong> shows how much you\'ve saved by saying no, how your spending compares to the 50/30/20 rule, and whether your decisions are trending smart or risky.',
+    body: 'Track how much you\'ve saved by <strong>saying no</strong>, and whether your choices are trending smart or risky.',
   },
   {
-    icon: '✦',
-    title: 'You\'re ready.',
-    body: 'Everything saves automatically. Start on the Analyze tab — type something you\'ve been thinking about buying and see what comes back. You can replay this tour anytime from the menu.',
+    sel: '#tab-bills', eyebrow: 'Bills',
+    title: 'Add your recurring costs',
+    body: 'Log your bills so every verdict knows your <strong>real budget</strong>, not just what\'s in your account today.',
+  },
+  {
+    sel: '.hamburger-btn', eyebrow: 'Last stop',
+    title: 'The menu holds everything else',
+    body: 'Extra tools, settings, and this tour all live here. <strong>Open it anytime</strong> to replay the walkthrough.',
+    opensMenu: true,
   },
 ];
 
-let tutStep = 0;
+let coachStep = 0;
+let coachActive = false;
 
 function startTutorial() {
-  tutStep = 0;
-  renderTutorialStep();
-  document.getElementById('tutorial-overlay').classList.add('open');
+  coachStep = 0;
+  coachActive = true;
+  document.getElementById('coach-catcher').classList.add('on');
+  document.getElementById('coach-ring').classList.add('on');
+  document.getElementById('coach-tip').classList.add('on');
+  window.addEventListener('resize', positionCoach);
+  window.addEventListener('scroll', positionCoach, true);
+  showCoachStep();
+}
+// Backwards-compatible alias
+function renderTutorialStep(){ showCoachStep(); }
+function tutorialNext(){ coachNext(); }
+function closeTutorial(){ endCoach(); }
+
+function coachTarget() {
+  const step = COACH_STEPS[coachStep];
+  return step ? document.querySelector(step.sel) : null;
 }
 
-function renderTutorialStep() {
-  const step = TUTORIAL_STEPS[tutStep];
-  const total = TUTORIAL_STEPS.length;
-  document.getElementById('tut-icon').textContent  = step.icon;
-  document.getElementById('tut-title').textContent = step.title;
-  document.getElementById('tut-body').innerHTML    = step.body;
-  document.getElementById('tut-counter').textContent = `${tutStep + 1} of ${total}`;
-  document.getElementById('tut-next-btn').textContent = tutStep === total - 1 ? "Let's go! →" : 'Next →';
-  // Dots
-  const dots = document.getElementById('tut-dots');
-  dots.innerHTML = TUTORIAL_STEPS.map((_, i) =>
-    `<div class="tutorial-step-dot ${i < tutStep ? 'done' : i === tutStep ? 'active' : ''}"></div>`
-  ).join('');
+function showCoachStep() {
+  const step = COACH_STEPS[coachStep];
+  if (!step) { endCoach(); return; }
+  const el = coachTarget();
+  if (!el) { coachStep++; showCoachStep(); return; }  // skip missing targets
+
+  // Make sure the target is on screen (tab bar scrolls horizontally)
+  try { el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch(e) {}
+
+  document.getElementById('coach-eyebrow').textContent = step.eyebrow || 'Getting started';
+  document.getElementById('coach-title').textContent = step.title;
+  document.getElementById('coach-body').innerHTML = step.body;
+  document.getElementById('coach-count').textContent = `${coachStep + 1} / ${COACH_STEPS.length}`;
+  document.getElementById('coach-cue-text').textContent =
+    step.opensMenu ? 'Tap the menu to open it' : 'Tap the highlighted tab';
+  document.getElementById('coach-next').textContent =
+    coachStep === COACH_STEPS.length - 1 ? 'Finish' : 'Next →';
+
+  // Wait a beat for any scroll to settle, then position
+  setTimeout(positionCoach, 260);
 }
 
-function tutorialNext() {
-  if (tutStep < TUTORIAL_STEPS.length - 1) {
-    tutStep++;
-    renderTutorialStep();
+function positionCoach() {
+  if (!coachActive) return;
+  const el = coachTarget();
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const pad = 6;
+  const ring = document.getElementById('coach-ring');
+  ring.style.top = (r.top - pad) + 'px';
+  ring.style.left = (r.left - pad) + 'px';
+  ring.style.width = (r.width + pad * 2) + 'px';
+  ring.style.height = (r.height + pad * 2) + 'px';
+
+  // Position tooltip: below the target if room, else above
+  const tip = document.getElementById('coach-tip');
+  const tipW = tip.offsetWidth || 300;
+  const tipH = tip.offsetHeight || 160;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let top = r.bottom + 14;
+  if (top + tipH > vh - 12) top = Math.max(12, r.top - tipH - 14);
+  let left = r.left + r.width / 2 - tipW / 2;
+  left = Math.max(14, Math.min(left, vw - tipW - 14));
+  tip.style.top = top + 'px';
+  tip.style.left = left + 'px';
+}
+
+// Advance when the user actually clicks the highlighted element
+document.addEventListener('DOMContentLoaded', () => {
+  const catcher = document.getElementById('coach-catcher');
+  if (!catcher) return;
+  catcher.addEventListener('click', (e) => {
+    const el = coachTarget();
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const inside = e.clientX >= r.left - 8 && e.clientX <= r.right + 8 &&
+                   e.clientY >= r.top - 8 && e.clientY <= r.bottom + 8;
+    if (inside) {
+      activateCoachTarget();
+      coachAdvance();
+    } else {
+      const ring = document.getElementById('coach-ring');
+      ring.classList.remove('pulse'); void ring.offsetWidth; ring.classList.add('pulse');
+    }
+  });
+});
+
+function activateCoachTarget() {
+  const step = COACH_STEPS[coachStep];
+  const el = coachTarget();
+  if (!el) return;
+  if (step.opensMenu) { if (typeof toggleHMenu === 'function') toggleHMenu(); }
+  else { el.click(); }  // navigates to that tab so it feels live
+}
+
+// "Next" button: show the tab too, then move on (but don't open the menu)
+function coachNext() {
+  const step = COACH_STEPS[coachStep];
+  const el = coachTarget();
+  if (el && !step.opensMenu) el.click();
+  coachAdvance();
+}
+
+function coachAdvance() {
+  if (coachStep < COACH_STEPS.length - 1) {
+    coachStep++;
+    showCoachStep();
   } else {
-    closeTutorial();
+    endCoach();
   }
 }
 
-function closeTutorial() {
-  document.getElementById('tutorial-overlay').classList.remove('open');
+function endCoach() {
+  coachActive = false;
+  document.getElementById('coach-catcher').classList.remove('on');
+  document.getElementById('coach-ring').classList.remove('on');
+  document.getElementById('coach-tip').classList.remove('on');
+  window.removeEventListener('resize', positionCoach);
+  window.removeEventListener('scroll', positionCoach, true);
   localStorage.setItem('sib4_tutorial_done', '1');
+  if (typeof showNotif === 'function') showNotif('✦', "You're all set", 'Replay this tour anytime from the menu.');
 }
 
 function maybeShowTutorial() {
@@ -8408,22 +8698,31 @@ showLesson('tax', null);
     gsap.set(heroReveals, { y: 26 });
     gsap.to(heroReveals, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', stagger: 0.09, delay: 0.12 });
 
-    // Ambient glow: take over drift from CSS so we can also parallax it
+    // Ambient glow: GSAP drives the drift (CSS no longer animates it — see .hero-glow comment)
     const glow = document.querySelector('.hero-glow');
     if (glow) {
-      glow.style.animation = 'none';
       gsap.to(glow, { xPercent: 8, yPercent: -6, duration: 7, ease: 'sine.inOut', yoyo: true, repeat: -1 });
     }
 
     if (hasST) {
-      // Scroll-triggered reveals for every section below the hero
+      // Make sure ScrollTrigger measures against a settled layout (GSAP loaded late)
+      ScrollTrigger.refresh();
+      const revealLine = window.innerHeight * 0.88;
+      let inViewIdx = 0;
       gsap.utils.toArray('.reveal').forEach(el => {
         if (el.closest('.landing-hero')) return;
         gsap.set(el, { y: 32 });
-        gsap.to(el, {
-          opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
-          scrollTrigger: { trigger: el, start: 'top 88%', once: true }
-        });
+        // If the element is already at/above the reveal line when GSAP finishes loading,
+        // animate it in right now (with a small stagger). ScrollTrigger would otherwise
+        // snap it to visible with no tween — the cause of the "random" missing animations.
+        if (el.getBoundingClientRect().top < revealLine) {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: (inViewIdx++) * 0.06 });
+        } else {
+          gsap.to(el, {
+            opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+            scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+          });
+        }
       });
       // Parallax — glow (y is free of the drift tween's x) and hero copy column
       if (glow) {
