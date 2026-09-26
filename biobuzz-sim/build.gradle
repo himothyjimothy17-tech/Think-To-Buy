@@ -1,0 +1,54 @@
+// Shared settings for every sub-project.
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        // Java 17 is the oldest version we support. It's the version we ask
+        // teammates to install on their Macs (brew install openjdk@17).
+        toolchain { languageVersion = JavaLanguageVersion.of(currentJavaMajor()) }
+    }
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 17
+        options.encoding = 'UTF-8'
+        options.compilerArgs += ['-Xlint:unchecked', '-Xlint:deprecation']
+    }
+    repositories { mavenCentral() }
+}
+
+// Use whatever JDK (17 or newer) is running Gradle, so nobody has to
+// install a second Java just for this project.
+static int currentJavaMajor() {
+    return Math.max(17, Runtime.version().feature())
+}
+
+// ./gradlew listEstimates  -> every value in config/ that is a guess, not a
+// measurement or a manual rule. Replace these once the robot exists.
+tasks.register('listEstimates') {
+    group = 'biobuzz'
+    description = 'Lists every ESTIMATE in the config files'
+    doLast { printMatching('ESTIMATE') }
+}
+
+// ./gradlew listTodos  -> every open question (manual unclear, stage not built yet).
+tasks.register('listTodos') {
+    group = 'biobuzz'
+    description = 'Lists every TODO in the config files and source code'
+    doLast { printMatching('TODO') }
+}
+
+def printMatching(String word) {
+    def files = fileTree(rootDir) {
+        include 'config/**/*.jsonc', '**/src/**/*.java', 'web/*.js'
+        exclude '**/build/**', 'web/vendor/**'
+    }.files.sort()
+    int count = 0
+    files.each { f ->
+        f.readLines().eachWithIndex { line, i ->
+            if (line.contains(word)) {
+                println "${rootDir.toPath().relativize(f.toPath())}:${i + 1}: ${line.trim()}"
+                count++
+            }
+        }
+    }
+    println "\n${count} line(s) contain ${word}."
+}

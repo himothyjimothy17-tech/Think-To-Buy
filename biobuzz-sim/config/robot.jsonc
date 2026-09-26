@@ -1,0 +1,107 @@
+// =============================================================================
+// OUR ROBOT - physical description used by the simulator.
+//
+// The robot is NOT built yet. Every number labeled ESTIMATE is a guess and
+// should be replaced with a real measurement once the robot exists.
+// Run `./gradlew listEstimates` to print every ESTIMATE in the config folder.
+//
+// Labels:
+//   CONFIRMED   decided by the team (see README "Robot decisions").
+//   SPEC        from a manufacturer's spec sheet (goBILDA, Limelight...).
+//   RULE        a limit from the game manual (the number itself lives in game.jsonc).
+//   ESTIMATE    a guess - replace when measured.
+//
+// Units: inches, pounds, degrees, seconds unless a key name says otherwise.
+// Robot frame: +x = forward (the intake side), +y = left, +z = up.
+// =============================================================================
+{
+  "name": "BIOBUZZ robot (design, not built yet)",
+
+  "chassis": {
+    "length": 17.0,             // ESTIMATE: just under the 18 in starting cube (RULE R102)
+    "width": 17.0,              // ESTIMATE
+    "height": 17.0,             // ESTIMATE
+    "massLb": 30.0,             // ESTIMATE
+    "wheelDiameterMm": 104.0,   // ESTIMATE: goBILDA 104 mm mecanum wheels
+    "trackWidth": 15.0,         // ESTIMATE: left wheel center to right wheel center
+    "wheelBase": 13.0           // ESTIMATE: front wheel center to back wheel center
+  },
+
+  // Motor models. Numbers are goBILDA Yellow Jacket spec-sheet values at 12 V.
+  // (SPEC - double-check against goBILDA's site before relying on them.)
+  "motorModels": {
+    "yj435":  { "freeRpm": 435,  "gearRatio": 13.7, "ticksPerRev": 384.5, "stallTorqueNm": 1.834, "stallCurrentA": 9.2, "freeCurrentA": 0.25 },  // SPEC 5203-2402-0014
+    "yj1620": { "freeRpm": 1620, "gearRatio": 3.7,  "ticksPerRev": 103.8, "stallTorqueNm": 0.530, "stallCurrentA": 9.2, "freeCurrentA": 0.25 },  // SPEC 5203-2402-0003
+    "yj6000": { "freeRpm": 6000, "gearRatio": 1.0,  "ticksPerRev": 28.0,  "stallTorqueNm": 0.144, "stallCurrentA": 9.2, "freeCurrentA": 0.25 }   // SPEC 5203-2402-0001
+  },
+
+  "drivetrain": {
+    "type": "mecanum",                  // CONFIRMED
+    "motorModel": "yj435",              // CONFIRMED: 4x goBILDA 435 RPM
+    // Stage 1 uses a simple model: each wheel's speed moves toward
+    // (power x free speed) with this time constant. Stage 2 replaces it with
+    // real motor torque curves, friction and slip.
+    "wheelResponseSeconds": 0.08,       // ESTIMATE (stage 1 only)
+    "strafeEfficiency": 0.85            // ESTIMATE (stage 1 only): mecanum strafing loses some speed
+  },
+
+  "intake": {
+    "motorModel": "yj1620",             // CONFIRMED: 2x goBILDA 1620 RPM, front-mounted
+    "motorCount": 2,
+    "capacity": 4                       // RULE G407: a robot may not CONTROL more than 4 elements
+  },
+
+  "shooter": {
+    "motorModel": "yj6000",             // CONFIRMED: 2x goBILDA 6000 RPM on one flywheel, 1:1
+    "motorCount": 2,
+    "flywheelGearRatio": 1.0,           // CONFIRMED
+    "flywheelDiameterMm": 96.0,         // ESTIMATE
+    "launchAngleDeg": 45.0,             // ESTIMATE: fixed launch angle (gate mode)
+
+    // The shooter servo's job isn't decided yet. Switch between:
+    //   "gate" - a feeder gate that releases one element per shot (default)
+    //   "hood" - an adjustable hood that changes the launch angle
+    "servoMode": "gate",
+    "servo": {
+      "secondsPer60Deg": 0.20,          // ESTIMATE: typical goBILDA 2000-series (torque) servo at 6 V
+      "rangeDeg": 300.0,                // SPEC: goBILDA dual-mode servo range in position mode
+      "gateClosedPosition": 0.0,        // ESTIMATE (gate mode)
+      "gateOpenPosition": 0.3,          // ESTIMATE (gate mode)
+      "hoodMinAngleDeg": 30.0,          // ESTIMATE (hood mode): launch angle at servo position 0.0
+      "hoodMaxAngleDeg": 60.0           // ESTIMATE (hood mode): launch angle at servo position 1.0
+    }
+  },
+
+  "battery": {
+    "restVoltage": 12.8,                // ESTIMATE: a charged 12 V NiMH FTC battery with no load
+    "internalResistanceOhm": 0.02       // ESTIMATE (used from stage 2): voltage drop per amp drawn
+  },
+
+  "imu": {
+    // How the Control Hub will be mounted. Our TeamCode must pass the SAME values
+    // to RevHubOrientationOnRobot, or the simulated IMU reads the wrong heading.
+    "logoFacing": "UP",                 // ESTIMATE
+    "usbFacing": "FORWARD"              // ESTIMATE
+  },
+
+  "camera": {
+    "type": "Limelight3A",              // CONFIRMED
+    "mountForward": 8.0,                // ESTIMATE: inches in front of robot center
+    "mountHeight": 8.0,                 // ESTIMATE: inches above the tiles
+    "pitchDeg": 15.0,                   // ESTIMATE: tilted up
+    "horizontalFovDeg": 54.5,           // SPEC: Limelight 3A
+    "verticalFovDeg": 42.0              // SPEC: Limelight 3A
+  },
+
+  "possessionSensor": { "enabled": false },   // CONFIRMED: optional, off by default
+  "odometry": { "pinpoint": false },          // CONFIRMED: drive encoders + IMU only for now
+
+  // Where our robot starts. RED positions only (blue = 180-degree rotation).
+  // All must satisfy G304: own side, touching a wall, not in the LOADING ZONE,
+  // not touching a FLOWER, inside the 18 in cube.
+  "startPoses": {
+    "redWallCenter":   { "x": -63.5, "y":   0.0, "headingDeg":  0.0 },  // back against the red wall, facing the HIVE
+    "redAudienceWall": { "x": -40.0, "y": -63.5, "headingDeg": 90.0 }   // back against the audience wall
+  },
+  "defaultStartPose": "redWallCenter"
+}

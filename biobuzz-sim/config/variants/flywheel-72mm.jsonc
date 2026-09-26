@@ -1,0 +1,3 @@
+// Design option: smaller 72 mm flywheel (ESTIMATE) - spins up faster,
+// launches slower at the same RPM.
+{ "shooter": { "flywheelDiameterMm": 72.0 } }

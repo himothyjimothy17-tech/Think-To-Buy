@@ -1,0 +1,3 @@
+// Design option: larger 120 mm flywheel (ESTIMATE) - more launch speed,
+// slower spin-up and recovery.
+{ "shooter": { "flywheelDiameterMm": 120.0 } }

@@ -1,0 +1,3 @@
+// The fake FTC SDK. Our TeamCode compiles against this in the simulator,
+// and against the real SDK in Android Studio.
+plugins { id 'java-library' }

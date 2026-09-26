@@ -1,0 +1,18 @@
+# Build output (Gradle recreates these)
+.gradle/
+build/
+*/build/
+TeamCode/build/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+out/
+
+# macOS
+.DS_Store
+
+# Saved runs and logs (later stages)
+runs/
+*.log

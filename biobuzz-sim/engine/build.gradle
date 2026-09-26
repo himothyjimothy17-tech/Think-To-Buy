@@ -1,0 +1,29 @@
+// The simulator engine: physics, rules, OpMode runner and web server.
+plugins { id 'java' }
+
+dependencies {
+    implementation project(':sdk-mock')
+    // Our TeamCode is on the classpath so the sim can find and run its OpModes.
+    implementation project(':teamcode')
+
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    workingDir = rootProject.projectDir   // so tests find config/
+    testLogging { events 'failed'; exceptionFormat 'full' }
+}
+
+// ./gradlew sim  -> starts the visual simulator and opens the browser.
+// Extra options:  ./gradlew sim --args="--variant hood --no-browser"
+tasks.register('sim', JavaExec) {
+    group = 'biobuzz'
+    description = 'Run the visual BIOBUZZ simulator (opens http://127.0.0.1:8765/)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.biobuzz.sim.Main'
+    workingDir = rootProject.projectDir
+    standardInput = System.in
+}

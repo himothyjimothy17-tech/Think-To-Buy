@@ -1,0 +1,9 @@
+// OUR robot code. The source folder layout matches the FTC SDK's TeamCode
+// module, so these files can be copied into FtcRobotController unchanged.
+plugins { id 'java-library' }
+
+dependencies {
+    // In the simulator we compile against the fake SDK.
+    // (In Android Studio, the real SDK is used instead.)
+    compileOnly project(':sdk-mock')
+}

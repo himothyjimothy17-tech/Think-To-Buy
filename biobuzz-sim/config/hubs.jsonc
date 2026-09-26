@@ -1,0 +1,69 @@
+// =============================================================================
+// ROBOT CONFIGURATION - what you would type into the Driver Station
+// "Configure Robot" screen. The simulator builds its hardwareMap from this.
+//
+// "name" must match the constants in TeamCode/.../RobotHardware.java EXACTLY
+// (capital letters count). If they don't match, hardwareMap.get() throws the
+// same "Unable to find a hardware device" error the real robot would, and the
+// sim prints a warning at startup listing the mismatch.
+//
+// "role" tells the PHYSICS which part of the robot the port drives. It is not
+// something our code ever sees.
+//
+// "mountedReversed": the motor is physically mirrored (true for the left-side
+// drive motors on a standard mecanum chassis). Our code fixes this with
+// setDirection(REVERSE) - forget it and the robot spins instead of driving.
+//
+// Port choices are ESTIMATES until the robot is wired.
+// =============================================================================
+{
+  "hubs": [
+    {
+      "name": "Control Hub",           // the voltage sensor is named after the hub
+      "type": "ControlHub",
+      "motors": [
+        { "port": 0, "name": "frontLeft",  "model": "yj435", "role": "drive.frontLeft",  "mountedReversed": true  },
+        { "port": 1, "name": "backLeft",   "model": "yj435", "role": "drive.backLeft",   "mountedReversed": true  },
+        { "port": 2, "name": "frontRight", "model": "yj435", "role": "drive.frontRight", "mountedReversed": false },
+        { "port": 3, "name": "backRight",  "model": "yj435", "role": "drive.backRight",  "mountedReversed": false }
+      ],
+      "servos": [
+        { "port": 0, "name": "shooterServo", "type": "Servo", "role": "shooter.servo" }
+      ],
+      "i2c": [
+        { "bus": 0, "name": "imu", "type": "IMU", "role": "imu" }
+      ]
+    },
+    {
+      "name": "Expansion Hub 2",
+      "type": "ExpansionHub",
+      "motors": [
+        { "port": 0, "name": "intakeLeft",   "model": "yj1620", "role": "intake.left",   "mountedReversed": false },
+        { "port": 1, "name": "intakeRight",  "model": "yj1620", "role": "intake.right",  "mountedReversed": true  },
+        { "port": 2, "name": "shooterLeft",  "model": "yj6000", "role": "shooter.left",  "mountedReversed": false },
+        { "port": 3, "name": "shooterRight", "model": "yj6000", "role": "shooter.right", "mountedReversed": true  }
+      ],
+      "servos": [],
+      "i2c": []
+    }
+  ],
+
+  // Plugged into the Control Hub's USB port. (Stage 3 adds the Limelight mock.)
+  "usb": [
+    { "name": "limelight", "type": "Limelight3A", "role": "camera" }
+  ],
+
+  // How long each hardware call takes on a real hub, in milliseconds.
+  // This is what makes the OpMode's loop run at a realistic speed.
+  // Without "bulk reads", every encoder read is a separate message to the hub.
+  // The Expansion Hub is slower because it talks over an RS-485 cable.
+  "timingMs": {
+    "controlHubRead": 1.2,     // ESTIMATE: one encoder/velocity read on the Control Hub
+    "controlHubWrite": 1.0,    // ESTIMATE: one setPower / setMode on the Control Hub
+    "expansionHubRead": 2.5,   // ESTIMATE: same, on the Expansion Hub (over RS-485)
+    "expansionHubWrite": 2.0,  // ESTIMATE
+    "imuRead": 2.0,            // ESTIMATE: I2C read of the BHI260AP IMU
+    "voltageRead": 1.2,        // ESTIMATE
+    "servoWrite": 1.0          // ESTIMATE
+  }
+}

@@ -1,0 +1,56 @@
+// Developer tools: the SDK checker (and, later, calibration tools).
+plugins { id 'java' }
+
+// Version of the REAL FTC SDK to check against. Change it to match the
+// FtcRobotController version on the robot:  ./gradlew sdkCheck -PftcSdkVersion=12.0.0
+def ftcSdkVersion = project.findProperty('ftcSdkVersion') ?: '12.0.0'
+
+configurations {
+    // The real SDK's Android libraries (.aar). We only need the Java classes inside.
+    realSdk { transitive = false }
+}
+
+dependencies {
+    implementation project(':sdk-mock')   // for the @SimOnly annotation
+    realSdk "org.firstinspires.ftc:RobotCore:${ftcSdkVersion}@aar"
+    realSdk "org.firstinspires.ftc:Hardware:${ftcSdkVersion}@aar"
+    realSdk "org.firstinspires.ftc:FtcCommon:${ftcSdkVersion}@aar"
+}
+
+// Pull classes.jar out of each .aar (an .aar is a zip file).
+def realSdkDir = layout.buildDirectory.dir('real-sdk')
+tasks.register('extractRealSdk', Copy) {
+    description = 'Downloads the real FTC SDK and extracts its Java classes'
+    configurations.realSdk.resolve().each { aar ->
+        from(zipTree(aar)) {
+            include 'classes.jar'
+            rename { aar.name.replace('.aar', '.jar') }
+        }
+    }
+    into realSdkDir
+}
+
+// Step 1 of the check: does TeamCode compile against the REAL SDK?
+tasks.register('compileTeamCodeAgainstRealSdk', JavaCompile) {
+    dependsOn 'extractRealSdk'
+    source = fileTree(rootProject.file('TeamCode/src/main/java'))
+    classpath = fileTree(realSdkDir) { include '*.jar' }
+    destinationDirectory = layout.buildDirectory.dir('teamcode-vs-real-sdk')
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+// ./gradlew sdkCheck
+tasks.register('sdkCheck', JavaExec) {
+    group = 'biobuzz'
+    description = 'Checks that TeamCode works with both the fake and the REAL FTC SDK'
+    dependsOn 'compileTeamCodeAgainstRealSdk', ':sdk-mock:classes', ':teamcode:classes', 'classes'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.biobuzz.tools.SdkCheck'
+    doFirst {
+        args = [
+            project(':sdk-mock').sourceSets.main.output.classesDirs.singleFile.absolutePath,
+            project(':teamcode').sourceSets.main.output.classesDirs.singleFile.absolutePath,
+        ] + fileTree(realSdkDir) { include '*.jar' }.files*.absolutePath.sort()
+    }
+}

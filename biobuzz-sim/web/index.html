@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BIOBUZZ Simulator</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js is stored locally in web/vendor so the sim works without internet. -->
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div id="layout">
+    <!-- ================= LEFT: Driver Station + sim controls ================= -->
+    <aside id="left" class="column">
+      <section class="card" id="match-card">
+        <div class="phase" id="phase">PRE-MATCH</div>
+        <div class="timer" id="timer">2:00</div>
+        <div class="subtle" id="sim-time">sim t = 0.00 s</div>
+      </section>
+
+      <section class="card">
+        <h2>Driver Station</h2>
+        <label class="field">OpMode
+          <select id="opmode-select"></select>
+        </label>
+        <div class="button-row">
+          <button id="btn-init" title="Run the OpMode's init (like pressing INIT)">INIT</button>
+          <button id="btn-start" class="go" title="Press START">&#9654; START</button>
+          <button id="btn-stop" class="stop" title="Press STOP">&#9632; STOP</button>
+        </div>
+        <div class="status-line">State: <span id="opmode-state">NONE</span></div>
+        <pre id="opmode-error" class="error hidden"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Setup</h2>
+        <div class="button-row">
+          <button id="btn-red" class="alliance red">RED</button>
+          <button id="btn-blue" class="alliance blue">BLUE</button>
+        </div>
+        <label class="field">Start position
+          <select id="startpose-select"></select>
+        </label>
+        <div class="button-row">
+          <button id="btn-reset" title="Put robots back at their start (keeps the config)">Reset</button>
+          <button id="btn-reload" title="Re-read the config/*.jsonc files, then reset">Reload config</button>
+        </div>
+        <div class="subtle" id="variants"></div>
+      </section>
+
+      <section class="card">
+        <h2>Simulation</h2>
+        <div class="button-row">
+          <button id="btn-pause">Pause</button>
+          <button id="btn-step" title="Advance 20 ms of simulated time">Step</button>
+        </div>
+        <label class="field">Speed
+          <select id="speed-select">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x (real time)</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>View</h2>
+        <div class="button-row cams">
+          <button data-cam="orbit" class="cam active">Orbit</button>
+          <button data-cam="driver" class="cam">Driver</button>
+          <button data-cam="chase" class="cam">Chase</button>
+          <button data-cam="top" class="cam">Top</button>
+        </div>
+        <label class="check"><input type="checkbox" id="chk-trail" checked> Path trail</label>
+        <label class="check"><input type="checkbox" id="chk-zones" checked> Zone overlays</label>
+        <button id="btn-clear-trail" class="small">Clear trail</button>
+      </section>
+    </aside>
+
+    <!-- ================= CENTER: 3D field ================= -->
+    <main id="center">
+      <div id="viewport"></div>
+      <div id="connection" class="overlay">Connecting to the simulator...</div>
+      <div id="hint" class="overlay-bottom">Click the field, then drive with the gamepad or keyboard (W A S D + Q E).</div>
+    </main>
+
+    <!-- ================= RIGHT: telemetry and robot state ================= -->
+    <aside id="right" class="column">
+      <section class="card" id="warnings-card" hidden>
+        <h2>Warnings</h2>
+        <ul id="warnings"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Telemetry</h2>
+        <pre id="telemetry" class="mono">(no telemetry yet)</pre>
+      </section>
+
+      <section class="card">
+        <h2>Robot state</h2>
+        <table class="kv" id="robot-state"></table>
+        <div class="bars" id="wheel-bars"></div>
+      </section>
+
+      <section class="card">
+        <h2>Gamepad 1</h2>
+        <div id="gamepad-source" class="subtle">No gamepad - using keyboard</div>
+        <div class="sticks">
+          <div class="stick"><div class="dot" id="stick-left"></div></div>
+          <div class="stick"><div class="dot" id="stick-right"></div></div>
+          <div id="buttons-pressed" class="mono small-text"></div>
+        </div>
+        <details>
+          <summary>Keyboard controls</summary>
+          <table class="kv small-text">
+            <tr><td>W / S</td><td>left stick up / down (drive)</td></tr>
+            <tr><td>A / D</td><td>left stick left / right (strafe)</td></tr>
+            <tr><td>Q / E</td><td>right stick left / right (turn)</td></tr>
+            <tr><td>Shift</td><td>right bumper (slow mode)</td></tr>
+            <tr><td>Z</td><td>left bumper</td></tr>
+            <tr><td>J K U I</td><td>A B X Y buttons</td></tr>
+            <tr><td>1 / 3</td><td>left / right trigger</td></tr>
+            <tr><td>Arrows</td><td>d-pad</td></tr>
+            <tr><td>Backspace / Enter</td><td>back / start</td></tr>
+          </table>
+        </details>
+      </section>
+
+      <section class="card grow">
+        <h2>Match log</h2>
+        <pre id="log" class="mono log"></pre>
+      </section>
+    </aside>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

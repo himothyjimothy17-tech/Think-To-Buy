@@ -1,0 +1,10 @@
+// BIOBUZZ simulator - Gradle project list.
+// Each "include" is a sub-project with its own folder.
+rootProject.name = 'biobuzz-sim'
+
+include 'sdk-mock'   // fake FTC SDK (same class names and methods as the real one)
+include 'teamcode'   // OUR robot code - lives in TeamCode/ exactly like in the FTC SDK
+include 'engine'     // physics, game rules, OpMode runner, web server
+include 'tools'      // SDK method checker (and later: calibration tools)
+
+project(':teamcode').projectDir = file('TeamCode')

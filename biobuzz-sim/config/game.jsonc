@@ -1,0 +1,195 @@
+// =============================================================================
+// BIOBUZZ game rules - every rule-based number in the simulator lives here.
+//
+// Source: 2026-2027 FIRST Tech Challenge Competition Manual, version TU02.
+// Every value cites its manual section (e.g. "§9.2") so you can check it.
+//
+// Labels used in comments:
+//   (no label)        copied straight from the manual text or a labeled figure.
+//   FIGURE-READ       read off a manual figure that has no printed number
+//                     (e.g. where a FLOWER sits along the wall). Accurate to a
+//                     few inches. TODO: confirm with the Event Field Setup Guide / CAD (§9.1).
+//   ESTIMATE          NOT in the manual. Our best guess. Replace when we can measure.
+//   TODO              something the manual leaves unclear - listed in README.
+//
+// UNITS: inches, seconds, points (unless a key name says otherwise).
+//
+// COORDINATE SYSTEM (our choice - the manual doesn't define one):
+//   Origin = center of the field, on the tile surface.
+//   +x points from the RED alliance wall toward the BLUE alliance wall
+//      (left to right, as seen from the audience).
+//   +y points away from the audience (toward the far/"scoring" wall).
+//   +z points up.
+//   Heading 0 = facing +x; positive heading = counter-clockwise (turning left).
+//   Tile columns A..F run along +x, rows 1..6 along +y (§9.4, Figure 9-5).
+//
+// RED vs BLUE: the field is identical after a 180-degree rotation around the
+// center (Figures 9-2, 9-17, 10-2). So blue positions are red positions with
+// (x, y, heading) -> (-x, -y, heading + 180). We only list RED positions and
+// let the simulator rotate them for blue.
+// =============================================================================
+{
+  "manualVersion": "TU02",
+
+  "field": {
+    "size": 144.0,              // §9.2: ~144 in x 144 in inside the perimeter walls
+    "tileSize": 24.0,           // §9.2: 36 tiles, each ~24 in x 24 in
+    "tileThickness": 0.59,      // §9.2
+    "tilesPerSide": 6,          // §9.2 (36 tiles = 6 x 6)
+    "wallHeight": 12.0,         // ESTIMATE: AndyMark am-0481 perimeter height is not in the sections we read. TODO
+    "dimensionTolerance": 1.0   // §9.1: +/- 1 in on all field dimensions
+  },
+
+  // ---- Areas and zones (§9.3). Only RED is listed; blue = 180-degree rotation. ----
+  "zones": {
+    "red": {
+      // §9.3 + Fig 9-3: LOADING ZONE ~23 in (set by tile seams) x 11 in deep, against
+      // the red alliance wall. Fig 9-4 places it between tile seams 4 and 5 (y = 24..48).
+      "loadingZone": { "xMin": -72.0, "xMax": -61.0, "yMin": 24.0, "yMax": 48.0 },   // FIGURE-READ for y
+
+      // §9.3 + Fig 9-3: GARDEN ~23 in x 2 in, along the audience wall in the corner
+      // closest to the red ALLIANCE AREA (§10.3.1 note). Width set by tile seams.
+      "garden": { "xMin": -72.0, "xMax": -49.0, "yMin": -72.0, "yMax": -70.0 },
+
+      // §9.3 / §9.5: ALLIANCE AREA ~97 in wide x 54 in deep, OUTSIDE the field.
+      // Fig 9-6: its far edge lines up with the top of the loading zone.
+      "allianceArea": { "xMin": -126.0, "xMax": -72.0, "yMin": -49.0, "yMax": 48.0 }  // FIGURE-READ for y
+    },
+
+    // G304.A / G402: during AUTO, columns A, B, C (x < 0) are the red side.
+    "redSideMaxX": 0.0
+  },
+
+  // ---- HIVE structure (§9.6) ----
+  "hive": {
+    // §9.6.1 / Fig 9-8: two triangular frames joined at the apex by a crossbar.
+    "frameWidth": 49.46,        // along the crossbar (x axis) - §9.6.1
+    "frameDepth": 38.95,        // triangle base (y axis) - §9.6.1
+    "pivotHeight": 43.95,       // pivot axis above the tiles - §9.6.1
+    "legRadius": 0.75,          // ESTIMATE: frame tube thickness for collisions
+
+    // §9.6.2 / Fig 9-9, 9-10
+    "hiveCenterToCenter": 25.5, // red HIVE and blue HIVE pivots, along x - Fig 9-10
+    "hiveLength": 42.91,        // end-to-end length of one HIVE - Fig 9-9
+    "cellGap": 18.84,           // gap between a HIVE's two CELLS - Fig 9-9 (§9.6.2 says ~18.8)
+    "cellDepth": 12.04,         // CELL length along the HIVE arm - Fig 9-9
+    "tiltDegrees": 30.0,        // HIVE arm angle from horizontal in a stable state - Fig 9-10
+    "cellOpeningWidth": 20.0,   // §9.6.2 / Fig 9-11
+    "cellOpeningHeight": 14.0,  // §9.6.2 / Fig 9-11 (pentagon, to the peak)
+    "cellOpeningRectHeight": 7.61, // Fig 9-11: height of the rectangular part below the peak
+    "upCellOpeningBottomZ": 53.5,  // Fig 9-10: bottom of the up-facing CELL's opening above tiles
+    "upCellOpeningTopZ": 65.6,     // Fig 9-10: top of the up-facing CELL's opening above tiles
+    "downCellBottomZ": 30.6,       // Fig 9-10: lowest point of the down-facing CELL above tiles
+
+    // Which CELL of the RED hive starts facing up. §10.3.1 / Fig 10-2: the red HIVE's
+    // audience-side CELL starts tilted up (holding 3 red NECTAR).
+    // (Fig 10-2 has a label typo: "CELL-RED ... NECTAR-BLUE" points at the blue HIVE.)
+    "redInitialUpCell": "audience",
+
+    // TODO: The manual only says the HIVE tips when "enough" POLLEN/NECTAR are
+    // LAUNCHED into the up-facing CELL (§8, §9.6). No number or weight is given.
+    // Stage 4 models tipping as a weight threshold - see robot.jsonc "gameElementPhysics".
+    "tipThresholdSource": "ESTIMATE"
+  },
+
+  // ---- FLOWERS (§9.7) ----
+  "flower": {
+    "count": 4,                     // §9.2
+    "topOpeningDiameter": 4.0,      // §9.7 / Fig 9-12
+    "topOpeningHeight": 21.5,       // §9.7 / Fig 9-12: top ring above tiles
+    "backstopHeight": 1.25,         // §9.7 / Fig 9-12
+    "retrievalOpeningHeight": 3.55, // §9.7 / Fig 9-12
+    "retrievalOpeningDepth": 3.57,  // §9.7 / Fig 9-12
+    "bottomRingHeight": 0.43,       // Fig 9-12 (§9.7 says ~0.4 in)
+    "bottomRingHoleDiameter": 2.79, // §9.7 / Fig 9-12
+    "centerFromWall": 3.0,          // ESTIMATE: how far the FLOWER's center sits from the wall. TODO confirm (Fig 9-12 is unclear)
+    "collisionRadius": 3.2,         // ESTIMATE: footprint of the pipes/rings for robot collisions
+
+    // Fig 9-4 / 9-17: the four FLOWERS sit on tile seams against the walls.
+    // RED-side positions only (x < 0); the other two are the 180-degree rotation.
+    // FIGURE-READ: "on seam W of the far wall" and "on seam 2 of the red wall".
+    "redSidePositions": [
+      { "x": -24.0, "y":  72.0, "wall": "far" },   // far wall, seam W
+      { "x": -72.0, "y": -24.0, "wall": "red" }    // red alliance wall, seam 2
+    ],
+    "initialPollenEach": 4          // §10.3.1 A.i
+  },
+
+  // ---- SCORING ELEMENTS (§9.8) ----
+  "elements": {
+    "pollen": { "diameter": 2.8, "color": "yellow", "count": 40 },  // §9.8
+    "nectar": { "diameter": 3.6, "perAlliance": 8 },                // §9.8: 8 red + 8 blue
+    "note": "§9.8: balls are not perfectly spherical and vary in size"
+  },
+
+  // ---- AprilTags (§9.9) ----
+  "aprilTags": {
+    "family": "36h11",              // §9.9
+    "size": 3.25,                   // §9.9: 3.25 in square
+    "tagsPerCluster": 4,            // §9.9
+    "clusterSpacingInner": 2.75,    // Fig 9-15: tag center to cluster center (inner tags)
+    "clusterSpacingOuter": 6.5,     // Fig 9-15: tag center to cluster center (outer tags)
+    // §9.9 / Fig 9-17: IDs on the bottom face of each CELL, facing down.
+    "redFarCellIds":      [30, 31, 32, 33],
+    "redAudienceCellIds": [34, 35, 36, 37],
+    "blueAudienceCellIds":[38, 39, 40, 41],
+    "blueFarCellIds":     [42, 43, 44, 45]
+  },
+
+  // ---- Staging before the match (§10.3.1) ----
+  "staging": {
+    "pollenInEachFlower": 4,        // §10.3.1 A.i
+    "pollenInEachGarden": 4,        // §10.3.1 A.ii/iii
+    "pollenPreloadPerRobot": 4,     // §10.3.1 A.iv, §10.3.4, G304.G
+    "nectarInUpCell": 3,            // §10.3.1 B.i (own-color NECTAR in own HIVE's up CELL)
+    "nectarInAllianceArea": 5       // §10.3.1 B.ii
+  },
+
+  // ---- Match timing (§10.1, §10.4) ----
+  // (§10.4 refers to a "Table 9-1" for timing that doesn't exist - manual typo.)
+  "match": {
+    "autoSeconds": 30,              // §10.4
+    "transitionSeconds": 8,         // §10.4
+    "teleopSeconds": 120,           // §10.4
+    "endgameNectarSecondsLeft": 60  // §10.1, G410, G426: NECTAR rules change with 60 s left
+  },
+
+  // ---- Point values (§10.5.5, Table 10-2) ----
+  "points": {
+    "leaveAuto": 3,                 // LEAVE, AUTO only
+    "parkAuto": 5,                  // PARK at end of AUTO
+    "parkTeleop": 5,                // PARK at end of match
+    "hiveTip": 20,                  // each HIVE TIP, AUTO or TELEOP (tips done before TELEOP starts count as AUTO, §10.5 B)
+    "elementInCellAtEnd": 2,        // POLLEN/NECTAR left in an up-facing CELL at the end (TELEOP only)
+    "bottomNectarBonus": 5,         // per FLOWER (TELEOP)
+    "elementInOwnedFlower": 2,      // per POLLEN/NECTAR in a FLOWER the alliance owns (TELEOP)
+    "elementInGarden": 1,           // per POLLEN/NECTAR in the alliance's GARDEN (TELEOP)
+    "minorFoul": 5,                 // §10.6 Table 10-4: credited to the OPPONENT
+    "majorFoul": 20                 // §10.6 Table 10-4: credited to the OPPONENT
+  },
+
+  // ---- Ranking points (Table 10-2, Table 10-3 "All Other Events") ----
+  "rankingPoints": {
+    "win": 3,
+    "tie": 1,
+    "swarmThresholdPoints": 16,     // SWARM RP: LEAVE + PARK points >= 16
+    "pollinator1TipThreshold": 4,   // POLLINATOR 1 RP: tips >= 4
+    "pollinator2TipThreshold": 7    // POLLINATOR 2 RP: tips >= 7
+  },
+
+  // ---- Robot rules we check automatically (§11.3, §11.4, §12) ----
+  "robotRules": {
+    "startingCube": 18.0,           // R102: 18 x 18 x 18 in STARTING CONFIGURATION
+    "expandedWidth": 18.0,          // R105.A: 18 in x 24 in x 29 in tall when expanded
+    "expandedLength": 24.0,         // R105.A
+    "expandedHeight": 29.0,         // R105.A
+    "maxMotors": 8,                 // R503
+    "maxServos": 8,                 // R503
+    "maxMotorsPerHubPort": 2,       // R505 Table 12-3
+    "maxControlledElements": 4,     // G407
+    "pinSeconds": 3.0,              // G421: 3-count on PINS
+    "pinSeparation": 24.0,          // G421.A/B: 2 ft
+    "momentarySeconds": 3.0,        // §10.6: MOMENTARY < ~3 s
+    "continuousSeconds": 10.0       // §10.6: CONTINUOUS > ~10 s
+  }
+}
