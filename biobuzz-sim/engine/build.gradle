@@ -40,3 +40,14 @@ tasks.register('experiment', Test) {
     workingDir = rootProject.projectDir
     testLogging { showStandardStreams = true; events 'failed' }
 }
+
+// ./gradlew headless --args="--auto 'BIOBUZZ Auto' --seeds 1-20"
+// Runs matches with no browser and saves a JSON report in runs/.
+// See Headless.java for every option (comparisons use "|", e.g. --variant "gate|hood").
+tasks.register('headless', JavaExec) {
+    group = 'biobuzz'
+    description = 'Run matches headless over many seeds and print/save the numbers'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.biobuzz.sim.Headless'
+    workingDir = rootProject.projectDir
+}

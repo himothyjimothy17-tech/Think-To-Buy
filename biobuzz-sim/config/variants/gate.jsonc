@@ -1,4 +1,7 @@
 // Design option: shooter servo is a FEEDER GATE (one element per shot).
 // This is the default in robot.jsonc; this file exists so batch comparisons
 // can name it explicitly.
-{ "shooter": { "servoMode": "gate" } }
+{
+  "shooter": { "servoMode": "gate" },
+  "teamcode": { "Shooter.HOOD_MODE": false }
+}

@@ -104,7 +104,7 @@ public final class OpModeRegistry {
     }
 
     /** Lists class names in the TeamCode package, from folders or jars on the classpath. */
-    private static List<String> scanClassNames() {
+    public static List<String> scanClassNames() {
         List<String> names = new ArrayList<>();
         String path = TEAMCODE_PACKAGE.replace('.', '/');
         try {

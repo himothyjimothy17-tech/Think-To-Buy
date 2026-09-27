@@ -1,3 +1,7 @@
 // Design option: shooter servo is an ADJUSTABLE HOOD (changes launch angle).
 // Elements are then fed by the intake instead of a gate.
-{ "shooter": { "servoMode": "hood" } }
+// "teamcode" sets TeamCode's public static fields so the code matches the hardware.
+{
+  "shooter": { "servoMode": "hood" },
+  "teamcode": { "Shooter.HOOD_MODE": true }
+}

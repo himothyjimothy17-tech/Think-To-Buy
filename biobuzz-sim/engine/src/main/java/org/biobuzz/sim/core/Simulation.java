@@ -97,6 +97,8 @@ public final class Simulation {
     private int ourCellEntries;
     private int ourFlowerEntries;
     private long stepCount;
+    private double matchT0;
+    private final List<Object> tipLog = new ArrayList<>();
     private double runWallStart;
     private RobotHardwareSim hardware;
     private final SimTelemetry telemetry = new SimTelemetry();
@@ -127,8 +129,25 @@ public final class Simulation {
         this.cfg = cfg;
         this.variantNames = variantNames;
         this.startPoseName = cfg.robot.str("defaultStartPose");
+        applyTeamCodeSettings(cfg);
         SimHooks.install(lockstep);
         buildWorld();
+    }
+
+    /**
+     * TeamCode static fields keep their values across simulations in one JVM,
+     * so start every Simulation from the code's own values, then apply the
+     * design variant's "teamcode" settings (e.g. Shooter.HOOD_MODE for the hood).
+     */
+    @SuppressWarnings("unchecked")
+    private void applyTeamCodeSettings(SimConfig c) {
+        Tunables.restoreDefaults();
+        Object tc = c.robot.raw().get("teamcode");
+        if (tc instanceof Map) {
+            for (Map.Entry<String, Object> e : ((Map<String, Object>) tc).entrySet()) {
+                Tunables.set(e.getKey(), e.getValue());
+            }
+        }
     }
 
     public void setBroadcaster(Consumer<String> broadcaster) {
@@ -215,6 +234,7 @@ public final class Simulation {
         startProblems.clear();
         ourCellEntries = 0;
         ourFlowerEntries = 0;
+        tipLog.clear();
         if (hardware.possessionSensor != null) {
             hardware.possessionSensor.ballPresent = () -> mech.ballAtGate(nowSeconds());
         }
@@ -289,6 +309,42 @@ public final class Simulation {
     /** Battery voltage at the hubs (sags with current draw). */
     private double batteryVoltage() {
         return battery.voltage();
+    }
+
+    /** Headless setup: alliance, start pose and seed (null = keep). Rebuilds the field. */
+    public void setup(Alliance alliance, String startPose, Long newSeed) {
+        if (alliance != null) {
+            ourAlliance = alliance;
+        }
+        if (startPose != null) {
+            startPoseName = startPose;
+        }
+        if (newSeed != null) {
+            seed = newSeed;
+        }
+        reset(false);
+    }
+
+    /**
+     * Runs one whole match as fast as possible and returns the JSON report.
+     * With autoOnly, stops when TELEOP would begin (so AUTO tips that finish
+     * during the TRANSITION still count) and reports the score at that point.
+     */
+    public String runMatch(String autoName, String teleopName, boolean autoOnly) {
+        startMatch(autoName == null ? "" : autoName, teleopName == null ? "" : teleopName);
+        double limit = nowSeconds() + 175;
+        while (running && nowSeconds() < limit) {
+            stepOnce();
+            if (autoOnly && timer.mode() == MatchTimer.Mode.MATCH && timer.phase() == MatchTimer.Phase.TELEOP) {
+                runner.stop();
+                score.updateEndItems(world, robots, false);
+                return buildReport(nowSeconds());
+            }
+            if (report != null) {
+                return report;
+            }
+        }
+        return buildReport(nowSeconds());
     }
 
     /** Sets the match seed (takes effect on the next reset). */
@@ -538,6 +594,7 @@ public final class Simulation {
             matchStartAt = -1;
             checkStartingPositions();
             timer.startMatch(now);
+            matchT0 = now;
             if (runner.state() == OpModeRunner.State.INIT) {
                 runner.start();
             }
@@ -567,6 +624,7 @@ public final class Simulation {
                 case HIVE_TIP:
                     boolean autoTip = timer.phase() != MatchTimer.Phase.TELEOP && timer.phase() != MatchTimer.Phase.POST_MATCH;
                     score.onTip(e.alliance, autoTip);
+                    tipLog.add(e.alliance.name() + String.format(" %.2f", now - matchT0));
                     log(e.alliance + " HIVE TIPPED (#" + e.index + ", " + (autoTip ? "AUTO" : "TELEOP") + ") - +20");
                     break;
                 case CELL_ENTRY:
@@ -694,6 +752,7 @@ public final class Simulation {
         }
         j.endArray();
         j.name("startProblems").any(new ArrayList<Object>(startProblems));
+        j.name("tips").any(new ArrayList<Object>(tipLog));
         j.field("simSeconds", now);
         j.field("wallSeconds", runWallStart > 0 ? (System.nanoTime() - runWallStart) / 1e9 : 0);
         return j.endObject().toString();

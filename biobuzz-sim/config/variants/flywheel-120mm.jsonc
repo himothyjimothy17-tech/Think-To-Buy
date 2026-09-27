@@ -1,3 +1,7 @@
 // Design option: larger 120 mm flywheel (ESTIMATE) - more launch speed,
-// slower spin-up and recovery.
-{ "shooter": { "flywheelDiameterMm": 120.0 } }
+// slower spin-up and recovery. Inertia scaled by diameter^2 for the same
+// wheel mass: 0.00035 x (120/96)^2 (ESTIMATE).
+{
+  "shooter": { "flywheelDiameterMm": 120.0, "flywheelInertia": 0.000547 },
+  "teamcode": { "Shooter.WHEEL_DIAMETER_MM": 120.0 }
+}

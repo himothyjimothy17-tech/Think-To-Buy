@@ -1,3 +1,7 @@
 // Design option: smaller 72 mm flywheel (ESTIMATE) - spins up faster,
-// launches slower at the same RPM.
-{ "shooter": { "flywheelDiameterMm": 72.0 } }
+// launches slower at the same RPM. Inertia scaled by diameter^2 for the
+// same wheel mass: 0.00035 x (72/96)^2 (ESTIMATE).
+{
+  "shooter": { "flywheelDiameterMm": 72.0, "flywheelInertia": 0.000197 },
+  "teamcode": { "Shooter.WHEEL_DIAMETER_MM": 72.0 }
+}
