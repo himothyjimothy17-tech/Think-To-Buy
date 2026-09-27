@@ -15,11 +15,13 @@ import { OrbitControls } from './vendor/OrbitControls.js';
 const DEG = Math.PI / 180;
 
 const COLORS = {
-  tile: 0x5a5f66,
-  tileSeam: 0x44484e,
-  floorOutside: 0x24282e,
-  wall: 0x9fb3c8,
-  wallRail: 0x8c9199,
+  tile: 0xd6d9dd,        // light gray foam tiles
+  tileSeam: 0xb4b8be,
+  floorOutside: 0x1c2026,
+  wall: 0xcfd8e2,
+  wallRail: 0x6f757d,
+  cellPanel: 0xe9eef4,   // clear polycarbonate CELL panels
+  oursBody: 0x26292e,    // our robot is drawn dark so it stands out
   red: 0xe5484d,
   blue: 0x3e8ef7,
   flowerPipe: 0x3d9a3d,
@@ -48,8 +50,8 @@ export class FieldScene {
     this.controls.maxPolarAngle = 88 * DEG;
     this.controls.update();
 
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 1.1));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x555555, 1.4));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.3);
     sun.position.set(-80, -120, 250);
     this.scene.add(sun);
 
@@ -118,7 +120,7 @@ export class FieldScene {
 
     // Perimeter walls (clear polycarbonate with an aluminum rail on top).
     const wallH = g.field.wallHeight;
-    const wallMat = new THREE.MeshLambertMaterial({ color: COLORS.wall, transparent: true, opacity: 0.18, depthWrite: false });
+    const wallMat = new THREE.MeshLambertMaterial({ color: COLORS.wall, transparent: true, opacity: 0.22, depthWrite: false });
     const railMat = new THREE.MeshLambertMaterial({ color: COLORS.wallRail });
     for (const [x, y, w, d] of [[0, half + 0.5, size + 2, 1], [0, -half - 0.5, size + 2, 1],
                                  [half + 0.5, 0, 1, size + 2], [-half - 0.5, 0, 1, size + 2]]) {
@@ -337,15 +339,25 @@ function makeHive(h, side) {
 
   const inner = h.cellGap / 2;
   const depth = h.cellDepth;
-  const wallMat = new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false });
-  const edgeMat = new THREE.LineBasicMaterial({ color });
+  const wallMat = new THREE.MeshLambertMaterial({ color: COLORS.cellPanel, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+  const rimMat = new THREE.MeshLambertMaterial({ color });
+  const pentagon = [[-w, base], [w, base], [w, base + h.cellOpeningRectHeight], [0, base + h.cellOpeningHeight], [-w, base + h.cellOpeningRectHeight]];
   for (const dir of [-1, 1]) {
     const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
     geo.rotateX(Math.PI / 2); // shape up -> z, extrusion -> -y
     geo.translate(0, dir > 0 ? inner + depth : -inner, 0);
-    const cell = new THREE.Mesh(geo, wallMat);
-    group.add(cell);
-    group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    group.add(new THREE.Mesh(geo, wallMat));
+    // Thick alliance-colored rims around both ends of the CELL, like the real aluminum frame.
+    for (const y of [dir * inner, dir * (inner + depth)]) {
+      for (let i = 0; i < 5; i++) {
+        const [u1, v1] = pentagon[i];
+        const [u2, v2] = pentagon[(i + 1) % 5];
+        group.add(beam(new THREE.Vector3(u1, y, v1), new THREE.Vector3(u2, y, v2), 0.55, rimMat));
+      }
+    }
+    for (const [u, v] of pentagon) {
+      group.add(beam(new THREE.Vector3(u, dir * inner, v), new THREE.Vector3(u, dir * (inner + depth), v), 0.3, rimMat));
+    }
   }
   // The arm joining the two CELLS.
   group.add(beam(new THREE.Vector3(0, -inner, 0), new THREE.Vector3(0, inner, 0), 0.7,
@@ -362,25 +374,58 @@ function beam(a, b, radius, material) {
   return mesh;
 }
 
-/** A robot: a box in alliance color with a yellow stripe on the front (intake side). */
+/**
+ * A robot model. Other robots: alliance-colored body on a bumper plate, with
+ * "I" or "II" on top (robot 1 or 2 of its alliance) and a yellow intake bar
+ * on the front. Ours: dark body with a shooter tower, so it's easy to spot.
+ * (Just for looks - collisions use the simple rectangle from robot.jsonc.)
+ */
 function makeRobot(r) {
   const group = new THREE.Group();
   const color = r.alliance === 'RED' ? COLORS.red : COLORS.blue;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(r.l, r.w, r.ht),
-    new THREE.MeshLambertMaterial({ color, transparent: !r.ours, opacity: r.ours ? 1 : 0.75 }));
-  body.position.z = r.ht / 2;
+  const bumperH = 2.5;
+  const bumper = new THREE.Mesh(new THREE.BoxGeometry(r.l, r.w, bumperH), new THREE.MeshLambertMaterial({ color }));
+  bumper.position.z = bumperH / 2 + 0.3;
+  group.add(bumper);
+
+  const bodyH = r.ours ? r.ht * 0.55 : r.ht * 0.45;
+  const bodyColor = r.ours ? COLORS.oursBody : new THREE.Color(color).multiplyScalar(0.8).getHex();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(r.l - 2, r.w - 2, bodyH), new THREE.MeshLambertMaterial({ color: bodyColor }));
+  body.position.z = bumperH + 0.3 + bodyH / 2;
   group.add(body);
-  const front = new THREE.Mesh(new THREE.BoxGeometry(1.2, r.w * 0.8, 3),
-    new THREE.MeshLambertMaterial({ color: COLORS.ours }));
-  front.position.set(r.l / 2 + 0.6, 0, 2.5);
-  group.add(front);
+  const topZ = bumperH + 0.3 + bodyH;
+
+  // Yellow intake bar across the front (the robot's +x side).
+  const intake = new THREE.Mesh(new THREE.BoxGeometry(1.5, r.w - 3, 2.2), new THREE.MeshLambertMaterial({ color: COLORS.ours }));
+  intake.position.set(r.l / 2 + 0.4, 0, bumperH + 1.5);
+  group.add(intake);
+
   if (r.ours) {
-    const outline = new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry),
-      new THREE.LineBasicMaterial({ color: COLORS.ours }));
-    outline.position.copy(body.position);
+    // Shooter tower: base block plus a flywheel housing pointing up.
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 4.5, 3, 20), new THREE.MeshLambertMaterial({ color: 0x3a3e45 }));
+    base.rotation.x = Math.PI / 2;
+    base.position.set(-1.5, 0, topZ + 1.5);
+    group.add(base);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, r.ht - topZ - 1, 16), new THREE.MeshLambertMaterial({ color: 0x55606c }));
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(-1.5, 0, topZ + 3 + (r.ht - topZ - 4) / 2);
+    group.add(barrel);
+    const outline = new THREE.LineSegments(new THREE.EdgesGeometry(bumper.geometry), new THREE.LineBasicMaterial({ color: COLORS.ours }));
+    outline.position.copy(bumper.position);
     group.add(outline);
+  } else {
+    // "I" or "II" marks on top, like the reference picture's robot plates.
+    const second = /2|PARTNER/.test(r.id);
+    const markMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const count = second ? 2 : 1;
+    for (let i = 0; i < count; i++) {
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(r.l * 0.45, 1.2, 0.2), markMat);
+      mark.position.set(0, (i - (count - 1) / 2) * 2.6, topZ + 0.1);
+      mark.rotation.z = 25 * DEG;
+      group.add(mark);
+    }
   }
-  const label = textSprite(r.ours ? 'US' : r.id, 0, 0, r.ht + 6, '#ffffff', 18);
+  const label = textSprite(r.ours ? 'US' : r.id, 0, 0, r.ht + 6, '#ffffff', 14);
   label.name = 'label';
   group.add(label);
   return group;

@@ -31,10 +31,12 @@ function connect() {
   socket.onopen = () => {
     $('connection').textContent = 'Connected';
     $('connection').classList.add('ok');
+    $('status-line').textContent = 'Java simulator connected · localhost only';
   };
   socket.onclose = () => {
     $('connection').textContent = 'Disconnected - is the simulator running? (./gradlew sim) Retrying...';
     $('connection').classList.remove('ok');
+    $('status-line').textContent = 'Disconnected';
     setTimeout(connect, 1000);
   };
   socket.onmessage = e => {
@@ -85,6 +87,9 @@ function onField(msg) {
   }
   poses.value = msg.startPose;
 
+  const label = $('our-alliance');
+  label.textContent = `${msg.alliance} ALLIANCE`;
+  label.className = `alliance-label ${msg.alliance.toLowerCase()}`;
   $('btn-red').classList.toggle('active', msg.alliance === 'RED');
   $('btn-blue').classList.toggle('active', msg.alliance === 'BLUE');
   $('variants').textContent = msg.variants.length ? `Design variants: ${msg.variants.join(', ')}` : 'Design: robot.jsonc defaults';
