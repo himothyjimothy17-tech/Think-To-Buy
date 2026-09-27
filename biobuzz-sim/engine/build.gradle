@@ -39,6 +39,8 @@ tasks.register('experiment', Test) {
     useJUnitPlatform { includeTags 'experiment' }
     workingDir = rootProject.projectDir
     testLogging { showStandardStreams = true; events 'failed' }
+    // Pass -Pexp.NAME=value to experiments as system property NAME.
+    project.properties.each { k, v -> if (k.startsWith('exp.')) systemProperty k.substring(4), v }
 }
 
 // ./gradlew headless --args="--auto 'BIOBUZZ Auto' --seeds 1-20"

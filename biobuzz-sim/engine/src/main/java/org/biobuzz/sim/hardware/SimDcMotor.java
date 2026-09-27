@@ -451,6 +451,20 @@ public final class SimDcMotor implements DcMotorEx {
         return 1;
     }
 
+    /**
+     * The OpMode ended: like the real hub, stop driving the motor at all - no
+     * power and no velocity PID fighting a coasting flywheel. (BRAKE/FLOAT is
+     * kept.) The next OpMode's INIT re-enables it.
+     */
+    public void stopForOpModeEnd() {
+        power = 0.0;
+        velocityTarget = Double.NaN;
+        enabled = false;
+        integral = 0;
+        controlOutput = 0;
+        applyToPhysics();
+    }
+
     /** Called between OpModes: the SDK resets motors to defaults. */
     @Override
     public void resetDeviceConfigurationForOpMode() {

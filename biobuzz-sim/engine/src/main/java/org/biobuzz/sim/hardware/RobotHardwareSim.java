@@ -256,7 +256,7 @@ public final class RobotHardwareSim {
     /** Stops every motor (the SDK does this when an OpMode ends). */
     public void stopAllMotors() {
         for (SimDcMotor m : motorPortsByRole.values()) {
-            m.setPower(0.0);
+            m.stopForOpModeEnd();
         }
     }
 }

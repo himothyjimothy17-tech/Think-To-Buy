@@ -40,5 +40,14 @@
   "collectInAutoChance": 0.5,           // ESTIMATE: collect GARDEN POLLEN after shooting the pre-loads
   "flowerEndgameChance": 0.35,          // ESTIMATE: lobs NECTAR into FLOWERS in the last 60 s
   "parkWhenSecondsLeft": [6, 12],       // ESTIMATE: start heading to park this long before the end
-  "autoParkWhenSecondsLeft": [4, 7]     // ESTIMATE
+  "autoParkWhenSecondsLeft": [4, 7],    // ESTIMATE
+
+  // Pre-match agreement with our partner: it won't pick shooting spots inside
+  // these circles (RED-frame inches; mirrored for BLUE), because that's where
+  // our AUTO shoots from. Change them if our AUTO's spots change.
+  "partnerKeepOut": [
+    { "x": -60, "y": -56, "r": 22 },
+    { "x": -58, "y": 56, "r": 22 },
+    { "x": -32, "y": 56, "r": 14 }     // our lane to the far FLOWER's pocket
+  ]
 }

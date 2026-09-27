@@ -119,11 +119,13 @@ public final class AiRobot implements ElementCarrier {
     public int pickups;
 
     private final List<Circle> fieldObstacles;
+    /** Spots our partner promised to leave free (empty for opponents). */
+    private final List<Circle> keepOut = new ArrayList<>();
     private final Ballistics pollenFlight;
     private final Ballistics nectarFlight;
 
-    public AiRobot(SimRobot body, int slot, Cfg ai, Random rng, GameWorld world, double pollenR, double pollenM,
-                   double nectarR, double nectarM) {
+    public AiRobot(SimRobot body, int slot, boolean partnerOfUs, Cfg ai, Random rng, GameWorld world, double pollenR,
+                   double pollenM, double nectarR, double nectarM) {
         this.body = body;
         this.slot = slot;
         this.rng = rng;
@@ -152,6 +154,12 @@ public final class AiRobot implements ElementCarrier {
         parkWhen = pick(ai, "parkWhenSecondsLeft");
         autoParkWhen = pick(ai, "autoParkWhenSecondsLeft");
         fieldObstacles = world.field().obstacles;
+        if (partnerOfUs && ai.has("partnerKeepOut")) {
+            for (Cfg k : ai.objList("partnerKeepOut")) {
+                double s = body.alliance == Alliance.RED ? 1 : -1; // BLUE: rotate 180 degrees
+                keepOut.add(new Circle(inToM(k.num("x")) * s, inToM(k.num("y")) * s, inToM(k.num("r")), "keep-out"));
+            }
+        }
         pollenFlight = new Ballistics(world.dragK(), pollenR, pollenM);
         nectarFlight = new Ballistics(world.dragK(), nectarR, nectarM);
     }
@@ -392,6 +400,11 @@ public final class AiRobot implements ElementCarrier {
         }
         for (Circle o : fieldObstacles) {
             if (FastMath.hypot(o.x - x, o.y - y) < o.r + body.length * 0.75) {
+                return false;
+            }
+        }
+        for (Circle k : keepOut) {
+            if (FastMath.hypot(k.x - x, k.y - y) < k.r) {
                 return false;
             }
         }

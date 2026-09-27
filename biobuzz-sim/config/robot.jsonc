@@ -136,7 +136,11 @@
   // not touching a FLOWER, inside the 18 in cube.
   "startPoses": {
     "redWallCenter":   { "x": -63.5, "y":   0.0, "headingDeg":  0.0 },  // back against the red wall, facing the HIVE
-    "redAudienceWall": { "x": -40.0, "y": -63.5, "headingDeg": 90.0 }   // back against the audience wall
+    "redAudienceWall": { "x": -40.0, "y": -63.5, "headingDeg": 90.0 },  // back against the audience wall
+    // Our AUTO's start: red wall, audience end - next to the GARDEN and our first
+    // shooting spot. Legal (G304): touches the wall, clear of the LOADING ZONE and FLOWER.
+    // Our partner then starts at the first other pose (redWallCenter).
+    "redWallAudienceEnd": { "x": -63.5, "y": -40.0, "headingDeg": 0.0 }
   },
-  "defaultStartPose": "redWallCenter"
+  "defaultStartPose": "redWallAudienceEnd"
 }

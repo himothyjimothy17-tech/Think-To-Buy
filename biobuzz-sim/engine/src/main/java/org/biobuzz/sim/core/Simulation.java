@@ -225,9 +225,10 @@ public final class Simulation {
             if (r == ours) {
                 continue;
             }
-            // Our partner parks in the far slot of our LOADING ZONE; opponents take slots 0 and 1.
-            int slot = r.alliance == ourAlliance ? 1 : slots[1]++;
-            AiRobot ai = new AiRobot(r, slot, cfg.ai, random.stream("ai-" + r.id), world,
+            // Our partner parks in the low (audience-end) slot of our LOADING ZONE and leaves the
+            // far slot to us (agreed before the match, like a real alliance); opponents use both.
+            int slot = r.alliance == ourAlliance ? 0 : slots[1]++;
+            AiRobot ai = new AiRobot(r, slot, r.alliance == ourAlliance, cfg.ai, random.stream("ai-" + r.id), world,
                     inToM(el.num("pollen.diameter")) / 2, phys.num("pollenMassG") / 1000.0,
                     inToM(el.num("nectar.diameter")) / 2, phys.num("nectarMassG") / 1000.0);
             ai.preload(preloads.get(r));
@@ -691,7 +692,12 @@ public final class Simulation {
                 case HIVE_TIP:
                     boolean autoTip = timer.phase() != MatchTimer.Phase.TELEOP && timer.phase() != MatchTimer.Phase.POST_MATCH;
                     score.onTip(e.alliance, autoTip);
-                    tipLog.add(e.alliance.name() + String.format(" %.2f", now - matchT0));
+                    boolean inTransition = timer.phase() == MatchTimer.Phase.TRANSITION;
+                    tipLog.add(e.alliance.name() + String.format(" %.2f", now - matchT0) + (inTransition ? " TRANSITION" : ""));
+                    if (inTransition) {
+                        // §10.5: counts as AUTO, but achievements during the transition may be penalized.
+                        log("RULE " + e.alliance + " TIP finished during the AUTO-TELEOP transition (§10.5: may be penalized)");
+                    }
                     log(e.alliance + " HIVE TIPPED (#" + e.index + ", " + (autoTip ? "AUTO" : "TELEOP") + ") - +20");
                     break;
                 case CELL_ENTRY:
@@ -769,13 +775,21 @@ public final class Simulation {
 
     /** Is any of our actuators powered, or is a servo still moving? (G403 / G404) */
     private boolean ourRobotPowered() {
-        for (MotorState m : hardware.allMotors()) {
-            if (Math.abs(m.appliedPower) > 0.01) {
-                return true;
+        return poweredReason() != null;
+    }
+
+    /** Why our robot counts as "powered" right now (null = it isn't). For G403/G404 and debugging. */
+    public String poweredReason() {
+        for (Map.Entry<String, SimDcMotor> e : hardware.motorPortsByRole.entrySet()) {
+            if (Math.abs(e.getValue().state.appliedPower) > 0.01) {
+                return e.getKey() + " power " + e.getValue().state.appliedPower;
             }
         }
         org.biobuzz.sim.hardware.SimServo sv = hardware.servosByRole.get("shooter.servo");
-        return sv != null && !Double.isNaN(sv.commandedRaw()) && Math.abs(sv.commandedRaw() - mech.servoActual()) > 0.005;
+        if (sv != null && !Double.isNaN(sv.commandedRaw()) && Math.abs(sv.commandedRaw() - mech.servoActual()) > 0.005) {
+            return String.format("servo moving (commanded %.3f, at %.3f)", sv.commandedRaw(), mech.servoActual());
+        }
+        return null;
     }
 
     /** G304: every robot must start legally. A real match wouldn't start otherwise. */

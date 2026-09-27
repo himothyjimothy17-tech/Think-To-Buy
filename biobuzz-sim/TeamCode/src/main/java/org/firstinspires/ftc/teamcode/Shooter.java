@@ -53,6 +53,16 @@ public class Shooter {
 
     /** How close to the target RPM the wheel must be before we feed a ball. */
     public static double TOLERANCE_RPM = 60;
+    /** Single-shot mode: a drop this big while the gate is open means a ball just left. */
+    public static double SHOT_DROP_RPM = 70;
+    /** Single-shot mode: gate position used to let ONE ball through (less travel = closes sooner). */
+    public static double GATE_FEED = 0.3;
+    /** Single-shot mode: if nothing leaves within this long, we're probably empty. */
+    public static double FEED_TIMEOUT_S = 0.45;
+    /** Single-shot mode: stricter speed window than TOLERANCE_RPM (accuracy over speed). */
+    public static double SINGLE_TOLERANCE_RPM = 40;
+    /** Time for the gate to swing shut before the next feed. */
+    public static double GATE_CLOSE_S = 0.15;
 
     private final DcMotorEx left;
     private final DcMotorEx right;
@@ -62,6 +72,10 @@ public class Shooter {
     private double targetRpm;
     private boolean gateOpen;
     private final ElapsedTime gateTimer = new ElapsedTime();
+    private final ElapsedTime closedTimer = new ElapsedTime();
+    private double peakRpm;
+    private int shotsDetected;
+    private int emptyFeeds;
 
     public Shooter(RobotHardware robot) {
         left = robot.shooterLeft;
@@ -73,6 +87,9 @@ public class Shooter {
 
     /** Spins the flywheel to this RPM (0 = off). */
     public void setTargetRpm(double rpm) {
+        if (rpm == targetRpm) {
+            return; // no change: skip the hub write (each one costs ~2 ms of loop time)
+        }
         targetRpm = rpm;
         double tps = rpm / 60.0 * TICKS_PER_REV;
         if (rpm <= 0) {
@@ -125,6 +142,84 @@ public class Shooter {
 
     public boolean isGateOpen() {
         return gateOpen;
+    }
+
+    /**
+     * SINGLE-SHOT FIRING (what the AUTO uses). Call every loop while you want
+     * to shoot. Feeds ONE ball only when the wheel is at speed, spots the RPM
+     * dip when it leaves, shuts the gate right away and waits for the wheel
+     * to recover before the next ball.
+     *
+     * Why: holding the gate open lets balls stream out 0.08 s apart, and each
+     * shot costs ~100 RPM - so the 2nd and 3rd balls leave 4-5% slow, fall
+     * short and bounce off the CELL rim. (Found in the simulator: 1-2 of 4 in
+     * with streaming vs. most of them one at a time.)
+     *
+     * @return true when a ball was just detected leaving
+     */
+    public boolean fireSingle() {
+        double rpm = getRpm();
+        if (!gateOpen) {
+            peakRpm = rpm;
+            boolean ready = targetRpm > 0 && Math.abs(rpm - targetRpm) < SINGLE_TOLERANCE_RPM
+                    && closedTimer.seconds() > GATE_CLOSE_S;
+            if (ready) {
+                if (!HOOD_MODE) {
+                    servo.setPosition(GATE_FEED);
+                } else {
+                    robot.intakeLeft.setPower(1.0);
+                    robot.intakeRight.setPower(1.0);
+                    feeding = true;
+                }
+                gateOpen = true;
+                gateTimer.reset();
+            }
+            return false;
+        }
+        peakRpm = Math.max(peakRpm, rpm);
+        if (peakRpm - rpm > SHOT_DROP_RPM) {
+            closeGate();
+            closedTimer.reset();
+            shotsDetected++;
+            emptyFeeds = 0;
+            return true;
+        }
+        if (gateTimer.seconds() > FEED_TIMEOUT_S) {
+            closeGate();
+            closedTimer.reset();
+            emptyFeeds++;
+        }
+        return false;
+    }
+
+    /** Balls we've seen leave (single-shot mode). */
+    public int getShotsDetected() {
+        return shotsDetected;
+    }
+
+    /** Feeds in a row with no ball coming out: 1+ means we're probably empty. */
+    public int getEmptyFeeds() {
+        return emptyFeeds;
+    }
+
+    public void resetEmptyFeeds() {
+        emptyFeeds = 0;
+    }
+
+    /** Hood mode: launch angle at servo 0.0 and 1.0 (must match the real hood linkage). ESTIMATE. */
+    public static double HOOD_MIN_DEG = 30;
+    public static double HOOD_MAX_DEG = 60;
+    /** Gate mode: the fixed launch angle. ESTIMATE. */
+    public static double FIXED_ANGLE_DEG = 45;
+
+    /** Sets the hood for a launch angle (degrees) and returns the angle we'll actually use. */
+    public double setLaunchAngle(double deg) {
+        if (!HOOD_MODE) {
+            return FIXED_ANGLE_DEG;
+        }
+        double a = Math.max(HOOD_MIN_DEG, Math.min(HOOD_MAX_DEG, deg));
+        setHood((a - HOOD_MIN_DEG) / (HOOD_MAX_DEG - HOOD_MIN_DEG));
+        return a;
     }
 
     /** Hood mode only: 0.0 = lowest launch angle, 1.0 = highest. */

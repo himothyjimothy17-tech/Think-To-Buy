@@ -23,6 +23,9 @@ built from the official game manual.
    **http://127.0.0.1:8765/**. Chrome and Safari both work.
 3. In the page: choose **Mecanum TeleOp**, press **INIT**, then **▶ START**,
    click the 3D field, and drive.
+4. **A full match:** in *Full match*, pick **BIOBUZZ Auto RED** and **Mecanum
+   TeleOp**, choose a seed, press **Start match**. AUTO (0:30) → transition
+   (0:08) → TELEOP (2:00), scored live, with three computer robots playing.
 
 Everything runs on your own computer (`127.0.0.1`). Nothing is uploaded.
 
@@ -51,13 +54,23 @@ All commands run from the `biobuzz-sim` folder.
 |---|---|
 | `./gradlew sim` | Visual simulator in the browser |
 | `./gradlew sim --args="--variant hood"` | Same, with a design variant from `config/variants/` |
+| `./gradlew headless --args="--auto 'BIOBUZZ Auto RED' --seeds 1-20"` | 20 AUTOs, no graphics, ~40 s; prints mean/sd/min/max, saves JSON in `runs/` |
+| `./gradlew headless --args="--auto 'OldAuto\|NewAuto' --seeds 1-20"` | **Old vs new on the same seeds**, with a per-seed paired comparison |
+| `./gradlew headless --args="--auto 'BIOBUZZ Auto RED' --variant 'gate\|hood'"` | Design comparison (any `config/variants/` file) |
+| `... --set BiobuzzAuto.RPM_SCALE=1.01\|BiobuzzAuto.RPM_SCALE=1.03` | Try TeamCode tunables without editing code |
+| `... --teleop 'Mecanum TeleOp'` or `--full` | Whole matches instead of AUTO only |
+| `... --ai off` | The other three robots sit still (test our robot alone) |
 | `./gradlew sdkCheck` | Checks TeamCode against the **real** FTC SDK (see below) |
-| `./gradlew test` | Automated tests |
+| `./gradlew test` | Automated tests (~50, about 2 minutes) |
+| `./gradlew :engine:experiment --tests '*ShotMap*' -Pexp.fine=1` | Experiments (shot maps, drive tuning, traces) - print tables, no pass/fail |
 | `./gradlew listEstimates` | Lists every guessed number that needs a real measurement |
 | `./gradlew listTodos` | Lists every open question and unfinished item |
 
-Headless mode (no graphics, faster than real time, JSON reports) and batch
-testing arrive in **Stage 5**.
+**Why "the same seeds" matters:** a seed fixes everything random in a match
+(ball placement jitter, wheel grip, sensor noise, shot spread, how the other
+robots play). Running old and new code on the same 20 seeds means the
+difference in score comes from the change, not from luck. The runner prints
+"better on N seeds, worse on M" and a 95% confidence interval.
 
 ---
 
@@ -161,6 +174,25 @@ physically mirrored (`mountedReversed` in `hubs.jsonc`). If the code forgets
 `setDirection(REVERSE)`, the robot spins instead of driving, just like the
 real one.
 
+**7. Tuning without editing code.** Any TeamCode `public static` (not
+`final`) field - the FTC Dashboard convention - shows up in the sim's **Live
+tuning** panel and can be set from the command line (`--set Class.FIELD=v`)
+or from a design variant (`"teamcode": {...}`). The same code runs on the
+robot, where FTC Dashboard can tune the same fields.
+
+**8. The other three robots are simple but honest.** Each draws a
+"personality" from `config/ai.jsonc` (speed, accuracy, launch angle, whether
+it parks, etc. - all ESTIMATEs) using the match seed. They shoot with the
+same drag physics as ours, so they only score if the ball physics says so,
+and they obey the rules (G402 center line in AUTO, max 4 held, no opponent
+NECTAR, stop between periods). Our partner follows a pre-match agreement:
+it won't shoot from the spots our AUTO uses.
+
+**9. Replays.** Every run is recorded at 10 Hz. Drag the timeline under the
+clock to look back (the sim pauses), **Save run** keeps it in `runs/`, and
+two saved runs can be compared side by side (scores, robot stats, both paths
+drawn on the field).
+
 ### Coordinates
 
 Everything uses inches and degrees:
@@ -169,6 +201,78 @@ Everything uses inches and degrees:
 - **+y:** away from the **audience**.
 - **Heading:** 0° faces +x, counter-clockwise is positive.
 - **Tiles:** columns A–F run along +x, rows 1–6 along +y (manual §9.4).
+
+---
+
+## The AUTO (`BiobuzzAuto.java`)
+
+**What it does** (RED; BLUE is the same turned 180°), as a loop:
+1. Know which HIVE CELL is up, from the AprilTags under the CELLs
+   (`HiveWatcher`): the down CELL's tags hang low (~35 in); when they rise,
+   it's tipping. From our first spot the tags vanishing also means a TIP.
+2. Holding balls → drive to that CELL's corner (S1 audience corner, S2 far
+   corner) and shoot **one at a time**.
+3. Otherwise collect: GARDEN (4 POLLEN on the audience wall), the far and
+   wall FLOWERS' bottom pockets (4 each), NECTAR the human player puts in our
+   LOADING ZONE.
+4. Stop launching at 28.5 s so every TIP finishes **before** AUTO ends, then
+   PARK in the LOADING ZONE, off the wall (PARK 5 + LEAVE 3).
+
+**Results** (AUTO points for our alliance, the same 20 seeds, other robots
+playing - `./gradlew headless --args="--auto 'BIOBUZZ Auto RED' --seeds 1-20"`):
+
+| Version | Change | Mean | SD | Tips/match |
+|---|---|---|---|---|
+| Leave Auto | drive off the wall | 17 | 11 | 0.4 (partner) |
+| v1 | first full plan | 28.0 | 8.9 | 0.70 |
+| v2 | wall ride, never switch CELLs without a detected TIP | 33.9 | 2.8 | 1.00 |
+| v3 | planner loop; shot spots from the 20/20 plateau | 35.0 | 7.9 | 1.05 |
+| v4 | slow sweep + jam recovery (0 jams in 12 seeds) | 35.2 | 5.4 | 1.05 |
+| v5 | never feed a CELL not seen to be up; zone NECTAR | 36.2 | 5.5 | 1.10 |
+| v8 (final) | NECTAR-aware RPM, pass-through waypoints | **36.2** | 6.4 | **1.10** |
+| v8 BLUE | same code, blue alliance | 35.4 | 5.5 | 1.05 |
+| v8, robot alone (`--ai off`) | no partner | 28 every seed | 0 | 1.00 |
+
+Zero fouls or warnings by our robot in all of these, and a legal start
+(G304) every time (checked by `Stage9Test` for both alliances).
+
+**Honest limits of the "record":**
+- The alliance usually gets **one TIP (≈36 points)** and a second TIP in
+  ~10% of seeds (51–56 points). A second TIP needs ~250 g in the other CELL,
+  which is right at the edge of what one robot can collect and shoot in the
+  time left; it happens when our partner helps.
+- These numbers rest on ESTIMATEs, above all the **TIP mass (250 g)**, ball
+  masses, the CELL shape, the shooter's exit speed and our robot's speed.
+  Measure them and re-run; the method stays the same.
+
+**What the simulator taught us (the engineering story):**
+1. **Shoot one ball at a time.** Holding the gate open streams balls 0.08 s
+   apart and each shot costs ~100 RPM, so the 2nd and 3rd balls leave 4–5%
+   slow and bounce off the CELL rim: 1–2 of 4 went in. Feeding one ball only
+   when the wheel is back within 40 RPM: **20 of 20** from the best spots.
+2. **Find the plateau, not the peak.** The shot map (`ShotMapExperiment`)
+   shows a region around (−60, −56) where every nearby spot and RPM ±1% still
+   scores 20/20, so small driving errors don't matter.
+3. **Stop before you shoot.** Shooting while still settling cost ~25%.
+4. **Wall ride + field clamp.** Driving slightly *into* the wall lines the
+   robot up for the GARDEN, and odometry can't be past a wall, so pushing into
+   it re-zeroes that axis.
+5. **Jams are about timing.** The GARDEN balls touch; two in the intake within
+   0.12 s jam it. 18 in/s → 1.7 jams/match, 8 in/s → 0.2. We approach fast and
+   sweep slow, and after a jam back off so the two balls separate.
+6. **Relocalize on AprilTags** when slow: wheel odometry drifted 4–15 in over a
+   route, vision kept it within ~1 in.
+7. **Know your next ball.** Storage is first-in-first-out and we know what
+   each source gives, so the code picks POLLEN or NECTAR RPM for each shot
+   without a color sensor.
+
+**Gate vs hood (design comparison):** with the hood at 60° the shot map is
+16/16 over a much larger area than the gate's plateau - a better *shooter*.
+But in the full AUTO the hood robot scored **29.5 vs 36.2**: with only one
+servo the intake must also feed the flywheel in hood mode, so it can't hold
+balls while collecting (they fly straight through). **Keep the gate**, unless
+the design adds a separate feeder (a second servo or motor); then re-run the
+comparison with `--variant hood`.
 
 ---
 
@@ -198,8 +302,9 @@ everything else is an **ESTIMATE** in `config/robot.jsonc`.
 ## Open questions from the manual (TODO)
 
 1. **How many elements tip a HIVE?** The manual only says "enough" (§8, §9.6).
-   Stage 4 will model tipping with an estimated weight threshold. We need a
-   real number from testing on a field.
+   The sim uses an estimated 250 g (`elementPhysics.tipMassG`). This one
+   number moves the AUTO's score more than anything else - weigh a real HIVE
+   setup as soon as one is available and update `BiobuzzAuto.TIP_MASS_G` too.
 2. **Ball weights** aren't in the manual. We need to weigh one POLLEN and one NECTAR.
 3. **Exact FLOWER and HIVE positions:** read off the figures. §9.1 says exact
    numbers are in the Event Field Setup Guide and the CAD model.
@@ -208,15 +313,27 @@ everything else is an **ESTIMATE** in `config/robot.jsonc`.
 6. **Two manual typos:** §10.4 cites a "Table 9-1" that doesn't exist, and
    Figure 10-2 labels a blue-HIVE CELL as "CELL-RED … NECTAR-BLUE".
 7. **CELL shape:** the 3D CELLs are approximate (the CELL's bottom sits about
-   1.4 in below the pivot arm, worked out from the heights in Fig 9-10).
-   Stage 4 needs the exact openings for scoring.
+   1.4 in below the pivot arm, worked out from the heights in Fig 9-10). The
+   opening shape decides which shots count; check against the CAD model.
+8. **Where spilled balls land after a TIP** is a simple guess (the same every
+   seed). The AUTO deliberately does NOT depend on it. Film a real TIP.
+9. **Human player NECTAR placement** (where in the LOADING ZONE, how fast) is
+   an ESTIMATE; the AUTO's zone sweep assumes it lands against the wall.
+10. **Achievements during the AUTO→TELEOP transition "may be subject to
+    penalties" (§10.5).** The sim logs any TIP that finishes then; our AUTO
+    stops launching at 28.5 s so it never happens.
 
 ## Not built yet (TODO)
 
 - **Calibration (Stage 7)** is postponed until the robot exists. It will add
   a Calibration OpMode for the real robot plus a tool that fits the sim's
   physics to the logged data.
-- Stages 2–6 and 8–9: see below.
+- **The other robots can't use FLOWER pockets or chase spilled balls
+  cleverly**, and they don't play defense.
+- **Our robot in TELEOP is only as good as the driver**: there's no AI driver
+  for our robot, so full-match batch runs without a TeleOp OpMode only score
+  the AUTO part for us.
+- **Hood + separate feeder** isn't modeled (see Gate vs hood).
 
 ---
 
@@ -227,9 +344,9 @@ everything else is an **ESTIMATE** in `config/robot.jsonc`.
 | 1 | SDK mock + field + MecanumTeleOp with gamepad | **done** |
 | 2 | Motor physics (torque curves, slip), encoders, IMU noise, battery sag | **done** |
 | 3 | POLLEN, NECTAR, intake, shooter, servo, Limelight | **done** |
-| 4 | HIVES, FLOWERS, scoring, rule checks | |
-| 5 | Headless mode, seeds, batch testing, design comparisons | |
-| 6 | Other robots (AI) | |
+| 4 | HIVES, FLOWERS, scoring, rule checks, full match flow | **done** |
+| 5 | Headless mode, seeds, batch testing, design comparisons | **done** |
+| 6 | Other robots (AI), robot-robot pushing | **done** |
 | 7 | Calibration tools | postponed until the robot exists |
-| 8 | Live tuning panel, run comparison, scrubbing | |
-| 9 | Starter autonomous, tested across seeds | |
+| 8 | Live tuning panel, saved runs, run comparison, scrubbing | **done** |
+| 9 | Legal max-score AUTO, optimized across seeds | **done** |

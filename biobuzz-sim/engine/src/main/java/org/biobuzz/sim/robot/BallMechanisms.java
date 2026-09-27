@@ -380,7 +380,12 @@ public final class BallMechanisms implements ElementCarrier {
         flywheelSpeed = Math.signum(flywheelSpeed) * Math.sqrt(2 * left / flywheelInertia);
         lastShotTime = now;
         shots++;
+        launchLog.add(new double[] {now, b.id, flywheelRpm(), robot.x, robot.y, robot.heading, speed, Math.toDegrees(pitch),
+            Math.toDegrees(yaw)});
     }
+
+    /** Every launch: {time, ballId, rpm after, x, y, heading, speed m/s, pitch deg, yaw deg} (for analysis). */
+    public final List<double[]> launchLog = new ArrayList<>();
 
     /** Launch angle right now: fixed in gate mode, set by the hood servo in hood mode. */
     public double currentLaunchAngleDeg() {
