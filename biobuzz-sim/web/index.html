@@ -23,11 +23,16 @@
     <div class="big-score" id="our-score">0</div>
     <table class="kv">
       <tr><td>Opponent score</td><td id="their-score">0</td></tr>
+      <tr><td>Ranking points</td><td id="rp">0</td></tr>
       <tr><td>Hive tips</td><td id="hive-tips">0</td></tr>
       <tr><td>Up-cell load</td><td id="hive-load">-</td></tr>
       <tr><td>Our shots / pickups</td><td id="shots">0 / 0</td></tr>
       <tr><td>Held elements</td><td id="held">0 / 4</td></tr>
     </table>
+    <details id="breakdown-box">
+      <summary class="tiny">Score breakdown</summary>
+      <table class="kv tiny breakdown" id="breakdown"></table>
+    </details>
   </section>
 
   <!-- ================= TOP CENTER: match clock ================= -->
@@ -51,6 +56,17 @@
     </div>
     <div class="tiny">State: <span id="opmode-state">NONE</span></div>
     <pre id="opmode-error" class="error hidden"></pre>
+
+    <details open id="match-box">
+      <summary>Full match (AUTO &rarr; TELEOP)</summary>
+      <label class="field">AUTO OpMode <select id="match-auto"></select></label>
+      <label class="field">TELEOP OpMode <select id="match-teleop"></select></label>
+      <div class="button-row">
+        <label class="field seed">Seed <input type="number" id="seed-input" value="1" min="0" step="1"></label>
+        <button id="btn-match" class="go" title="Reset the field, INIT the AUTO, then run AUTO, TRANSITION and TELEOP">Start match</button>
+      </div>
+      <div class="tiny error" id="start-problems"></div>
+    </details>
 
     <div class="button-row">
       <button id="btn-pause">Pause</button>
@@ -88,6 +104,11 @@
       <button id="btn-reload" class="small wide" title="Re-read the config/*.jsonc files, then reset">Reload config files</button>
       <div class="subtle tiny" id="variants"></div>
     </details>
+
+    <section id="fouls-card" hidden>
+      <h2>Rule checks</h2>
+      <ul id="fouls" class="tiny"></ul>
+    </section>
 
     <section id="warnings-card" hidden>
       <h2>Warnings</h2>

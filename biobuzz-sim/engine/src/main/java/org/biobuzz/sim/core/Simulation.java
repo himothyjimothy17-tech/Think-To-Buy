@@ -10,6 +10,9 @@ import org.biobuzz.sim.game.Ball;
 import org.biobuzz.sim.game.Flower;
 import org.biobuzz.sim.game.GameWorld;
 import org.biobuzz.sim.game.Hive;
+import org.biobuzz.sim.game.RuleChecker;
+import org.biobuzz.sim.game.ScoreKeeper;
+import org.biobuzz.sim.robot.ElementCarrier;
 import org.biobuzz.sim.robot.BallMechanisms;
 import org.biobuzz.sim.geom.Circle;
 import org.biobuzz.sim.geom.Pose2d;
@@ -78,6 +81,23 @@ public final class Simulation {
     private GameWorld world;
     private BallMechanisms mech;
     private final java.util.Map<SimRobot, List<Ball>> preloads = new java.util.HashMap<>();
+    private final java.util.Map<SimRobot, ElementCarrier> carriers = new java.util.LinkedHashMap<>();
+    private ScoreKeeper score;
+    private RuleChecker rules;
+
+    // ---- full match flow ----
+    private OpModeRegistry.Entry matchAuto;
+    private OpModeRegistry.Entry matchTeleop;
+    private double matchStartAt = -1;
+    private double teleopInitAt = -1;
+    private double postMatchAt = -1;
+    private boolean endgameReleased;
+    private String report;
+    private final List<String> startProblems = new ArrayList<>();
+    private int ourCellEntries;
+    private int ourFlowerEntries;
+    private long stepCount;
+    private double runWallStart;
     private RobotHardwareSim hardware;
     private final SimTelemetry telemetry = new SimTelemetry();
     private OpModeRunner runner;
@@ -163,6 +183,38 @@ public final class Simulation {
         ours.drivetrain = buildDrivetrain();
         mech = buildMechanisms();
         mech.preload(preloads.get(ours));
+        carriers.clear();
+        for (SimRobot r : robots) {
+            if (r == ours) {
+                carriers.put(r, mech);
+            } else {
+                // Until the robot AI (stage 6) takes over, other robots just hold their pre-loads.
+                List<Ball> held = new ArrayList<>(preloads.get(r));
+                carriers.put(r, new ElementCarrier() {
+                    public int heldCount() {
+                        held.removeIf(b -> b.state != Ball.State.HELD);
+                        return held.size();
+                    }
+
+                    public List<Ball> heldBalls() {
+                        heldCount();
+                        return held;
+                    }
+                });
+            }
+        }
+        score = new ScoreKeeper(cfg.game, field);
+        rules = new RuleChecker(cfg.game, field);
+        matchAuto = null;
+        matchTeleop = null;
+        matchStartAt = -1;
+        teleopInitAt = -1;
+        postMatchAt = -1;
+        endgameReleased = false;
+        report = null;
+        startProblems.clear();
+        ourCellEntries = 0;
+        ourFlowerEntries = 0;
         if (hardware.possessionSensor != null) {
             hardware.possessionSensor.ballPresent = () -> mech.ballAtGate(nowSeconds());
         }
@@ -288,16 +340,27 @@ public final class Simulation {
                     log("No OpMode named " + msg.get("opmode"));
                     return;
                 }
+                if (timer.mode() == MatchTimer.Mode.MATCH && timer.isRunning()) {
+                    log("A match is running - press Reset first");
+                    return;
+                }
                 timer.reset();
                 runner.init(e);
                 break;
             }
             case "start":
-                if (runner.state() == OpModeRunner.State.INIT) {
+                if (runner.state() == OpModeRunner.State.INIT && timer.mode() == MatchTimer.Mode.PRACTICE) {
                     runner.start();
-                    timer.startPeriod(runner.entry().autonomous ? MatchTimer.Phase.AUTO : MatchTimer.Phase.TELEOP,
+                    timer.startPractice(runner.entry().autonomous ? MatchTimer.Phase.AUTO : MatchTimer.Phase.TELEOP,
                             nowSeconds());
                 }
+                break;
+            case "startMatch":
+                startMatch(str(msg.get("auto")), str(msg.get("teleop")));
+                break;
+            case "seed":
+                seed = ((Double) msg.get("value")).longValue();
+                reset(false);
                 break;
             case "stop":
                 runner.stop();
@@ -323,6 +386,31 @@ public final class Simulation {
             default:
                 log("Unknown command " + cmd);
         }
+    }
+
+    private static String str(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
+    /**
+     * Starts a full match: fresh field, INIT the auto OpMode (the drive team
+     * does this before the match), then AUTO -> TRANSITION -> TELEOP.
+     * Either OpMode name may be empty.
+     */
+    public void startMatch(String autoName, String teleopName) {
+        reset(false);
+        matchAuto = autoName.isEmpty() ? null : registry.find(autoName);
+        matchTeleop = teleopName.isEmpty() ? null : registry.find(teleopName);
+        if (!autoName.isEmpty() && matchAuto == null) {
+            log("No OpMode named " + autoName);
+        }
+        if (matchAuto != null) {
+            runner.init(matchAuto);
+        }
+        // Give INIT a moment (drive teams INIT well before the match starts).
+        matchStartAt = nowSeconds() + (matchAuto != null ? 1.0 : 0.05);
+        log("Match queued: AUTO = " + (matchAuto == null ? "none" : matchAuto.name)
+                + ", TELEOP = " + (matchTeleop == null ? "none" : matchTeleop.name) + ", seed " + seed);
     }
 
     /** Puts every robot back at its start. With reloadConfig, re-reads the config files first. */
@@ -437,10 +525,178 @@ public final class Simulation {
         // 3) Advance the clock and the match.
         lockstep.advancePhysics(STEP_NS);
         runner.afterStep();
-        if (timer.update(nowSeconds())) {
-            log("Time's up (" + (runner.entry() != null && runner.entry().autonomous ? "AUTO" : "TELEOP") + " period over)");
-            runner.stop();
+        matchFlow(nowSeconds());
+        stepCount++;
+    }
+
+    // =====================================================================
+    // Match flow, scoring and rules
+    // =====================================================================
+
+    private void matchFlow(double now) {
+        if (matchStartAt >= 0 && now >= matchStartAt) {
+            matchStartAt = -1;
+            checkStartingPositions();
+            timer.startMatch(now);
+            if (runner.state() == OpModeRunner.State.INIT) {
+                runner.start();
+            }
+            runWallStart = System.nanoTime();
+            log("MATCH START - AUTO");
         }
+        MatchTimer.Phase started = timer.update(now);
+        if (started != null) {
+            onPhaseStart(started, now);
+        }
+        if (teleopInitAt >= 0 && now >= teleopInitAt) {
+            teleopInitAt = -1;
+            if (matchTeleop != null) {
+                runner.init(matchTeleop); // drive team presses INIT during the transition
+            }
+        }
+        if (timer.mode() == MatchTimer.Mode.MATCH && timer.phase() == MatchTimer.Phase.TELEOP && !endgameReleased
+                && timer.matchSecondsLeft(now) <= 60.0) {
+            endgameReleased = true;
+            world.releaseEndgameNectar(now);
+            log("60 s left: all remaining NECTAR may be entered, NECTAR may go into FLOWERS (G410, G426)");
+        }
+
+        List<GameWorld.Event> events = world.drainEvents();
+        for (GameWorld.Event e : events) {
+            switch (e.type) {
+                case HIVE_TIP:
+                    boolean autoTip = timer.phase() != MatchTimer.Phase.TELEOP && timer.phase() != MatchTimer.Phase.POST_MATCH;
+                    score.onTip(e.alliance, autoTip);
+                    log(e.alliance + " HIVE TIPPED (#" + e.index + ", " + (autoTip ? "AUTO" : "TELEOP") + ") - +20");
+                    break;
+                case CELL_ENTRY:
+                    if (ours.id.equals(e.ball.launchedBy) && e.alliance == ours.alliance) {
+                        ourCellEntries++;
+                    }
+                    break;
+                case FLOWER_ENTRY:
+                    if (ours.id.equals(e.ball.launchedBy)) {
+                        ourFlowerEntries++;
+                    }
+                    log(e.ball.kind.label() + " into FLOWER " + e.index);
+                    break;
+                case NECTAR_ENTERED:
+                    log("Human player entered " + e.alliance + " NECTAR");
+                    break;
+                case LEFT_FIELD:
+                    log(e.ball.kind.label() + " left the field");
+                    break;
+                default:
+                    break;
+            }
+        }
+        java.util.Map<SimRobot, Boolean> powered = new java.util.HashMap<>();
+        for (SimRobot r : robots) {
+            powered.put(r, r == ours ? ourRobotPowered() : Math.hypot(r.intentVx, r.intentVy) > 0.05);
+        }
+        rules.step(now, timer.phase().name(), timer.phaseTime(now), robots, carriers, powered, events,
+                timer.mode() == MatchTimer.Mode.MATCH ? timer.matchSecondsLeft(now)
+                        : (timer.phase() == MatchTimer.Phase.TELEOP ? timer.secondsLeft(now) : 999));
+        for (RuleChecker.Foul f : rules.drainNew()) {
+            score.onFoul(f.alliance, rules.points(f));
+            log("RULE " + f);
+        }
+        if (stepCount % 100 == 0) {
+            score.updateEndItems(world, robots, false);
+        }
+        if (postMatchAt >= 0 && now >= postMatchAt) {
+            postMatchAt = -1;
+            score.updateEndItems(world, robots, true);
+            report = buildReport(now);
+            log(String.format("FINAL SCORE  RED %d - BLUE %d   (our alliance %s: %d RP)",
+                    score.total(Alliance.RED), score.total(Alliance.BLUE), ourAlliance, score.rankingPoints(ourAlliance)));
+        }
+    }
+
+    private void onPhaseStart(MatchTimer.Phase p, double now) {
+        switch (p) {
+            case TRANSITION:
+                runner.stop(); // the Driver Station's 30 s AUTO timer stops the OpMode
+                score.assessAuto(robots);
+                log(String.format("AUTO over. LEAVE: red %d, blue %d; AUTO PARK: red %d, blue %d",
+                        score.get(Alliance.RED).leave, score.get(Alliance.BLUE).leave,
+                        score.get(Alliance.RED).autoPark, score.get(Alliance.BLUE).autoPark));
+                teleopInitAt = now + 1.0;
+                break;
+            case TELEOP:
+                if (runner.state() == OpModeRunner.State.INIT) {
+                    runner.start();
+                }
+                log("TELEOP");
+                break;
+            case POST_MATCH:
+                if (timer.mode() == MatchTimer.Mode.PRACTICE && runner.entry() != null && runner.entry().autonomous) {
+                    score.assessAuto(robots);
+                }
+                runner.stop();
+                postMatchAt = now + 3.0; // final scoring once everything comes to rest
+                log("Time's up - waiting for everything to come to rest");
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** Is any of our actuators powered, or is a servo still moving? (G403 / G404) */
+    private boolean ourRobotPowered() {
+        for (MotorState m : hardware.allMotors()) {
+            if (Math.abs(m.appliedPower) > 0.01) {
+                return true;
+            }
+        }
+        org.biobuzz.sim.hardware.SimServo sv = hardware.servosByRole.get("shooter.servo");
+        return sv != null && !Double.isNaN(sv.commandedRaw()) && Math.abs(sv.commandedRaw() - mech.servoActual()) > 0.005;
+    }
+
+    /** G304: every robot must start legally. A real match wouldn't start otherwise. */
+    private void checkStartingPositions() {
+        startProblems.clear();
+        for (SimRobot r : robots) {
+            for (String p : rules.checkStart(r, carriers.get(r).heldCount(), r.length, r.width, r.height)) {
+                startProblems.add(r.id + ": " + p);
+                log("RULE " + r.id + " start: " + p);
+            }
+        }
+        if (Math.hypot(ours.vx, ours.vy) > 0.01 || ourRobotPowered()) {
+            startProblems.add(ours.id + ": G304.H: not motionless after INIT");
+            log("RULE US start: G304.H: not motionless after OpMode INIT finished");
+        }
+    }
+
+    /** Everything about the match, as JSON (used by headless runs and saved runs). */
+    public String buildReport(double now) {
+        JsonOut j = new JsonOut().beginObject();
+        j.field("seed", seed);
+        j.name("variants").any(new ArrayList<Object>(variantNames));
+        j.field("alliance", ourAlliance.name()).field("startPose", startPoseName);
+        j.field("autoOpMode", matchAuto == null ? "" : matchAuto.name);
+        j.field("teleopOpMode", matchTeleop == null ? "" : matchTeleop.name);
+        j.name("score");
+        score.writeJson(j);
+        j.field("ourScore", score.total(ourAlliance)).field("ourAutoScore", score.get(ourAlliance).autoTotal(cfg.game.obj("points")));
+        j.field("theirScore", score.total(ourAlliance.opponent()));
+        j.name("ourRobot").beginObject()
+                .field("shots", mech.shots).field("pickups", mech.pickups).field("jams", mech.jams)
+                .field("cellEntries", ourCellEntries).field("flowerEntries", ourFlowerEntries)
+                .field("minBatteryV", battery.minVoltage())
+                .field("opModeError", runner.error())
+                .endObject();
+        j.name("fouls").beginArray();
+        for (RuleChecker.Foul f : rules.all()) {
+            j.beginObject().field("t", f.time).field("robot", f.robot).field("alliance", f.alliance.name())
+                    .field("rule", f.rule).field("penalty", f.penalty.name()).field("points", rules.points(f))
+                    .field("what", f.description).endObject();
+        }
+        j.endArray();
+        j.name("startProblems").any(new ArrayList<Object>(startProblems));
+        j.field("simSeconds", now);
+        j.field("wallSeconds", runWallStart > 0 ? (System.nanoTime() - runWallStart) / 1e9 : 0);
+        return j.endObject().toString();
     }
 
     public double nowSeconds() {
@@ -567,8 +823,13 @@ public final class Simulation {
         j.field("t", now).field("paused", paused).field("speed", speed);
         j.name("match").beginObject()
                 .field("phase", timer.phase().name())
+                .field("mode", timer.mode().name())
                 .field("timeLeft", timer.secondsLeft(now))
+                .field("matchTimeLeft", timer.matchSecondsLeft(now))
                 .endObject();
+        j.name("score");
+        score.writeJson(j);
+        j.field("seed", seed);
         j.name("opmode").beginObject()
                 .field("name", runner.entry() == null ? "" : runner.entry().name)
                 .field("state", runner.state().name())
@@ -642,6 +903,13 @@ public final class Simulation {
                     .field("inVolume", f.scoringBalls().size()).endObject();
         }
         j.endArray();
+        j.name("fouls").beginArray();
+        for (RuleChecker.Foul f : rules.all()) {
+            j.beginObject().field("t", Math.round(f.time * 10) / 10.0).field("robot", f.robot)
+                    .field("rule", f.rule).field("penalty", f.penalty.name()).field("what", f.description).endObject();
+        }
+        j.endArray();
+        j.field("startProblems", String.join("; ", startProblems));
         j.name("telemetry").any(new ArrayList<Object>(telemetry.publishedLines()));
         List<String> logLines = new ArrayList<>();
         String line;
@@ -660,6 +928,27 @@ public final class Simulation {
 
     public GameWorld world() {
         return world;
+    }
+
+    public ScoreKeeper score() {
+        return score;
+    }
+
+    public RuleChecker rules() {
+        return rules;
+    }
+
+    public MatchTimer timer() {
+        return timer;
+    }
+
+    /** The final match report (JSON), or null until the match is over. */
+    public String report() {
+        return report;
+    }
+
+    public List<String> startProblems() {
+        return startProblems;
     }
 
     public BallMechanisms mechanisms() {

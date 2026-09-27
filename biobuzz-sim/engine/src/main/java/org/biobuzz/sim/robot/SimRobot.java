@@ -26,6 +26,12 @@ public final class SimRobot {
     public double vx;
     public double vy;
     public double omega;
+    /**
+     * Where the robot is TRYING to go (field frame, m/s) - from its wheel speeds
+     * or its AI. Differs from vx/vy when it is pushing against something (G421 pins).
+     */
+    public double intentVx;
+    public double intentVy;
 
     /** Only set for our robot. */
     public MecanumDrivetrain drivetrain;

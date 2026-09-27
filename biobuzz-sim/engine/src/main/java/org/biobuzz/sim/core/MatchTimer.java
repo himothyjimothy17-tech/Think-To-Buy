@@ -3,23 +3,27 @@ package org.biobuzz.sim.core;
 import org.biobuzz.sim.config.Cfg;
 
 /**
- * The match clock: AUTO (30 s), TRANSITION (8 s), TELEOP (2:00) - §10.4.
+ * The match clock (§10.4): AUTO 30 s, TRANSITION 8 s, TELEOP 2:00.
  *
- * Stage 1 supports "practice" runs of a single period: starting a TeleOp
- * OpMode runs the TELEOP period, starting an Autonomous runs the AUTO period.
- * The full AUTO -> TRANSITION -> TELEOP match comes with scoring in stage 4.
+ * Two ways to run it:
+ *   MATCH    - the real thing: AUTO -> TRANSITION -> TELEOP -> POST_MATCH
+ *   PRACTICE - a single period (TELEOP for a TeleOp OpMode, AUTO for an
+ *              Autonomous one), handy for driving practice
  */
 public final class MatchTimer {
 
     public enum Phase { PRE_MATCH, AUTO, TRANSITION, TELEOP, POST_MATCH }
 
+    public enum Mode { PRACTICE, MATCH }
+
     private final double autoSeconds;
     private final double transitionSeconds;
     private final double teleopSeconds;
 
+    private Mode mode = Mode.PRACTICE;
     private Phase phase = Phase.PRE_MATCH;
-    private double phaseStartSeconds;
-    private double phaseLengthSeconds;
+    private double phaseStart;
+    private double phaseLength;
 
     public MatchTimer(Cfg game) {
         autoSeconds = game.num("match.autoSeconds");
@@ -29,49 +33,96 @@ public final class MatchTimer {
 
     public void reset() {
         phase = Phase.PRE_MATCH;
+        mode = Mode.PRACTICE;
+    }
+
+    /** Starts a full match at {@code now} (AUTO begins). */
+    public void startMatch(double now) {
+        mode = Mode.MATCH;
+        enter(Phase.AUTO, now);
     }
 
     /** Starts a single practice period. */
-    public void startPeriod(Phase p, double nowSeconds) {
-        phase = p;
-        phaseStartSeconds = nowSeconds;
-        phaseLengthSeconds = lengthOf(p);
+    public void startPractice(Phase p, double now) {
+        mode = Mode.PRACTICE;
+        enter(p, now);
     }
 
-    /** Moves to POST_MATCH when the period's time runs out. Returns true at that moment. */
-    public boolean update(double nowSeconds) {
-        if ((phase == Phase.AUTO || phase == Phase.TELEOP || phase == Phase.TRANSITION)
-                && nowSeconds - phaseStartSeconds >= phaseLengthSeconds) {
-            phase = Phase.POST_MATCH;
-            return true;
+    private void enter(Phase p, double now) {
+        phase = p;
+        phaseStart = now;
+        switch (p) {
+            case AUTO: phaseLength = autoSeconds; break;
+            case TRANSITION: phaseLength = transitionSeconds; break;
+            case TELEOP: phaseLength = teleopSeconds; break;
+            default: phaseLength = Double.MAX_VALUE;
         }
-        return false;
+    }
+
+    /**
+     * Advances the clock. Returns the phase that just STARTED, or null if
+     * nothing changed this step.
+     */
+    public Phase update(double now) {
+        if (phase == Phase.PRE_MATCH || phase == Phase.POST_MATCH) {
+            return null;
+        }
+        if (now - phaseStart + 1e-9 < phaseLength) {
+            return null;
+        }
+        Phase next;
+        if (mode == Mode.PRACTICE) {
+            next = Phase.POST_MATCH;
+        } else if (phase == Phase.AUTO) {
+            next = Phase.TRANSITION;
+        } else if (phase == Phase.TRANSITION) {
+            next = Phase.TELEOP;
+        } else {
+            next = Phase.POST_MATCH;
+        }
+        enter(next, phaseStart + phaseLength);
+        return next;
     }
 
     public Phase phase() {
         return phase;
     }
 
+    public Mode mode() {
+        return mode;
+    }
+
+    /** Seconds since the current phase started. */
+    public double phaseTime(double now) {
+        return now - phaseStart;
+    }
+
     /** Seconds left in the current period (what the field display shows). */
-    public double secondsLeft(double nowSeconds) {
+    public double secondsLeft(double now) {
         switch (phase) {
             case AUTO:
             case TRANSITION:
             case TELEOP:
-                return Math.max(0, phaseLengthSeconds - (nowSeconds - phaseStartSeconds));
+                return Math.max(0, phaseLength - (now - phaseStart));
             case PRE_MATCH:
-                return teleopSeconds;
+                return mode == Mode.MATCH ? autoSeconds : teleopSeconds;
             default:
                 return 0;
         }
     }
 
-    private double lengthOf(Phase p) {
-        switch (p) {
-            case AUTO: return autoSeconds;
-            case TRANSITION: return transitionSeconds;
-            case TELEOP: return teleopSeconds;
+    /** Seconds left in the whole MATCH (used for the "last 60 seconds" NECTAR rules). */
+    public double matchSecondsLeft(double now) {
+        switch (phase) {
+            case AUTO: return secondsLeft(now) + transitionSeconds + teleopSeconds;
+            case TRANSITION: return secondsLeft(now) + teleopSeconds;
+            case TELEOP: return secondsLeft(now);
+            case PRE_MATCH: return autoSeconds + transitionSeconds + teleopSeconds;
             default: return 0;
         }
+    }
+
+    public boolean isRunning() {
+        return phase == Phase.AUTO || phase == Phase.TRANSITION || phase == Phase.TELEOP;
     }
 }

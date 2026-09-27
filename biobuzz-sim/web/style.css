@@ -164,3 +164,14 @@ table.kv td:last-child { text-align: right; }
   #left { width: calc(100vw - 24px); }
   .left-grid { grid-template-columns: 1fr; }
 }
+
+/* score breakdown + rule checks */
+.breakdown th { text-align: right; font-weight: 600; }
+.breakdown td:not(:first-child) { text-align: right; }
+#fouls { margin: 4px 0 0; padding-left: 16px; max-height: 140px; overflow: auto; }
+#fouls li.major { color: #d23c3c; }
+#fouls li.minor { color: #d9822b; }
+#fouls li.warning { color: #8a7a2b; }
+.field.seed { flex: 0 0 90px; }
+.field.seed input { width: 100%; }
+[hidden] { display: none !important; }

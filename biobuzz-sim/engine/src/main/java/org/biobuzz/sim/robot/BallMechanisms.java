@@ -37,7 +37,7 @@ import static org.biobuzz.sim.util.Units.mmToM;
  * motors spin it back up (recovery time). Launch speed ~ wheel surface
  * speed x exitSpeedFactor, plus a little random spread per shot.
  */
-public final class BallMechanisms {
+public final class BallMechanisms implements ElementCarrier {
 
     public enum IntakeState { IDLE, RUNNING, JAMMED }
 
@@ -393,10 +393,12 @@ public final class BallMechanisms {
     // =====================================================================
 
     /** Everything this robot CONTROLS right now (G407: max 4). */
+    @Override
     public int heldCount() {
         return storage.size() + jammed.size();
     }
 
+    @Override
     public List<Ball> heldBalls() {
         List<Ball> all = new ArrayList<>(storage);
         all.addAll(jammed);

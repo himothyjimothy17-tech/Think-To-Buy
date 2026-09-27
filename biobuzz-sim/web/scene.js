@@ -155,8 +155,11 @@ export class FieldScene {
 
     // FLOWERS (§9.7): 4 pipes, top ring at 21.5 in, middle ring, bottom ring.
     const flower = g.flower;
+    this.flowerRings = [];
     for (const f of msg.flowers) {
-      this.fieldGroup.add(makeFlower(f.x, f.y, flower));
+      const fl = makeFlower(f.x, f.y, flower);
+      this.flowerRings.push(fl.getObjectByName('topRing'));
+      this.fieldGroup.add(fl);
     }
 
     // HIVE structure (§9.6).
@@ -227,6 +230,17 @@ export class FieldScene {
       const g = this.hiveGroups[h.alliance];
       if (g) g.rotation.x = h.angle * DEG;
     }
+  }
+
+  /** Colors each FLOWER's top ring by its owner (top-most NECTAR, §10.5.2). */
+  updateFlowers(flowers) {
+    if (!this.flowerRings) return;
+    flowers.forEach((f, i) => {
+      const ring = this.flowerRings[i];
+      if (!ring) return;
+      const c = f.owner === 'RED' ? COLORS.red : f.owner === 'BLUE' ? COLORS.blue : COLORS.flowerRing;
+      ring.material.color.setHex(c);
+    });
   }
 
   addTrailPoint(x, y) {
@@ -329,8 +343,9 @@ function makeFlower(x, y, f) {
     group.add(pipe);
   }
   for (const [z, r] of [[topZ, ringR], [midZ, ringR], [f.bottomRingHeight / 2, f.bottomRingHoleDiameter / 2 + 0.6]]) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.45, 8, 24), ringMat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.45, 8, 24), z === topZ ? ringMat.clone() : ringMat);
     ring.position.z = z;
+    if (z === topZ) ring.name = 'topRing'; // recolored to show the FLOWER's owner
     group.add(ring);
   }
   return group;

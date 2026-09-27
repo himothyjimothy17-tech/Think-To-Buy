@@ -168,5 +168,13 @@ public final class MecanumDrivetrain {
         for (int i = 0; i < 4; i++) {
             motors[i].velocityRadPerSec = wheelSpeed[i] * mountSign[i];
         }
+        // Intended motion = what the wheels would do without slipping (mecanum kinematics).
+        double r = p.wheelRadiusM;
+        double fwd = r / 4 * (wheelSpeed[0] + wheelSpeed[1] + wheelSpeed[2] + wheelSpeed[3]);
+        double left = r / 4 * (-wheelSpeed[0] + wheelSpeed[1] + wheelSpeed[2] - wheelSpeed[3]);
+        double c = Math.cos(robot.heading);
+        double s = Math.sin(robot.heading);
+        robot.intentVx = fwd * c - left * s;
+        robot.intentVy = fwd * s + left * c;
     }
 }

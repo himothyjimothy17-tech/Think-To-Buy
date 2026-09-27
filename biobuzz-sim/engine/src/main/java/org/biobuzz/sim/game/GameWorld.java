@@ -38,20 +38,26 @@ public final class GameWorld {
 
     /** Something happened that scoring or the rules care about. */
     public static final class Event {
-        public enum Type { CELL_ENTRY, HIVE_TIP, FLOWER_ENTRY, LEFT_FIELD, NECTAR_ENTERED }
+        public enum Type { CELL_ENTRY, HIVE_TIP, FLOWER_ENTRY, LEFT_FIELD, NECTAR_ENTERED, CAUGHT_FROM_HIVE }
 
         public final Type type;
         public final double time;
         public final Ball ball;
         public final Alliance alliance; // HIVE / FLOWER owner or NECTAR alliance
         public final int index;         // FLOWER index, or tip count
+        public final String robotId;    // for CAUGHT_FROM_HIVE
 
         Event(Type type, double time, Ball ball, Alliance alliance, int index) {
+            this(type, time, ball, alliance, index, null);
+        }
+
+        Event(Type type, double time, Ball ball, Alliance alliance, int index, String robotId) {
             this.type = type;
             this.time = time;
             this.ball = ball;
             this.alliance = alliance;
             this.index = index;
+            this.robotId = robotId;
         }
     }
 
@@ -341,7 +347,11 @@ public final class GameWorld {
             if (r.id.equals(b.launchedBy) && now - b.launchedAt < OWN_LAUNCH_GRACE_S) {
                 continue;
             }
-            bounceOffRobot(b, r);
+            if (bounceOffRobot(b, r) && b.fromTippedHive) {
+                // G409: a ball falling from a TIPPED HIVE touched a robot before anything else.
+                events.add(new Event(Event.Type.CAUGHT_FROM_HIVE, now, b, null, -1, r.id));
+                b.fromTippedHive = false;
+            }
         }
     }
 
@@ -400,10 +410,10 @@ public final class GameWorld {
         b.fromTippedHive = false;
     }
 
-    /** A ball against a robot's body: pushed out, and it picks up the robot's motion. */
-    private void bounceOffRobot(Ball b, SimRobot r) {
+    /** A ball against a robot's body: pushed out, and it picks up the robot's motion. Returns true on contact. */
+    private boolean bounceOffRobot(Ball b, SimRobot r) {
         if (b.z - b.radius > r.height) {
-            return;
+            return false;
         }
         double c = Math.cos(r.heading);
         double s = Math.sin(r.heading);
@@ -419,7 +429,7 @@ public final class GameWorld {
         double ey = ly - qy;
         double d = Math.hypot(ex, ey);
         if (d >= b.radius) {
-            return;
+            return false;
         }
         double nx;
         double ny;
@@ -459,6 +469,7 @@ public final class GameWorld {
         b.vx = svx + rvx;
         b.vy = svy + rvy;
         b.asleep = false;
+        return true;
     }
 
     /** Ball-to-ball contact (loose balls only). Sleeping balls are woken when hit. */
@@ -594,6 +605,9 @@ public final class GameWorld {
 
     /** A robot's intake takes a ball. */
     public void pickUp(Ball b, String robotId) {
+        if (b.fromTippedHive) {
+            events.add(new Event(Event.Type.CAUGHT_FROM_HIVE, b.launchedAt, b, null, -1, robotId));
+        }
         b.state = Ball.State.HELD;
         b.holder = robotId;
         b.stop();

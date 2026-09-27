@@ -54,7 +54,7 @@ public final class OpModeRegistry {
         }
     }
 
-    private final List<Entry> entries;
+    private final List<Entry> entries = new ArrayList<>();
 
     public OpModeRegistry() {
         List<Entry> found = new ArrayList<>();
@@ -79,11 +79,17 @@ public final class OpModeRegistry {
             }
         }
         found.sort(Comparator.comparing((Entry e) -> e.autonomous).thenComparing(e -> e.name));
-        entries = Collections.unmodifiableList(found);
+        entries.addAll(found);
     }
 
     public List<Entry> entries() {
-        return entries;
+        return Collections.unmodifiableList(entries);
+    }
+
+    /** Adds an OpMode that isn't in TeamCode (tests, experiments). */
+    public void register(Entry e) {
+        entries.removeIf(x -> x.name.equals(e.name));
+        entries.add(e);
     }
 
     /** Finds an OpMode by its display name or its class name. */

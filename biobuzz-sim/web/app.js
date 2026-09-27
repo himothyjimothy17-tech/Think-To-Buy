@@ -77,6 +77,16 @@ function onField(msg) {
   }
   if ([...sel.options].some(o => o.value === previous)) sel.value = previous;
 
+  // Full-match pickers: AUTO list and TELEOP list (plus "none").
+  for (const [id, auto] of [['match-auto', true], ['match-teleop', false]]) {
+    const m = $(id);
+    const prev = m.value;
+    m.innerHTML = '<option value="">(none)</option>'
+      + msg.opmodes.filter(o => o.autonomous === auto).map(o => `<option>${o.name}</option>`).join('');
+    if (m.dataset.touched && [...m.options].some(o => o.value === prev)) m.value = prev;
+    else if (m.options.length > 1) m.selectedIndex = 1;
+  }
+
   const poses = $('startpose-select');
   poses.innerHTML = '';
   for (const p of msg.startPoses) {
@@ -116,6 +126,8 @@ function onState(s) {
     $('hive-tips').textContent = ourHive.tips;
     $('hive-load').textContent = `${ourHive.massG.toFixed(0)} / ${ourHive.tipMassG.toFixed(0)} g`;
   }
+  updateScore(s);
+  scene.updateFlowers(s.flowers);
   $('held').textContent = `${s.ours.mech.held} / 4`;
   $('shots').textContent = `${s.ours.mech.shots} / ${s.ours.mech.pickups}`;
   paused = s.paused;
@@ -143,6 +155,39 @@ function onState(s) {
     log.textContent += s.log.join('\n') + '\n';
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
+}
+
+const BREAKDOWN_ROWS = [
+  ['LEAVE', 'leave', 3], ['AUTO PARK', 'autoPark', 5], ['AUTO HIVE tips', 'autoTips', 20],
+  ['TELEOP HIVE tips', 'teleopTips', 20], ['Balls in up CELL', 'cellBalls', 2], ['Bottom NECTAR', 'bottomNectar', 5],
+  ['Balls in owned FLOWERS', 'flowerBalls', 2], ['GARDEN', 'garden', 1], ['TELEOP PARK', 'teleopPark', 5],
+];
+
+function updateScore(s) {
+  if (!s.score) return;
+  const us = (fieldMsg.alliance || 'RED').toLowerCase();
+  const them = us === 'red' ? 'blue' : 'red';
+  const a = s.score[us];
+  const b = s.score[them];
+  $('our-score').textContent = a.total;
+  $('their-score').textContent = b.total;
+  $('rp').textContent = a.rankingPoints;
+  const cell = (x, pts) => `${x}${pts ? ` <span class="subtle">(${x * pts})</span>` : ''}`;
+  $('breakdown').innerHTML = `<tr><th></th><th>${us.toUpperCase()}</th><th>${them.toUpperCase()}</th></tr>`
+    + BREAKDOWN_ROWS.map(([label, k, p]) => `<tr><td>${label}</td><td>${cell(a[k], p)}</td><td>${cell(b[k], p)}</td></tr>`).join('')
+    + `<tr><td>Foul points received</td><td>${a.fouls}</td><td>${b.fouls}</td></tr>`
+    + `<tr><td><b>AUTO / TELEOP</b></td><td>${a.auto} / ${a.teleop}</td><td>${b.auto} / ${b.teleop}</td></tr>`
+    + `<tr><td><b>Total</b></td><td><b>${a.total}</b></td><td><b>${b.total}</b></td></tr>`
+    + `<tr><td colspan="3" class="subtle">${s.score.final ? 'FINAL' : 'end-of-match items shown as if the match ended now'}</td></tr>`;
+  const fouls = $('fouls');
+  $('fouls-card').hidden = s.fouls.length === 0;
+  if (fouls.childElementCount !== s.fouls.length) {
+    fouls.innerHTML = s.fouls.map(f => `<li class="${f.penalty.toLowerCase()}">${f.t.toFixed(1)} s · ${f.robot} · `
+      + `${f.rule} ${f.penalty}: ${f.what}</li>`).join('');
+  }
+  $('start-problems').textContent = s.startProblems ? `Illegal start (G304): ${s.startProblems}` : '';
+  $('start-problems').hidden = !s.startProblems;
+  if (document.activeElement !== $('seed-input')) $('seed-input').value = s.seed;
 }
 
 function updateRobotPanel(s) {
@@ -228,6 +273,14 @@ onClick('btn-reload', () => cmd('reload'));
 onClick('btn-pause', () => cmd(paused ? 'resume' : 'pause'));
 onClick('btn-step', () => cmd('step'));
 onClick('btn-clear-trail', () => scene.clearTrail());
+onClick('btn-match', () => {
+  const seed = parseInt($('seed-input').value, 10);
+  if (!Number.isNaN(seed)) cmd('seed', { value: seed });
+  scene.clearTrail();
+  $('log').textContent = '';
+  cmd('startMatch', { auto: $('match-auto').value, teleop: $('match-teleop').value });
+});
+for (const id of ['match-auto', 'match-teleop']) $(id).addEventListener('change', e => { e.target.dataset.touched = '1'; });
 $('startpose-select').addEventListener('change', e => cmd('startPose', { value: e.target.value }));
 $('speed-select').addEventListener('change', e => cmd('speed', { value: parseFloat(e.target.value) }));
 $('chk-trail').addEventListener('change', e => scene.setTrailVisible(e.target.checked));
