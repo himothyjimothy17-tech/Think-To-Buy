@@ -187,7 +187,7 @@ export class FieldScene {
   // ---------------------------------------------------------------------------
   // Moving things (called for each "state" message, ~60 times a second)
   // ---------------------------------------------------------------------------
-  updateRobots(robots) {
+  updateRobots(robots, addTrail = true) {
     this.lastRobots = robots;
     for (const r of robots) {
       let mesh = this.robotMeshes.get(r.id);
@@ -200,7 +200,7 @@ export class FieldScene {
       mesh.rotation.z = r.h * DEG;
       if (r.ours) {
         this.ours = r;
-        this.addTrailPoint(r.x, r.y);
+        if (addTrail) this.addTrailPoint(r.x, r.y);
       }
     }
   }
@@ -241,6 +241,21 @@ export class FieldScene {
       const c = f.owner === 'RED' ? COLORS.red : f.owner === 'BLUE' ? COLORS.blue : COLORS.flowerRing;
       ring.material.color.setHex(c);
     });
+  }
+
+  /**
+   * Comparison trails: our robot's path in saved runs, drawn over the field.
+   * paths = [{ points: [[x, y], ...], color: 0xRRGGBB }, ...]
+   */
+  setCompareTrails(paths) {
+    if (this.compareGroup) this.scene.remove(this.compareGroup);
+    this.compareGroup = new THREE.Group();
+    paths.forEach((p, i) => {
+      const pts = p.points.map(([x, y]) => new THREE.Vector3(x, y, 0.5 + i * 0.2));
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      this.compareGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: p.color })));
+    });
+    this.scene.add(this.compareGroup);
   }
 
   addTrailPoint(x, y) {

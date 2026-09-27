@@ -52,6 +52,8 @@ public final class WebServer {
     }
 
     private final Path webRoot;
+    /** Saved runs and headless reports, served read-only at /runs/. */
+    private final Path runsRoot;
     private final int port;
     private final Consumer<String> onMessage;
     private final Supplier<String> onConnectMessage;
@@ -64,6 +66,7 @@ public final class WebServer {
      */
     public WebServer(Path webRoot, int port, Consumer<String> onMessage, Supplier<String> onConnectMessage) {
         this.webRoot = webRoot.toAbsolutePath().normalize();
+        this.runsRoot = webRoot.toAbsolutePath().normalize().getParent().resolve("runs");
         this.port = port;
         this.onMessage = onMessage;
         this.onConnectMessage = onConnectMessage;
@@ -146,9 +149,15 @@ public final class WebServer {
         if (path.equals("/")) {
             path = "/index.html";
         }
-        Path file = webRoot.resolve(path.substring(1)).normalize();
-        // Never serve anything outside web/ (blocks "../../secret" tricks).
-        if (!file.startsWith(webRoot) || !Files.isRegularFile(file)) {
+        if (path.equals("/runs/")) {
+            sendRunList(out);
+            return;
+        }
+        Path root = path.startsWith("/runs/") ? runsRoot : webRoot;
+        Path file = (path.startsWith("/runs/") ? runsRoot.resolve(path.substring(6)) : webRoot.resolve(path.substring(1)))
+                .normalize();
+        // Never serve anything outside web/ or runs/ (blocks "../../secret" tricks).
+        if (!file.startsWith(root) || !Files.isRegularFile(file)) {
             byte[] body = "Not found".getBytes(StandardCharsets.UTF_8);
             out.write(("HTTP/1.1 404 Not Found\r\nContent-Length: " + body.length
                     + "\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
@@ -161,6 +170,31 @@ public final class WebServer {
         out.write(("HTTP/1.1 200 OK\r\nContent-Length: " + body.length
                 + "\r\nContent-Type: " + CONTENT_TYPES.getOrDefault(ext, "application/octet-stream")
                 + "\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+        out.write(body);
+        out.flush();
+    }
+
+    /** JSON list of saved runs, newest first: [{"file":..., "bytes":..., "modified":...}]. */
+    private void sendRunList(OutputStream out) throws IOException {
+        StringBuilder sb = new StringBuilder("[");
+        if (Files.isDirectory(runsRoot)) {
+            java.util.List<Path> files = new java.util.ArrayList<>();
+            try (java.util.stream.Stream<Path> st = Files.list(runsRoot)) {
+                st.filter(p -> p.toString().endsWith(".json")).forEach(files::add);
+            }
+            files.sort((a, b) -> Long.compare(b.toFile().lastModified(), a.toFile().lastModified()));
+            for (Path f : files) {
+                if (sb.length() > 1) {
+                    sb.append(',');
+                }
+                sb.append("{\"file\":\"").append(f.getFileName().toString().replace("\"", "")).append("\",\"bytes\":")
+                        .append(Files.size(f)).append(",\"modified\":").append(f.toFile().lastModified()).append('}');
+            }
+        }
+        byte[] body = sb.append(']').toString().getBytes(StandardCharsets.UTF_8);
+        out.write(("HTTP/1.1 200 OK\r\nContent-Length: " + body.length
+                + "\r\nContent-Type: application/json\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n")
+                .getBytes(StandardCharsets.US_ASCII));
         out.write(body);
         out.flush();
     }

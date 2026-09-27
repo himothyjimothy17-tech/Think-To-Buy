@@ -40,6 +40,12 @@
     <div class="phase" id="phase">PRE-MATCH</div>
     <div class="timer" id="timer">2:00</div>
     <div class="subtle tiny" id="sim-time">sim t = 0.00 s</div>
+    <div class="timeline">
+      <button id="btn-play-replay" class="small" title="Play / pause the recording">&#9654;</button>
+      <input type="range" id="scrub" min="0" max="0" value="0" title="Drag to look back in time (pauses the sim)">
+      <button id="btn-live" class="small" title="Back to the live simulation">LIVE</button>
+    </div>
+    <div class="tiny subtle" id="scrub-label">live</div>
   </section>
 
   <!-- ================= RIGHT: Driver Station ================= -->
@@ -103,6 +109,26 @@
         <button id="btn-clear-trail" class="small">clear</button></label>
       <button id="btn-reload" class="small wide" title="Re-read the config/*.jsonc files, then reset">Reload config files</button>
       <div class="subtle tiny" id="variants"></div>
+    </details>
+
+    <details id="tune-box">
+      <summary>Live tuning (TeamCode)</summary>
+      <div class="tiny subtle">TeamCode's <code>public static</code> fields (FTC Dashboard style).
+        Most are read at INIT, so INIT again after changing.</div>
+      <div id="tunables"></div>
+      <button id="btn-tune-reset" class="small wide">Back to the code's values</button>
+    </details>
+
+    <details id="runs-box">
+      <summary>Saved runs &amp; compare</summary>
+      <div class="button-row">
+        <input type="text" id="run-name" placeholder="run name" value="my-run">
+        <button id="btn-save-run" class="small">Save run</button>
+        <button id="btn-refresh-runs" class="small" title="Refresh the list">&#8635;</button>
+      </div>
+      <div class="tiny subtle">Pick A and B to compare. Headless batch reports appear here too.</div>
+      <table class="kv tiny" id="run-list"></table>
+      <div id="compare" class="tiny"></div>
     </details>
 
     <section id="fouls-card" hidden>

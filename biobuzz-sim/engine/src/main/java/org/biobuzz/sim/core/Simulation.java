@@ -36,6 +36,9 @@ import org.biobuzz.sim.util.Units;
 import org.biobuzz.simhooks.SimHooks;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -103,6 +106,9 @@ public final class Simulation {
     private int ourFlowerEntries;
     private long stepCount;
     private double matchT0;
+    /** Compact 10 Hz recording of the current run (for scrubbing and saved runs). */
+    private final List<String> frames = new ArrayList<>();
+    private static final int MAX_FRAMES = 2400;
     private final List<Object> tipLog = new ArrayList<>();
     private double runWallStart;
     private RobotHardwareSim hardware;
@@ -246,6 +252,7 @@ public final class Simulation {
         ourCellEntries = 0;
         ourFlowerEntries = 0;
         tipLog.clear();
+        frames.clear();
         if (hardware.possessionSensor != null) {
             hardware.possessionSensor.ballPresent = () -> mech.ballAtGate(nowSeconds());
         }
@@ -422,6 +429,25 @@ public final class Simulation {
                             nowSeconds());
                 }
                 break;
+            case "tune":
+                try {
+                    Tunables.set(str(msg.get("name")), msg.get("value"));
+                    log("Tuned " + msg.get("name") + " = " + Tunables.get(str(msg.get("name")))
+                            + " (TeamCode reads most values at INIT)");
+                } catch (IllegalArgumentException e) {
+                    log("Can't tune: " + e.getMessage());
+                }
+                broadcaster.accept(fieldMessage());
+                break;
+            case "tuneReset":
+                Tunables.restoreDefaults();
+                applyTeamCodeSettings(cfg);
+                log("Tunables back to the code's values (plus the design variant's)");
+                broadcaster.accept(fieldMessage());
+                break;
+            case "saveRun":
+                saveRun(str(msg.get("value")));
+                break;
             case "startMatch":
                 startMatch(str(msg.get("auto")), str(msg.get("teleop")));
                 break;
@@ -597,6 +623,9 @@ public final class Simulation {
         lockstep.advancePhysics(STEP_NS);
         runner.afterStep();
         matchFlow(nowSeconds());
+        if (stepCount % 100 == 0 && frames.size() < MAX_FRAMES && timer.phase() != MatchTimer.Phase.PRE_MATCH) {
+            frames.add(frameJson());
+        }
         stepCount++;
     }
 
@@ -911,7 +940,99 @@ public final class Simulation {
         }
         j.endArray();
         j.name("warnings").any(new ArrayList<Object>(warnings));
+        j.name("tunables").beginArray();
+        Map<String, Object> defaults = Tunables.defaults();
+        for (Map.Entry<String, Object> e : Tunables.snapshot().entrySet()) {
+            j.beginObject().field("name", e.getKey()).name("value").any(e.getValue())
+                    .name("default").any(defaults.get(e.getKey())).endObject();
+        }
+        j.endArray();
+        j.name("robotsInfo");
+        robotsInfo(j);
         return j.endObject().toString();
+    }
+
+    private void writeBalls(JsonOut j) {
+        j.name("balls").beginArray();
+        for (Ball b : world.balls) {
+            if (b.state == Ball.State.OUT_OF_FIELD) {
+                continue;
+            }
+            j.beginArray().value(b.id).value(b.kind.ordinal()).value(b.state.ordinal())
+                    .value(Math.round(mToIn(b.x) * 10) / 10.0).value(Math.round(mToIn(b.y) * 10) / 10.0)
+                    .value(Math.round(mToIn(b.z) * 10) / 10.0).endArray();
+        }
+        j.endArray();
+    }
+
+    private void robotsInfo(JsonOut j) {
+        j.beginArray();
+        for (SimRobot r : robots) {
+            j.beginObject().field("id", r.id).field("alliance", r.alliance.name()).field("ours", r.ours)
+                    .field("l", mToIn(r.length)).field("w", mToIn(r.width)).field("ht", mToIn(r.height)).endObject();
+        }
+        j.endArray();
+    }
+
+    /**
+     * One compact recorded frame. Same meaning as the live state, fewer bytes:
+     *   t, phase, timeLeft, score [red, blue],
+     *   robots [[x, y, headingDeg], ...] (same order as robotsInfo),
+     *   balls [[id, kind, state, x, y, z], ...], hives [angleDeg...], flowers [owner...]
+     */
+    private String frameJson() {
+        double now = nowSeconds();
+        JsonOut j = new JsonOut().beginObject();
+        j.field("t", Math.round(now * 100) / 100.0).field("phase", timer.phase().name())
+                .field("timeLeft", Math.round(timer.secondsLeft(now) * 10) / 10.0);
+        j.name("score").beginArray().value(score.total(Alliance.RED)).value(score.total(Alliance.BLUE)).endArray();
+        j.name("robots").beginArray();
+        for (SimRobot r : robots) {
+            j.beginArray().value(Math.round(mToIn(r.x) * 10) / 10.0).value(Math.round(mToIn(r.y) * 10) / 10.0)
+                    .value(Math.round(Math.toDegrees(Units.wrapRadians(r.heading)) * 10) / 10.0).endArray();
+        }
+        j.endArray();
+        writeBalls(j);
+        j.name("hives").beginArray();
+        for (Hive h : world.hives.values()) {
+            j.value(Math.round(Math.toDegrees(h.angle()) * 10) / 10.0);
+        }
+        j.endArray();
+        j.name("flowers").beginArray();
+        for (Flower f : world.flowers) {
+            j.value(f.owner() == null ? "" : f.owner().name());
+        }
+        j.endArray();
+        return j.endObject().toString();
+    }
+
+    /** Saves the current run (settings, report and the recording) to runs/NAME.json. */
+    public Path saveRun(String name) {
+        String safe = name.replaceAll("[^A-Za-z0-9._-]", "_");
+        if (safe.isBlank()) {
+            safe = "run";
+        }
+        Path dir = cfg.configDir.toAbsolutePath().getParent().resolve("runs");
+        Path file = dir.resolve(safe + ".json");
+        try {
+            Files.createDirectories(dir);
+            JsonOut j = new JsonOut().beginObject();
+            j.field("type", "biobuzz-run").field("name", name).field("created", java.time.LocalDateTime.now().toString());
+            j.name("tunables").any(new java.util.LinkedHashMap<String, Object>(Tunables.snapshot()));
+            j.name("robotsInfo");
+            robotsInfo(j);
+            j.name("report").rawValue(buildReport(nowSeconds()));
+            j.name("frames").beginArray();
+            for (String f : frames) {
+                j.rawValue(f);
+            }
+            j.endArray();
+            Files.writeString(file, j.endObject().toString(), StandardCharsets.UTF_8);
+            log("Saved run to " + dir.getFileName() + "/" + file.getFileName() + " (" + frames.size() + " frames)");
+        } catch (IOException e) {
+            log("Couldn't save the run: " + e.getMessage());
+        }
+        return file;
     }
 
     private static void rect(JsonOut j, Rect r) {
@@ -983,16 +1104,7 @@ public final class Simulation {
         j.endObject();
 
         // Balls: [id, kind, state, x, y, z] in inches (compact).
-        j.name("balls").beginArray();
-        for (Ball b : world.balls) {
-            if (b.state == Ball.State.OUT_OF_FIELD) {
-                continue;
-            }
-            j.beginArray().value(b.id).value(b.kind.ordinal()).value(b.state.ordinal())
-                    .value(Math.round(mToIn(b.x) * 10) / 10.0).value(Math.round(mToIn(b.y) * 10) / 10.0)
-                    .value(Math.round(mToIn(b.z) * 10) / 10.0).endArray();
-        }
-        j.endArray();
+        writeBalls(j);
         j.name("hives").beginArray();
         for (Hive h : world.hives.values()) {
             j.beginObject().field("alliance", h.alliance.name()).field("angle", Math.toDegrees(h.angle()))
