@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -56,6 +57,7 @@ public class RobotHardware {
     public DcMotorEx shooterLeft;
     public DcMotorEx shooterRight;
     public Servo shooterServo;
+    public Limelight3A limelight;
     public IMU imu;
     public VoltageSensor batteryVoltage;
     private java.util.List<LynxModule> hubs;
@@ -98,8 +100,26 @@ public class RobotHardware {
         shooterLeft = hardwareMap.get(DcMotorEx.class, SHOOTER_LEFT);
         shooterRight = hardwareMap.get(DcMotorEx.class, SHOOTER_RIGHT);
         shooterServo = hardwareMap.get(Servo.class, SHOOTER_SERVO);
-        // TODO(stage 3): set intake/shooter directions and modes once the
-        // mechanisms are simulated.
+
+        // The right intake and right shooter motors are mounted mirrored, so we
+        // reverse them: then +power pulls balls IN and spins the flywheel to SHOOT.
+        intakeLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooterLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        for (DcMotorEx m : new DcMotorEx[] {intakeLeft, intakeRight}) {
+            m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            m.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        for (DcMotorEx m : new DcMotorEx[] {shooterLeft, shooterRight}) {
+            // The flywheel coasts when off, and the hub holds its speed (velocity PIDF).
+            m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            m.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            m.setVelocityPIDFCoefficients(Shooter.KP, Shooter.KI, Shooter.KD, Shooter.KF);
+        }
+
+        limelight = hardwareMap.get(Limelight3A.class, LIMELIGHT);
 
         imu = hardwareMap.get(IMU.class, IMU_NAME);
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(HUB_LOGO, HUB_USB)));

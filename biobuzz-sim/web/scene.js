@@ -61,6 +61,8 @@ export class FieldScene {
     this.scene.add(this.fieldGroup, this.zoneGroup, this.robotGroup);
 
     this.robotMeshes = new Map();   // robot id -> THREE.Group
+    this.ballMeshes = new Map();    // ball id -> THREE.Mesh
+    this.hiveGroups = {};           // 'RED' / 'BLUE' -> THREE.Group (rotates when it tips)
     this.cameraMode = 'orbit';
     this.alliance = 'RED';
     this.lastRobots = [];
@@ -94,6 +96,17 @@ export class FieldScene {
     clearGroup(this.zoneGroup);
     clearGroup(this.robotGroup);
     this.robotMeshes.clear();
+    if (this.ballGroup) clearGroup(this.ballGroup);
+    else { this.ballGroup = new THREE.Group(); this.scene.add(this.ballGroup); }
+    this.ballMeshes.clear();
+    const el = msg.game.elements;
+    // POLLEN 2.8 in yellow, NECTAR 3.6 in red/blue (§9.8).
+    this.ballGeo = [new THREE.SphereGeometry(el.pollen.diameter / 2, 16, 12),
+                    new THREE.SphereGeometry(el.nectar.diameter / 2, 16, 12),
+                    new THREE.SphereGeometry(el.nectar.diameter / 2, 16, 12)];
+    this.ballMat = [new THREE.MeshLambertMaterial({ color: 0xf2d027 }),
+                    new THREE.MeshLambertMaterial({ color: 0xd9363e }),
+                    new THREE.MeshLambertMaterial({ color: 0x2f6fdb })];
     this.clearTrail();
 
     const g = msg.game;
@@ -149,7 +162,9 @@ export class FieldScene {
     // HIVE structure (§9.6).
     this.fieldGroup.add(makeHiveFrame(g.hive));
     for (const side of ['RED', 'BLUE']) {
-      this.fieldGroup.add(makeHive(g.hive, side));
+      const hive = makeHive(g.hive, side);
+      this.hiveGroups[side] = hive;
+      this.fieldGroup.add(hive);
     }
 
     // Text labels for orientation.
@@ -184,6 +199,33 @@ export class FieldScene {
         this.ours = r;
         this.addTrailPoint(r.x, r.y);
       }
+    }
+  }
+
+  /** Balls: [id, kind, state, x, y, z] (kind 0 pollen / 1 red / 2 blue; state 1 = held). */
+  updateBalls(balls) {
+    const seen = new Set();
+    for (const [id, kind, state, x, y, z] of balls) {
+      let m = this.ballMeshes.get(id);
+      if (!m) {
+        m = new THREE.Mesh(this.ballGeo[kind], this.ballMat[kind]);
+        this.ballMeshes.set(id, m);
+        this.ballGroup.add(m);
+      }
+      m.position.set(x, y, z);
+      m.visible = state !== 1; // held balls are inside the robot
+      seen.add(id);
+    }
+    for (const [id, m] of this.ballMeshes) {
+      if (!seen.has(id)) m.visible = false; // left the field
+    }
+  }
+
+  /** HIVE tilt from the simulator (degrees; + raises the far end). */
+  updateHives(hives) {
+    for (const h of hives) {
+      const g = this.hiveGroups[h.alliance];
+      if (g) g.rotation.x = h.angle * DEG;
     }
   }
 

@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.config.SimConfig;
+import org.biobuzz.sim.game.GameWorld;
 import org.biobuzz.sim.physics.MotorSpec;
 import org.biobuzz.sim.physics.MotorState;
 import org.biobuzz.sim.robot.SimRobot;
@@ -39,10 +40,13 @@ public final class RobotHardwareSim {
     public final Map<String, Double> mountSignByRole = new HashMap<>();
     public final Map<String, SimServo> servosByRole = new LinkedHashMap<>();
     public SimImu imu;
+    public SimLimelight limelight;
+    public SimDistanceSensor possessionSensor;
     /** Problems found while building (shown in the browser and printed at startup). */
     public final List<String> warnings = new ArrayList<>();
 
-    public RobotHardwareSim(SimConfig cfg, SimRobot robot, DoubleSupplier batteryVoltage, SimRandom random) {
+    public RobotHardwareSim(SimConfig cfg, SimRobot robot, DoubleSupplier batteryVoltage, SimRandom random,
+                            GameWorld world, java.util.function.Supplier<List<SimRobot>> allRobots) {
         HubTiming timing = new HubTiming(cfg.hubs.obj("timingMs"));
         Map<String, MotorSpec> specs = new HashMap<>();
         Cfg models = cfg.robot.obj("motorModels");
@@ -102,6 +106,15 @@ public final class RobotHardwareSim {
                 servoCount++;
             }
             for (Cfg d : h.objList("i2c")) {
+                if (d.bool("optional", false) && d.str("role").equals("possession")
+                        && !cfg.robot.bool("possessionSensor.enabled")) {
+                    continue; // optional device that robot.jsonc says isn't on the robot
+                }
+                if (d.str("type").equals("DistanceSensor")) {
+                    possessionSensor = new SimDistanceSensor(d.str("name"), timing.imuReadNs, random.stream("possession"));
+                    hardwareMap.put(d.str("name"), possessionSensor);
+                    noteName(allNames, d.str("name"));
+                }
                 if (d.str("type").equals("IMU")) {
                     Cfg imuCfg = cfg.robot.obj("imu");
                     imu = new SimImu(d.str("name"), robot, timing.imuReadNs,
@@ -113,9 +126,14 @@ public final class RobotHardwareSim {
                 }
             }
         }
-        // USB devices (the Limelight) get their simulated class in stage 3; remember the names now.
+        // USB devices: the Limelight 3A.
         for (Cfg u : cfg.hubs.objList("usb")) {
             noteName(allNames, u.str("name"));
+            if (u.str("type").equals("Limelight3A")) {
+                limelight = new SimLimelight(u.str("name"), robot, allRobots, world, cfg.robot.obj("camera"),
+                        cfg.game.obj("aprilTags"), random.stream("limelight"));
+                hardwareMap.put(u.str("name"), limelight);
+            }
         }
 
         checkRules(cfg.game, motorCount, servoCount);
@@ -214,6 +232,9 @@ public final class RobotHardwareSim {
         }
         for (SimServo s : servosByRole.values()) {
             s.resetDeviceConfigurationForOpMode();
+        }
+        if (limelight != null) {
+            limelight.resetDeviceConfigurationForOpMode();
         }
     }
 

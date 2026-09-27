@@ -226,7 +226,7 @@ everything else is an **ESTIMATE** in `config/robot.jsonc`.
 |---|---|---|
 | 1 | SDK mock + field + MecanumTeleOp with gamepad | **done** |
 | 2 | Motor physics (torque curves, slip), encoders, IMU noise, battery sag | **done** |
-| 3 | POLLEN, NECTAR, intake, shooter, servo, Limelight | |
+| 3 | POLLEN, NECTAR, intake, shooter, servo, Limelight | **done** |
 | 4 | HIVES, FLOWERS, scoring, rule checks | |
 | 5 | Headless mode, seeds, batch testing, design comparisons | |
 | 6 | Other robots (AI) | |

@@ -122,6 +122,24 @@
     "note": "§9.8: balls are not perfectly spherical and vary in size"
   },
 
+  // ---- How the balls move. NOT in the manual - all ESTIMATEs (TODO: measure). ----
+  "elementPhysics": {
+    "pollenMassG": 23.0,            // ESTIMATE: 2.8 in hollow polyethylene ball. TODO weigh one
+    "nectarMassG": 45.0,            // ESTIMATE: 3.6 in ball. TODO weigh one
+    "dragCoefficient": 0.5,         // ESTIMATE: holes make these balls draggy (whiffle-ball style)
+    "bounceFloor": 0.45,            // ESTIMATE: fraction of speed kept bouncing on foam tiles
+    "bounceHard": 0.55,             // ESTIMATE: off walls, robots, pipes
+    "rollingDecel": 0.35,           // ESTIMATE m/s^2: rolling slowdown on foam tiles
+    "flowerEntrySlop": 0.5,         // ESTIMATE in: how far off-center a ball can land and still drop in
+    "cellEntrySlop": 0.4,           // ESTIMATE: fraction of a ball radius that can hit the CELL rim and still go in
+    "cellBaseOffset": -1.4,         // FIGURE-READ: CELL floor below the HIVE arm axis (in), from Fig 9-10 heights
+    "tipMassG": 250.0,              // ESTIMATE: mass in the up CELL that tips the HIVE. TODO - manual only says "enough".
+                                    //   3 staged NECTAR (135 g) must NOT tip it; ~5 more POLLEN will.
+    "tipSeconds": 0.8,              // ESTIMATE: time for the HIVE to swing to the other stable state
+    "humanPlayerDelaySeconds": 2.0, // ESTIMATE: human player reaction time to enter a NECTAR
+    "outOfFieldReturnSeconds": 5.0  // ESTIMATE: field staff put POLLEN that left the field back in (§10.8)
+  },
+
   // ---- AprilTags (§9.9) ----
   "aprilTags": {
     "family": "36h11",              // §9.9

@@ -107,7 +107,17 @@ function onField(msg) {
 // ---------------------------------------------------------------- state message
 
 function onState(s) {
+  if (!fieldMsg) return; // wait for the field layout first
   scene.updateRobots(s.robots);
+  scene.updateBalls(s.balls);
+  scene.updateHives(s.hives);
+  const ourHive = s.hives.find(h => h.alliance === (fieldMsg ? fieldMsg.alliance : 'RED'));
+  if (ourHive) {
+    $('hive-tips').textContent = ourHive.tips;
+    $('hive-load').textContent = `${ourHive.massG.toFixed(0)} / ${ourHive.tipMassG.toFixed(0)} g`;
+  }
+  $('held').textContent = `${s.ours.mech.held} / 4`;
+  $('shots').textContent = `${s.ours.mech.shots} / ${s.ours.mech.pickups}`;
   paused = s.paused;
   $('btn-pause').textContent = paused ? 'Run' : 'Pause';
 
@@ -155,7 +165,11 @@ function updateRobotPanel(s) {
   for (const sv of o.servos) {
     rows.push([sv.name, sv.position === null ? 'not set' : sv.position.toFixed(3)]);
   }
-  rows.push(['Intake / held', 'stage 3']);
+  const m = o.mech;
+  rows.push(['Flywheel', `${m.flywheelRpm.toFixed(0)} RPM`]);
+  rows.push(['Shooter servo (actual)', `${m.servoActual.toFixed(2)} · launch ${m.launchAngle.toFixed(0)}°`]);
+  rows.push(['Intake', m.intake + (m.jams ? ` (jams: ${m.jams})` : '')]);
+  rows.push(['Held / ball at gate', `${m.held} / ${m.ballAtGate ? 'yes' : 'no'}`]);
   $('robot-state').innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
 
   // Wheel power bars (what the hub sends to each drive motor).

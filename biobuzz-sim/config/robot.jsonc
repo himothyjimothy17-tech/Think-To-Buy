@@ -51,7 +51,16 @@
   "intake": {
     "motorModel": "yj1620",             // CONFIRMED: 2x goBILDA 1620 RPM, front-mounted
     "motorCount": 2,
-    "capacity": 4                       // RULE G407: a robot may not CONTROL more than 4 elements
+    "capacity": 4,                      // RULE G407: a robot may not CONTROL more than 4 elements
+    "rollerDiameterMm": 60.0,           // ESTIMATE: compliant intake wheels
+    "rollerInertia": 0.00015,           // ESTIMATE kg*m^2 per side, incl. motor rotor through 3.7:1
+    "mouthWidth": 15.5,                 // ESTIMATE in: opening across the front (must reach balls against a wall)
+    "mouthDepth": 3.0,                  // ESTIMATE in: how far in front of the bumper the rollers reach
+    "minCaptureSurfaceSpeed": 1.0,      // ESTIMATE m/s: slower rollers don't grab the ball
+    "jamWindowSeconds": 0.12,           // ESTIMATE: two balls entering within this time = JAM
+    "jamClearReverseSeconds": 0.25,     // ESTIMATE: reverse this long to spit the jam out
+    "transferSeconds": 0.25,            // ESTIMATE: time for a ball to roll from the intake to the gate
+    "flowerReachIn": 5.0                // ESTIMATE in: intake mouth to FLOWER center distance to pull POLLEN out of the bottom
   },
 
   "shooter": {
@@ -59,7 +68,17 @@
     "motorCount": 2,
     "flywheelGearRatio": 1.0,           // CONFIRMED
     "flywheelDiameterMm": 96.0,         // ESTIMATE
+    "flywheelInertia": 0.00035,         // ESTIMATE kg*m^2: 96 mm wheel + hub + shaft (heavier = less RPM drop per shot)
     "launchAngleDeg": 45.0,             // ESTIMATE: fixed launch angle (gate mode)
+    "exitSpeedFactor": 0.5,             // ESTIMATE: ball speed / flywheel surface speed (one wheel + fixed hood: ball rolls, ~half)
+    "shotEnergyLossFactor": 1.5,        // ESTIMATE: energy the flywheel loses per shot / ball's kinetic energy
+    "exitForward": -1.0,                // ESTIMATE in: where the ball leaves the robot (robot frame, from center)
+    "exitHeight": 15.0,                 // ESTIMATE in: height the ball leaves the robot
+    "minShotIntervalSeconds": 0.08,     // ESTIMATE: a ball needs this long to clear the flywheel
+    "speedSpreadPct": 2.0,              // ESTIMATE: shot-to-shot launch speed variation (1 sigma)
+    "angleSpreadDeg": 0.8,              // ESTIMATE: shot-to-shot direction variation (1 sigma)
+    "gateOpenFraction": 0.7,            // ESTIMATE: gate must be this far open for a ball to pass
+    "hubServoVoltage": 5.0,             // REV hubs power servos at 5 V (R502 note); goBILDA spec is at 6 V
 
     // The shooter servo's job isn't decided yet. Switch between:
     //   "gate" - a feeder gate that releases one element per shot (default)
@@ -97,10 +116,19 @@
     "mountHeight": 8.0,                 // ESTIMATE: inches above the tiles
     "pitchDeg": 15.0,                   // ESTIMATE: tilted up
     "horizontalFovDeg": 54.5,           // SPEC: Limelight 3A
-    "verticalFovDeg": 42.0              // SPEC: Limelight 3A
+    "verticalFovDeg": 42.0,             // SPEC: Limelight 3A
+    "fps": 50.0,                        // ESTIMATE: frames per second in these pipelines
+    "latencyMs": 25.0,                  // ESTIMATE: capture + processing delay
+    "angleNoiseDeg": 0.15,              // ESTIMATE: tx/ty noise
+    "poseNoiseIn": 0.8,                 // ESTIMATE: botpose noise at 1 m (grows with distance)
+    "tagMaxRangeIn": 140.0,             // ESTIMATE: farthest a 3.25 in tag decodes
+    "ballMaxRangeIn": 110.0,            // ESTIMATE: farthest the detector sees a ball
+    "missRate": 0.05,                   // ESTIMATE: chance a visible target is missed in a frame
+    // Pipelines as they'd be set up in the Limelight web UI:
+    "pipelines": ["apriltag", "detector"]
   },
 
-  "possessionSensor": { "enabled": false },   // CONFIRMED: optional, off by default
+  "possessionSensor": { "enabled": false },   // CONFIRMED: optional, off by default (a distance sensor at the gate)
   "odometry": { "pinpoint": false },          // CONFIRMED: drive encoders + IMU only for now
 
   // Where our robot starts. RED positions only (blue = 180-degree rotation).

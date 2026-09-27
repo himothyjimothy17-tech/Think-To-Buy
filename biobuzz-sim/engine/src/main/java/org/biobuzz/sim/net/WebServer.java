@@ -210,11 +210,12 @@ public final class WebServer {
         out.flush();
 
         Client client = new Client(out);
+        // The field layout must reach the browser before any state message.
+        client.enqueue(onConnectMessage.get(), false);
         clients.add(client);
         Thread writer = new Thread(client::writeLoop, "ws-writer");
         writer.setDaemon(true);
         writer.start();
-        client.enqueue(onConnectMessage.get(), false);
         try {
             readFrames(in, client);
         } finally {

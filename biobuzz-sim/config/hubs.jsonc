@@ -31,7 +31,9 @@
         { "port": 0, "name": "shooterServo", "type": "Servo", "role": "shooter.servo" }
       ],
       "i2c": [
-        { "bus": 0, "name": "imu", "type": "IMU", "role": "imu" }
+        { "bus": 0, "name": "imu", "type": "IMU", "role": "imu" },
+        // Only created when robot.jsonc possessionSensor.enabled is true:
+        { "bus": 1, "name": "possessionSensor", "type": "DistanceSensor", "role": "possession", "optional": true }
       ]
     },
     {

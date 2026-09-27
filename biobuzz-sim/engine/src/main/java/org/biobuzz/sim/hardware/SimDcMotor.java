@@ -146,10 +146,15 @@ public final class SimDcMotor implements DcMotorEx {
                 target = Double.isNaN(velocityTarget) ? power * maxTicksPerSecond() : velocityTarget;
             }
             double error = target - velocityCode;
-            integral += error;
-            // Anti-windup: the I term alone can't ask for more than full power.
-            double iLimit = velocityPidf.i > 0 ? REV_OUTPUT_SCALE / velocityPidf.i : 0;
-            integral = Math.max(-iLimit, Math.min(iLimit, integral));
+            // Anti-windup ("conditional integration"): while the output is already
+            // maxed out in the direction of the error, don't keep adding to the
+            // integral - otherwise it overshoots badly after a big spin-up.
+            double trial = (velocityPidf.p * error + velocityPidf.i * (integral + error)
+                    + velocityPidf.d * (error - lastError) + velocityPidf.f * target) / REV_OUTPUT_SCALE;
+            boolean saturated = Math.abs(trial) >= 1.0 && Math.signum(trial) == Math.signum(error);
+            if (!saturated) {
+                integral += error;
+            }
             double out = (velocityPidf.p * error + velocityPidf.i * integral
                     + velocityPidf.d * (error - lastError) + velocityPidf.f * target) / REV_OUTPUT_SCALE;
             lastError = error;

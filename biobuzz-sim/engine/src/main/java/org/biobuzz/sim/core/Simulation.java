@@ -6,6 +6,11 @@ import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.config.SimConfig;
 import org.biobuzz.sim.field.Alliance;
 import org.biobuzz.sim.field.Field;
+import org.biobuzz.sim.game.Ball;
+import org.biobuzz.sim.game.Flower;
+import org.biobuzz.sim.game.GameWorld;
+import org.biobuzz.sim.game.Hive;
+import org.biobuzz.sim.robot.BallMechanisms;
 import org.biobuzz.sim.geom.Circle;
 import org.biobuzz.sim.geom.Pose2d;
 import org.biobuzz.sim.geom.Rect;
@@ -70,6 +75,9 @@ public final class Simulation {
     private Field field;
     private final List<SimRobot> robots = new ArrayList<>();
     private SimRobot ours;
+    private GameWorld world;
+    private BallMechanisms mech;
+    private final java.util.Map<SimRobot, List<Ball>> preloads = new java.util.HashMap<>();
     private RobotHardwareSim hardware;
     private final SimTelemetry telemetry = new SimTelemetry();
     private OpModeRunner runner;
@@ -143,11 +151,21 @@ public final class Simulation {
         robots.add(opp2);
 
         random = new SimRandom(seed);
+        // Game elements staged exactly as §10.3.1 says (with small random placement variation).
+        world = new GameWorld(cfg.game, field, random.stream("staging"));
+        preloads.clear();
+        world.stage(robots, preloads);
+
         Cfg bat = cfg.robot.obj("battery");
         battery = new Battery(bat.num("restVoltage"), bat.num("internalResistanceOhm"), bat.num("electronicsCurrentA"));
-        hardware = new RobotHardwareSim(cfg, ours, this::batteryVoltage, random);
+        hardware = new RobotHardwareSim(cfg, ours, this::batteryVoltage, random, world, () -> robots);
         warnings.addAll(hardware.warnings);
         ours.drivetrain = buildDrivetrain();
+        mech = buildMechanisms();
+        mech.preload(preloads.get(ours));
+        if (hardware.possessionSensor != null) {
+            hardware.possessionSensor.ballPresent = () -> mech.ballAtGate(nowSeconds());
+        }
         runner = new OpModeRunner(lockstep, hardware, telemetry, this::log);
         lockstep.resetClock();
         applied1 = null;
@@ -184,6 +202,20 @@ public final class Simulation {
         p.slipSpeed = d.num("slipSpeed");
         p.gripVariation = d.num("gripVariation");
         return new MecanumDrivetrain(m[0], m[1], m[2], m[3], sign, p, random.stream("drivetrain"));
+    }
+
+    private BallMechanisms buildMechanisms() {
+        for (String role : new String[] {"intake.left", "intake.right", "shooter.left", "shooter.right"}) {
+            if (!hardware.motorsByRole.containsKey(role)) {
+                throw new IllegalArgumentException("hubs.jsonc has no motor with role \"" + role + "\"");
+            }
+        }
+        return new BallMechanisms(ours, world, cfg.robot,
+                hardware.motorsByRole.get("intake.left"), hardware.mountSignByRole.get("intake.left"),
+                hardware.motorsByRole.get("intake.right"), hardware.mountSignByRole.get("intake.right"),
+                hardware.motorsByRole.get("shooter.left"), hardware.mountSignByRole.get("shooter.left"),
+                hardware.motorsByRole.get("shooter.right"), hardware.mountSignByRole.get("shooter.right"),
+                hardware.servosByRole.get("shooter.servo"), random.stream("shooter"));
     }
 
     private static Pose2d allianceStart(Cfg p, Alliance a) {
@@ -395,11 +427,10 @@ public final class Simulation {
         hardware.step(STEP_S);
         ours.drivetrain.step(ours, STEP_S, battery.voltage());
         Collisions.resolve(ours, field, robots);
-        // Motors that aren't part of a simulated mechanism yet spin freely.
-        for (MotorState m : hardware.allMotors()) {
-            if (!m.role.startsWith("drive.")) {
-                spinFree(m, STEP_S);
-            }
+        mech.step(nowSeconds(), STEP_S, battery.voltage());
+        world.step(nowSeconds(), STEP_S, robots);
+        if (hardware.limelight != null) {
+            hardware.limelight.step(nowSeconds());
         }
         battery.update(hardware.allMotors());
 
@@ -410,19 +441,6 @@ public final class Simulation {
             log("Time's up (" + (runner.entry() != null && runner.entry().autonomous ? "AUTO" : "TELEOP") + " period over)");
             runner.stop();
         }
-    }
-
-    /**
-     * A motor with nothing attached except its own rotor/gearbox inertia.
-     * TODO(stage 3): replaced by the intake and flywheel mechanisms.
-     */
-    private void spinFree(MotorState m, double dt) {
-        // ESTIMATE: motor rotor inertia (about 1.5e-6 kg*m^2) seen through the gearbox
-        // grows with the gear ratio squared, plus a little for the output shaft.
-        final double inertia = 1.5e-6 * m.spec.gearRatio * m.spec.gearRatio + 1e-5;
-        double t = m.torque(battery.voltage());
-        m.velocityRadPerSec += t / inertia * dt;
-        m.angleRad += m.velocityRadPerSec * dt;
     }
 
     public double nowSeconds() {
@@ -583,12 +601,47 @@ public final class Simulation {
                     .endObject();
         }
         j.endArray();
+        j.name("mech").beginObject()
+                .field("held", mech.heldCount())
+                .field("intake", mech.intakeState().name())
+                .field("flywheelRpm", mech.flywheelRpm())
+                .field("servoActual", mech.servoActual())
+                .field("launchAngle", mech.currentLaunchAngleDeg())
+                .field("shots", mech.shots)
+                .field("pickups", mech.pickups)
+                .field("jams", mech.jams)
+                .field("ballAtGate", mech.ballAtGate(now))
+                .endObject();
         j.name("servos").beginArray();
         hardware.servosByRole.forEach((role, s) ->
                 j.beginObject().field("name", s.configName()).field("role", role).field("position", s.getPosition()).endObject());
         j.endArray();
         j.endObject();
 
+        // Balls: [id, kind, state, x, y, z] in inches (compact).
+        j.name("balls").beginArray();
+        for (Ball b : world.balls) {
+            if (b.state == Ball.State.OUT_OF_FIELD) {
+                continue;
+            }
+            j.beginArray().value(b.id).value(b.kind.ordinal()).value(b.state.ordinal())
+                    .value(Math.round(mToIn(b.x) * 10) / 10.0).value(Math.round(mToIn(b.y) * 10) / 10.0)
+                    .value(Math.round(mToIn(b.z) * 10) / 10.0).endArray();
+        }
+        j.endArray();
+        j.name("hives").beginArray();
+        for (Hive h : world.hives.values()) {
+            j.beginObject().field("alliance", h.alliance.name()).field("angle", Math.toDegrees(h.angle()))
+                    .field("upEnd", h.upEnd()).field("tips", h.tips).field("massG", h.upCellMass() * 1000)
+                    .field("tipMassG", h.tipMassKg * 1000).endObject();
+        }
+        j.endArray();
+        j.name("flowers").beginArray();
+        for (Flower f : world.flowers) {
+            j.beginObject().field("owner", f.owner() == null ? "" : f.owner().name())
+                    .field("inVolume", f.scoringBalls().size()).endObject();
+        }
+        j.endArray();
         j.name("telemetry").any(new ArrayList<Object>(telemetry.publishedLines()));
         List<String> logLines = new ArrayList<>();
         String line;
@@ -603,6 +656,22 @@ public final class Simulation {
 
     public SimRobot ourRobot() {
         return ours;
+    }
+
+    public GameWorld world() {
+        return world;
+    }
+
+    public BallMechanisms mechanisms() {
+        return mech;
+    }
+
+    public RobotHardwareSim hardware() {
+        return hardware;
+    }
+
+    public List<SimRobot> robots() {
+        return Collections.unmodifiableList(robots);
     }
 
     public OpModeRunner runner() {

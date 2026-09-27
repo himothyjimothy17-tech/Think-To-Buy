@@ -200,26 +200,25 @@ class Stage2Test {
         assertEquals(1000, result3, 25);
     }
 
-    /** Velocity control on the (free-spinning, in stage 2) shooter motor. */
+    /** Velocity control on both flywheel motors (they share one wheel). */
     public static class VelocityHold extends LinearOpMode {
         @Override
         public void runOpMode() {
-            DcMotorEx m = hardwareMap.get(DcMotorEx.class, RobotHardware.SHOOTER_LEFT);
-            // REV convention: F = 32767 / max ticks per second.
-            double maxTps = 6000 / 60.0 * 28;
-            m.setVelocityPIDFCoefficients(1.5, 0.15, 0, 32767 / maxTps);
+            RobotHardware r = new RobotHardware();
+            r.init(hardwareMap); // sets REVERSE on the mirrored motor and the tuned PIDF
             waitForStart();
-            m.setVelocity(2000);
-            sleep(1500);
-            result1 = m.getVelocity();
-            result2 = m.getCurrent(CurrentUnit.AMPS);
+            r.shooterLeft.setVelocity(2000);
+            r.shooterRight.setVelocity(2000);
+            sleep(2000);
+            result1 = r.shooterLeft.getVelocity();
+            result2 = r.shooterLeft.getCurrent(CurrentUnit.AMPS);
         }
     }
 
     @Test
     void runUsingEncoderHoldsVelocity() throws Exception {
         newSim();
-        runOpMode(VelocityHold.class, 2.0);
+        runOpMode(VelocityHold.class, 2.5);
         System.out.printf("velocity hold: %.0f ticks/s (target 2000), current %.2f A%n", result1, result2);
         assertEquals(2000, result1, 80);
         assertEquals(0, result1 % 20, 1e-9, "28-tick motors read in steps of 20 ticks/s");

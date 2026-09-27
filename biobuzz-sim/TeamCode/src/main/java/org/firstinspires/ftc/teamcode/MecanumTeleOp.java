@@ -15,8 +15,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  *   Right bumper    hold for slow mode (precise lining up)
  *   Y               switch between field-centric and robot-centric
  *   Back            reset the heading (face away from the drivers, then press)
- *
- * TODO(stage 3): intake and shooter controls.
+ *   Left trigger    intake IN (auto-clears jams)
+ *   Left bumper     intake OUT
+ *   A               flywheel on / off
+ *   D-pad up/down   flywheel target +/- 100 RPM
+ *   Right trigger   FIRE (opens the gate whenever the flywheel is at speed)
  */
 @TeleOp(name = "Mecanum TeleOp", group = "Competition")
 public class MecanumTeleOp extends LinearOpMode {
@@ -27,11 +30,19 @@ public class MecanumTeleOp extends LinearOpMode {
     /** Stick values smaller than this are treated as 0 (sticks rarely rest exactly at 0). */
     private static final double STICK_DEADBAND = 0.05;
 
+    /** Starting flywheel speed; adjust with the d-pad. */
+    private static final double DEFAULT_RPM = 3300;
+    private static final double RPM_STEP = 100;
+
     @Override
     public void runOpMode() {
         RobotHardware robot = new RobotHardware();
         robot.init(hardwareMap);
         MecanumDrive drive = new MecanumDrive(robot);
+        Intake intake = new Intake(robot);
+        Shooter shooter = new Shooter(robot);
+        boolean flywheelOn = false;
+        double targetRpm = DEFAULT_RPM;
 
         boolean fieldCentric = true;
         ElapsedTime loopTimer = new ElapsedTime();
@@ -61,6 +72,32 @@ public class MecanumTeleOp extends LinearOpMode {
                 robot.imu.resetYaw();
             }
 
+            // ---- intake ----
+            if (gamepad1.left_trigger > 0.3) {
+                intake.intake();
+            } else if (gamepad1.left_bumper) {
+                intake.outtake();
+            } else {
+                intake.stop();
+            }
+
+            // ---- shooter ----
+            if (gamepad1.aWasPressed()) {
+                flywheelOn = !flywheelOn;
+            }
+            if (gamepad1.dpadUpWasPressed()) {
+                targetRpm += RPM_STEP;
+            }
+            if (gamepad1.dpadDownWasPressed()) {
+                targetRpm -= RPM_STEP;
+            }
+            shooter.setTargetRpm(flywheelOn ? targetRpm : 0);
+            if (gamepad1.right_trigger > 0.3 && flywheelOn) {
+                shooter.fire();
+            } else {
+                shooter.closeGate();
+            }
+
             double heading = robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             if (fieldCentric) {
                 drive.driveFieldCentric(forward, strafe, turn, heading);
@@ -75,12 +112,17 @@ public class MecanumTeleOp extends LinearOpMode {
             telemetry.addData("Encoders FL BL FR BR", "%d %d %d %d",
                     robot.frontLeft.getCurrentPosition(), robot.backLeft.getCurrentPosition(),
                     robot.frontRight.getCurrentPosition(), robot.backRight.getCurrentPosition());
+            telemetry.addData("Flywheel", "%s  %.0f / %.0f RPM%s", flywheelOn ? "ON" : "off",
+                    shooter.getRpm(), targetRpm, shooter.atSpeed() ? "  READY" : "");
+            telemetry.addData("Intake", intake.isUnjamming() ? "UNJAMMING" : "ok (jams cleared: " + intake.getJamCount() + ")");
             telemetry.addData("Battery", "%.2f V", robot.batteryVoltage.getVoltage());
             telemetry.addData("Loop", "%.1f ms", loopTimer.milliseconds());
             loopTimer.reset();
             telemetry.update();
         }
         drive.stop();
+        intake.stop();
+        shooter.setTargetRpm(0);
     }
 
     private static double deadband(double value) {

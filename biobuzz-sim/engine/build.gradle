@@ -12,7 +12,9 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    // Long-running experiments (shooting range maps, PID sweeps) only run on request:
+    //   ./gradlew :engine:experiment --tests '*ShootingRange*'
+    useJUnitPlatform { excludeTags 'experiment' }
     workingDir = rootProject.projectDir   // so tests find config/
     testLogging { events 'failed'; exceptionFormat 'full' }
 }
@@ -26,4 +28,15 @@ tasks.register('sim', JavaExec) {
     mainClass = 'org.biobuzz.sim.Main'
     workingDir = rootProject.projectDir
     standardInput = System.in
+}
+
+// Runs the tagged experiments (they print tables instead of pass/fail).
+tasks.register('experiment', Test) {
+    group = 'biobuzz'
+    description = 'Run simulator experiments (shooting range, PID tuning)'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'experiment' }
+    workingDir = rootProject.projectDir
+    testLogging { showStandardStreams = true; events 'failed' }
 }
