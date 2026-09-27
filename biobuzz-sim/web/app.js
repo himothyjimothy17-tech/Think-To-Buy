@@ -146,10 +146,11 @@ function updateRobotPanel(s) {
     ['Heading', `${r.h.toFixed(1)}°`],
     ['Speed', `${speed.toFixed(1)} in/s`],
     ['Turn rate', `${o.omega.toFixed(0)} °/s`],
-    ['Battery', `${o.voltage.toFixed(2)} V`],
+    ['Battery', `${o.voltage.toFixed(2)} V (min ${o.minVoltage.toFixed(2)})`],
+    ['Battery current', `${o.batteryAmps.toFixed(1)} A`],
   ];
   for (const m of o.motors.filter(m => !drive.includes(m.role))) {
-    rows.push([m.name, `${m.power.toFixed(2)} pwr · ${m.rpm.toFixed(0)} rpm`]);
+    rows.push([m.name, `${m.power.toFixed(2)} · ${m.rpm.toFixed(0)} rpm · ${m.amps.toFixed(1)} A`]);
   }
   for (const sv of o.servos) {
     rows.push([sv.name, sv.position === null ? 'not set' : sv.position.toFixed(3)]);
@@ -166,7 +167,7 @@ function updateRobotPanel(s) {
     const height = Math.abs(p) * 50;
     return `<div class="bar"><div class="track"><div class="mid"></div>`
       + `<div class="fill" style="top:${top}%;height:${height}%"></div></div>`
-      + `${labels[i]} ${p.toFixed(2)}<br>${m ? m.rpm.toFixed(0) : 0} rpm</div>`;
+      + `${labels[i]} ${p.toFixed(2)}<br>${m ? m.rpm.toFixed(0) : 0} rpm<br>${m ? m.amps.toFixed(1) : 0} A</div>`;
   }).join('');
 }
 

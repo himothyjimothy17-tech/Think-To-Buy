@@ -1,5 +1,6 @@
 package org.biobuzz.sim.hardware;
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.ServoController;
@@ -7,15 +8,21 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.biobuzz.simhooks.SimHooks;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 
 import java.util.function.DoubleSupplier;
 
 /**
  * A simulated REV Control Hub or Expansion Hub. Like the real hub, it is at
- * the same time a motor controller, a servo controller and a battery
- * voltage sensor (hardwareMap.voltageSensor lists one entry per hub).
+ * the same time a LynxModule (bulk reads), a motor controller, a servo
+ * controller and a battery voltage sensor (hardwareMap.voltageSensor lists
+ * one entry per hub).
  */
-public final class SimHub implements DcMotorController, ServoController, VoltageSensor {
+public final class SimHub extends LynxModule implements DcMotorController, ServoController, VoltageSensor {
+
+    /** What a bulk read returns for one motor port. */
+    enum Channel { POSITION, VELOCITY, BUSY }
 
     public static final int MOTOR_PORTS = 4;
     public static final int SERVO_PORTS = 6;
@@ -31,7 +38,15 @@ public final class SimHub implements DcMotorController, ServoController, Voltage
     final SimServo[] servos = new SimServo[SERVO_PORTS];
     private PwmStatus pwmStatus = PwmStatus.ENABLED;
 
+    // ---- bulk read cache ----
+    private boolean cacheValid;
+    private final double[][] cache = new double[MOTOR_PORTS][Channel.values().length];
+    private final boolean[][] readSinceBulk = new boolean[MOTOR_PORTS][Channel.values().length];
+    /** How many messages this hub has handled (shown in the sim; useful for loop-time tuning). */
+    public long messageCount;
+
     public SimHub(String name, boolean isControlHub, HubTiming timing, DoubleSupplier batteryVoltage) {
+        super(isControlHub);
         this.name = name;
         this.isControlHub = isControlHub;
         this.readNs = isControlHub ? timing.controlHubReadNs : timing.expansionHubReadNs;
@@ -40,10 +55,88 @@ public final class SimHub implements DcMotorController, ServoController, Voltage
         this.batteryVoltage = batteryVoltage;
     }
 
+    // ---- Reads, with bulk caching ----
+
+    /**
+     * Reads one value from a motor port, the way the real SDK does:
+     * OFF = its own message; AUTO/MANUAL = from the last bulk read if possible.
+     */
+    double readMotor(int port, Channel channel) {
+        BulkCachingMode mode = getBulkCachingMode();
+        if (mode == BulkCachingMode.OFF) {
+            messageCount++;
+            SimHooks.charge(readNs);
+            return live(port, channel);
+        }
+        int c = channel.ordinal();
+        if (!cacheValid || (mode == BulkCachingMode.AUTO && readSinceBulk[port][c])) {
+            bulkRead();
+        }
+        readSinceBulk[port][c] = true;
+        return cache[port][c];
+    }
+
+    /** One message that returns every motor's encoder, velocity and busy flag. */
+    private void bulkRead() {
+        messageCount++;
+        SimHooks.charge(readNs);
+        for (int port = 0; port < MOTOR_PORTS; port++) {
+            for (Channel ch : Channel.values()) {
+                cache[port][ch.ordinal()] = motors[port] == null ? 0 : live(port, ch);
+                readSinceBulk[port][ch.ordinal()] = false;
+            }
+        }
+        cacheValid = true;
+    }
+
+    private double live(int port, Channel channel) {
+        SimDcMotor m = motors[port];
+        if (m == null) {
+            return 0;
+        }
+        switch (channel) {
+            case POSITION: return m.rawTicks();
+            case VELOCITY: return m.measuredTicksPerSecondRaw();
+            default: return m.busyRaw() ? 1 : 0;
+        }
+    }
+
+    /** A write (setPower etc.) - always its own message. */
+    void write() {
+        messageCount++;
+        SimHooks.charge(writeNs);
+    }
+
+    @Override
+    public void clearBulkCache() {
+        cacheValid = false;
+    }
+
+    @Override
+    public double getCurrent(CurrentUnit unit) {
+        messageCount++;
+        SimHooks.charge(readNs);
+        double amps = 0;
+        for (SimDcMotor m : motors) {
+            if (m != null) {
+                amps += Math.abs(m.state.currentA);
+            }
+        }
+        return unit.convert(amps, CurrentUnit.AMPS);
+    }
+
+    @Override
+    public double getInputVoltage(VoltageUnit unit) {
+        messageCount++;
+        SimHooks.charge(voltageReadNs);
+        return unit.convert(batteryVoltage.getAsDouble(), VoltageUnit.VOLTS);
+    }
+
     // ---- VoltageSensor ----
 
     @Override
     public double getVoltage() {
+        messageCount++;
         SimHooks.charge(voltageReadNs);
         return batteryVoltage.getAsDouble();
     }
@@ -184,6 +277,8 @@ public final class SimHub implements DcMotorController, ServoController, Voltage
     @Override
     public void resetDeviceConfigurationForOpMode() {
         pwmStatus = PwmStatus.ENABLED;
+        bulkCachingMode = BulkCachingMode.OFF;
+        cacheValid = false;
     }
 
     @Override

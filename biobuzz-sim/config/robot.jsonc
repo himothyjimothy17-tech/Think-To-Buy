@@ -38,11 +38,14 @@
   "drivetrain": {
     "type": "mecanum",                  // CONFIRMED
     "motorModel": "yj435",              // CONFIRMED: 4x goBILDA 435 RPM
-    // Stage 1 uses a simple model: each wheel's speed moves toward
-    // (power x free speed) with this time constant. Stage 2 replaces it with
-    // real motor torque curves, friction and slip.
-    "wheelResponseSeconds": 0.08,       // ESTIMATE (stage 1 only)
-    "strafeEfficiency": 0.85            // ESTIMATE (stage 1 only): mecanum strafing loses some speed
+    // Force-based physics (see MecanumDrivetrain.java). Calibration (stage 7)
+    // will measure these on the real robot.
+    "wheelInertia": 0.0006,             // ESTIMATE kg*m^2: 104 mm wheel + gearbox + motor rotor (reflected)
+    "frictionCoeff": 0.8,               // ESTIMATE: mecanum roller grip on foam tiles
+    "rollerResistance": 0.25,           // ESTIMATE: roller drag when strafing; 0.25 makes strafe ~81% of forward speed (typical)
+    "rollingResistance": 0.015,         // ESTIMATE: rolling drag on the soft tiles
+    "slipSpeed": 0.05,                  // ESTIMATE m/s: how much slip reaches full friction
+    "gripVariation": 0.03               // ESTIMATE: each wheel's grip differs up to +/-3% (random per seed)
   },
 
   "intake": {
@@ -74,14 +77,18 @@
 
   "battery": {
     "restVoltage": 12.8,                // ESTIMATE: a charged 12 V NiMH FTC battery with no load
-    "internalResistanceOhm": 0.02       // ESTIMATE (used from stage 2): voltage drop per amp drawn
+    "internalResistanceOhm": 0.08,      // ESTIMATE: battery + wires + fuse; voltage drop per amp drawn
+    "electronicsCurrentA": 0.8          // ESTIMATE: hubs, sensors and Limelight
   },
 
   "imu": {
     // How the Control Hub will be mounted. Our TeamCode must pass the SAME values
     // to RevHubOrientationOnRobot, or the simulated IMU reads the wrong heading.
     "logoFacing": "UP",                 // ESTIMATE
-    "usbFacing": "FORWARD"              // ESTIMATE
+    "usbFacing": "FORWARD",             // ESTIMATE
+    "yawNoiseDeg": 0.02,                // ESTIMATE: random wobble per reading
+    "rateNoiseDegPerSec": 0.05,         // ESTIMATE: angular velocity noise
+    "driftSigmaDegPerMin": 0.3          // ESTIMATE: typical yaw drift rate (each seed picks its own)
   },
 
   "camera": {

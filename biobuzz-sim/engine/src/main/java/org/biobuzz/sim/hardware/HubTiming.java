@@ -16,6 +16,10 @@ public final class HubTiming {
     public final long imuReadNs;
     public final long voltageReadNs;
     public final long servoWriteNs;
+    /** How often the hub's motor PID runs, in seconds. */
+    public final double motorControlPeriodS;
+    /** Velocity measurement window, in 1 ms physics steps. */
+    public final int velocityWindowSteps;
 
     public HubTiming(Cfg timingMs) {
         controlHubReadNs = ms(timingMs, "controlHubRead");
@@ -25,6 +29,8 @@ public final class HubTiming {
         imuReadNs = ms(timingMs, "imuRead");
         voltageReadNs = ms(timingMs, "voltageRead");
         servoWriteNs = ms(timingMs, "servoWrite");
+        motorControlPeriodS = timingMs.num("motorControlPeriod") / 1000.0;
+        velocityWindowSteps = (int) Math.round(timingMs.num("velocityWindow"));
     }
 
     private static long ms(Cfg c, String key) {

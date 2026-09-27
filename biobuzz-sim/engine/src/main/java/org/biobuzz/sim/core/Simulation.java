@@ -14,11 +14,13 @@ import org.biobuzz.sim.hardware.SimDcMotor;
 import org.biobuzz.sim.hardware.SimTelemetry;
 import org.biobuzz.sim.opmode.OpModeRegistry;
 import org.biobuzz.sim.opmode.OpModeRunner;
+import org.biobuzz.sim.physics.Battery;
 import org.biobuzz.sim.physics.Collisions;
 import org.biobuzz.sim.physics.MotorState;
 import org.biobuzz.sim.robot.MecanumDrivetrain;
 import org.biobuzz.sim.robot.SimRobot;
 import org.biobuzz.sim.util.JsonOut;
+import org.biobuzz.sim.util.SimRandom;
 import org.biobuzz.sim.util.Units;
 import org.biobuzz.simhooks.SimHooks;
 
@@ -72,6 +74,9 @@ public final class Simulation {
     private final SimTelemetry telemetry = new SimTelemetry();
     private OpModeRunner runner;
     private MatchTimer timer;
+    private Battery battery;
+    private long seed = 1;
+    private SimRandom random = new SimRandom(1);
     private final OpModeRegistry registry = new OpModeRegistry();
     private final List<String> warnings = new ArrayList<>();
 
@@ -137,7 +142,10 @@ public final class Simulation {
         robots.add(opp1);
         robots.add(opp2);
 
-        hardware = new RobotHardwareSim(cfg, ours, this::batteryVoltage);
+        random = new SimRandom(seed);
+        Cfg bat = cfg.robot.obj("battery");
+        battery = new Battery(bat.num("restVoltage"), bat.num("internalResistanceOhm"), bat.num("electronicsCurrentA"));
+        hardware = new RobotHardwareSim(cfg, ours, this::batteryVoltage, random);
         warnings.addAll(hardware.warnings);
         ours.drivetrain = buildDrivetrain();
         runner = new OpModeRunner(lockstep, hardware, telemetry, this::log);
@@ -162,10 +170,20 @@ public final class Simulation {
         }
         Cfg c = cfg.robot.obj("chassis");
         Cfg d = cfg.robot.obj("drivetrain");
-        return new MecanumDrivetrain(m[0], m[1], m[2], m[3], sign,
-                Units.mmToM(c.num("wheelDiameterMm")) / 2.0,
-                inToM(c.num("trackWidth")), inToM(c.num("wheelBase")),
-                d.num("strafeEfficiency"), d.num("wheelResponseSeconds"));
+        MecanumDrivetrain.Params p = new MecanumDrivetrain.Params();
+        p.massKg = Units.lbToKg(c.num("massLb"));
+        p.lengthM = inToM(c.num("length"));
+        p.widthM = inToM(c.num("width"));
+        p.wheelRadiusM = Units.mmToM(c.num("wheelDiameterMm")) / 2.0;
+        p.trackWidthM = inToM(c.num("trackWidth"));
+        p.wheelBaseM = inToM(c.num("wheelBase"));
+        p.wheelInertia = d.num("wheelInertia");
+        p.frictionCoeff = d.num("frictionCoeff");
+        p.rollerResistance = d.num("rollerResistance");
+        p.rollingResistance = d.num("rollingResistance");
+        p.slipSpeed = d.num("slipSpeed");
+        p.gripVariation = d.num("gripVariation");
+        return new MecanumDrivetrain(m[0], m[1], m[2], m[3], sign, p, random.stream("drivetrain"));
     }
 
     private static Pose2d allianceStart(Cfg p, Alliance a) {
@@ -184,9 +202,18 @@ public final class Simulation {
         }
     }
 
-    /** Battery voltage. Stage 1: constant. TODO(stage 2): sag with current draw. */
+    /** Battery voltage at the hubs (sags with current draw). */
     private double batteryVoltage() {
-        return cfg.robot.num("battery.restVoltage");
+        return battery.voltage();
+    }
+
+    /** Sets the match seed (takes effect on the next reset). */
+    public void setSeed(long seed) {
+        this.seed = seed;
+    }
+
+    public long seed() {
+        return seed;
     }
 
     // =====================================================================
@@ -364,9 +391,17 @@ public final class Simulation {
         }
         stuckWarned = false;
 
-        // 2) Move our robot, then resolve collisions.
-        ours.drivetrain.step(ours, STEP_S);
+        // 2) Hub firmware (motor PID, velocity measurement), then physics.
+        hardware.step(STEP_S);
+        ours.drivetrain.step(ours, STEP_S, battery.voltage());
         Collisions.resolve(ours, field, robots);
+        // Motors that aren't part of a simulated mechanism yet spin freely.
+        for (MotorState m : hardware.allMotors()) {
+            if (!m.role.startsWith("drive.")) {
+                spinFree(m, STEP_S);
+            }
+        }
+        battery.update(hardware.allMotors());
 
         // 3) Advance the clock and the match.
         lockstep.advancePhysics(STEP_NS);
@@ -375,6 +410,19 @@ public final class Simulation {
             log("Time's up (" + (runner.entry() != null && runner.entry().autonomous ? "AUTO" : "TELEOP") + " period over)");
             runner.stop();
         }
+    }
+
+    /**
+     * A motor with nothing attached except its own rotor/gearbox inertia.
+     * TODO(stage 3): replaced by the intake and flywheel mechanisms.
+     */
+    private void spinFree(MotorState m, double dt) {
+        // ESTIMATE: motor rotor inertia (about 1.5e-6 kg*m^2) seen through the gearbox
+        // grows with the gear ratio squared, plus a little for the output shaft.
+        final double inertia = 1.5e-6 * m.spec.gearRatio * m.spec.gearRatio + 1e-5;
+        double t = m.torque(battery.voltage());
+        m.velocityRadPerSec += t / inertia * dt;
+        m.angleRad += m.velocityRadPerSec * dt;
     }
 
     public double nowSeconds() {
@@ -520,6 +568,8 @@ public final class Simulation {
         j.name("ours").beginObject();
         j.field("vx", mToIn(ours.vx)).field("vy", mToIn(ours.vy)).field("omega", Math.toDegrees(ours.omega));
         j.field("voltage", batteryVoltage());
+        j.field("batteryAmps", battery.totalCurrentA());
+        j.field("minVoltage", battery.minVoltage());
         j.name("motors").beginArray();
         for (Map.Entry<String, SimDcMotor> e : hardware.motorPortsByRole.entrySet()) {
             MotorState s = e.getValue().state;
@@ -528,6 +578,7 @@ public final class Simulation {
                     .field("role", e.getKey())
                     .field("power", s.appliedPower)
                     .field("rpm", Units.radPerSecToRpm(s.velocityRadPerSec))
+                    .field("amps", Math.abs(s.currentA))
                     .field("ticks", Math.floor(s.angleRad * s.spec.ticksPerRadian()))
                     .endObject();
         }

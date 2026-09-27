@@ -4,8 +4,7 @@ A simulator for the 2026–2027 *FIRST* Tech Challenge game **BIOBUZZ**.
 Our real FTC Java OpModes run in it with **zero code changes**, on a field
 built from the official game manual.
 
-> **Status: Stage 1 of 9** - fake FTC SDK, field, and our `MecanumTeleOp`
-> driving with a gamepad or keyboard. See [Build stages](#build-stages).
+> **Status:** see [Build stages](#build-stages).
 
 ---
 
@@ -226,7 +225,7 @@ everything else is an **ESTIMATE** in `config/robot.jsonc`.
 | # | Stage | Status |
 |---|---|---|
 | 1 | SDK mock + field + MecanumTeleOp with gamepad | **done** |
-| 2 | Motor physics (torque curves, slip), encoders, IMU noise, battery sag | next |
+| 2 | Motor physics (torque curves, slip), encoders, IMU noise, battery sag | **done** |
 | 3 | POLLEN, NECTAR, intake, shooter, servo, Limelight | |
 | 4 | HIVES, FLOWERS, scoring, rule checks | |
 | 5 | Headless mode, seeds, batch testing, design comparisons | |

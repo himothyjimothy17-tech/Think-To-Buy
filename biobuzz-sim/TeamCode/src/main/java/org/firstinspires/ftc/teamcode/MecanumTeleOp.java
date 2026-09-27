@@ -42,6 +42,8 @@ public class MecanumTeleOp extends LinearOpMode {
         robot.imu.resetYaw();
 
         while (opModeIsActive()) {
+            robot.clearBulkCache(); // fresh encoder values for this loop
+
             // Sticks: pushing UP gives a NEGATIVE y value, so we flip it.
             double forward = deadband(-gamepad1.left_stick_y);
             double strafe = deadband(gamepad1.left_stick_x);

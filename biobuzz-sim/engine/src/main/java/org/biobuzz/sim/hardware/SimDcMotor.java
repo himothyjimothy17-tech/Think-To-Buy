@@ -7,31 +7,37 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.biobuzz.sim.physics.MotorState;
-import org.biobuzz.simhooks.SimHooks;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 /**
- * A simulated motor port. Our TeamCode talks to this through the normal
- * DcMotorEx interface; this class passes the commands to the physics
- * ({@link MotorState}) and reads the simulated encoder back.
+ * A simulated motor port, including the hub's built-in motor control.
  *
- * Things it gets right (like the real SDK):
- *   - setDirection(REVERSE) flips both the power AND the encoder reading.
+ * Things it gets right (like the real SDK + REV hub):
+ *   - setDirection(REVERSE) flips the power AND the encoder reading.
  *   - STOP_AND_RESET_ENCODER zeroes the encoder and stops the motor.
- *   - Every call costs simulated time (more on the Expansion Hub).
- *   - Setting the same power twice in a row only costs time once (the SDK caches it).
- *
- * TODO(stage 2): RUN_USING_ENCODER / setVelocity closed loop, RUN_TO_POSITION,
- * current draw, and velocity quantization. In stage 1 every mode is open-loop.
+ *   - RUN_WITHOUT_ENCODER: setPower() is the raw duty cycle.
+ *   - RUN_USING_ENCODER: setPower(p) asks for p x max velocity, and
+ *     setVelocity(v) asks for v ticks/s; the HUB runs a PIDF loop every
+ *     20 ms to hold it (REV units: F = 32767 / max ticks per second).
+ *   - RUN_TO_POSITION: the hub drives to setTargetPosition() at up to
+ *     |power| x max speed; isBusy() is true until it's within tolerance.
+ *   - getVelocity() is MEASURED from the encoder over a 50 ms window and
+ *     rounded to whole ticks, so 28-tick motors read in steps of 20 ticks/s.
+ *   - Every call costs simulated time; bulk caching makes reads cheaper.
  */
 public final class SimDcMotor implements DcMotorEx {
+
+    /** REV's PIDF output scale: 32767 = full power. */
+    private static final double REV_OUTPUT_SCALE = 32767.0;
 
     private final String configName;
     private final SimHub hub;
     private final int port;
     public final MotorState state;
     private MotorConfigurationType motorType;
+    private final double controlPeriodS;
+    private final int velocityWindowSteps;
 
     private Direction direction = Direction.FORWARD;
     private ZeroPowerBehavior zeroPowerBehavior = ZeroPowerBehavior.BRAKE;
@@ -43,15 +49,33 @@ public final class SimDcMotor implements DcMotorEx {
     private double currentAlertAmps = 5.0;
     /** Raw encoder count at the last STOP_AND_RESET_ENCODER. */
     private long encoderZeroTicks;
+    /** Velocity target for RUN_USING_ENCODER (code direction, ticks/s), or NaN to use power x max. */
+    private double velocityTarget = Double.NaN;
+    // Defaults the SDK uses for goBILDA motors (ESTIMATE of REV firmware behavior).
     private PIDFCoefficients velocityPidf = new PIDFCoefficients(10, 3, 0, 0);
     private PIDFCoefficients positionPidf = new PIDFCoefficients(10, 0, 0, 0);
 
-    public SimDcMotor(String configName, SimHub hub, int port, MotorState state) {
+    // ---- hub control loop state ----
+    private double controlTimer;
+    private double integral;
+    private double lastError;
+    private double controlOutput;
+    private boolean busy;
+    /** Raw ticks over the last velocityWindow steps (ring buffer) for the velocity measurement. */
+    private final long[] tickHistory;
+    private int historyIndex;
+    private double measuredTps;
+
+    public SimDcMotor(String configName, SimHub hub, int port, MotorState state, HubTiming timing) {
         this.configName = configName;
         this.hub = hub;
         this.port = port;
         this.state = state;
         this.motorType = new MotorConfigurationType(state.spec.ticksPerRev, state.spec.gearRatio, state.spec.freeRpm);
+        this.controlPeriodS = timing.motorControlPeriodS;
+        this.velocityWindowSteps = Math.max(1, timing.velocityWindowSteps);
+        this.tickHistory = new long[velocityWindowSteps + 1];
+        hub.motors[port] = this;
     }
 
     public String configName() {
@@ -59,26 +83,95 @@ public final class SimDcMotor implements DcMotorEx {
     }
 
     /** Encoder count straight from the motor, before direction and reset are applied. */
-    private long rawTicks() {
+    long rawTicks() {
         return (long) Math.floor(state.angleRad * state.spec.ticksPerRadian());
+    }
+
+    /** Measured velocity in raw (motor) direction, ticks/s. */
+    double measuredTicksPerSecondRaw() {
+        return measuredTps;
+    }
+
+    boolean busyRaw() {
+        return busy;
     }
 
     private int directionSign() {
         return direction == Direction.FORWARD ? 1 : -1;
     }
 
-    private void read() {
-        SimHooks.charge(hub.readNs);
+    private double maxTicksPerSecond() {
+        return motorType.getAchieveableMaxTicksPerSecond();
     }
 
-    private void write() {
-        SimHooks.charge(hub.writeNs);
+    // =====================================================================
+    // Hub firmware: runs every physics step (called by the simulation)
+    // =====================================================================
+
+    /** Updates the velocity measurement and runs the hub's control loop. */
+    public void hubStep(double dt) {
+        // Velocity = change in encoder count over the window, in whole ticks per second.
+        long now = rawTicks();
+        historyIndex = (historyIndex + 1) % tickHistory.length;
+        long old = tickHistory[historyIndex];
+        tickHistory[historyIndex] = now;
+        double window = velocityWindowSteps * dt;
+        measuredTps = Math.round((now - old) / window);
+
+        controlTimer += dt;
+        if (controlTimer + 1e-9 >= controlPeriodS) {
+            controlTimer -= controlPeriodS;
+            runControlLoop();
+        }
+        applyToPhysics();
     }
 
-    /** Sends the current power to the physics, taking direction and mode into account. */
+    private void runControlLoop() {
+        if (mode == RunMode.RUN_USING_ENCODER || mode == RunMode.RUN_TO_POSITION) {
+            int dir = directionSign();
+            double positionCode = (rawTicks() - encoderZeroTicks) * dir;
+            double velocityCode = measuredTps * dir;
+            double target;
+            if (mode == RunMode.RUN_TO_POSITION) {
+                double error = targetPosition - positionCode;
+                busy = Math.abs(error) > targetTolerance;
+                // Position loop -> velocity request, limited by |power| x max speed.
+                double limit = Math.abs(power) * maxTicksPerSecond();
+                target = Math.max(-limit, Math.min(limit, positionPidf.p * error));
+                if (!busy) {
+                    target = 0;
+                }
+            } else {
+                busy = false;
+                target = Double.isNaN(velocityTarget) ? power * maxTicksPerSecond() : velocityTarget;
+            }
+            double error = target - velocityCode;
+            integral += error;
+            // Anti-windup: the I term alone can't ask for more than full power.
+            double iLimit = velocityPidf.i > 0 ? REV_OUTPUT_SCALE / velocityPidf.i : 0;
+            integral = Math.max(-iLimit, Math.min(iLimit, integral));
+            double out = (velocityPidf.p * error + velocityPidf.i * integral
+                    + velocityPidf.d * (error - lastError) + velocityPidf.f * target) / REV_OUTPUT_SCALE;
+            lastError = error;
+            controlOutput = Math.max(-1.0, Math.min(1.0, out));
+        } else {
+            busy = false;
+            integral = 0;
+            lastError = 0;
+        }
+    }
+
+    /** Sends the right duty cycle to the physics for the current mode. */
     private void applyToPhysics() {
-        boolean stopped = !enabled || mode == RunMode.STOP_AND_RESET_ENCODER;
-        state.appliedPower = stopped ? 0.0 : power * directionSign();
+        double duty;
+        if (!enabled || mode == RunMode.STOP_AND_RESET_ENCODER) {
+            duty = 0.0;
+        } else if (mode == RunMode.RUN_USING_ENCODER || mode == RunMode.RUN_TO_POSITION) {
+            duty = controlOutput * directionSign();
+        } else {
+            duty = power * directionSign();
+        }
+        state.appliedPower = duty;
         state.brakeAtZero = zeroPowerBehavior != ZeroPowerBehavior.FLOAT;
     }
 
@@ -98,10 +191,11 @@ public final class SimDcMotor implements DcMotorEx {
     @Override
     public void setPower(double power) {
         double clipped = Math.max(-1.0, Math.min(1.0, power));
-        if (clipped != this.power) {
-            write(); // the SDK skips sending a power the hub already has
+        if (clipped != this.power || !Double.isNaN(velocityTarget)) {
+            hub.write(); // the SDK skips sending a power the hub already has
         }
         this.power = clipped;
+        velocityTarget = Double.NaN;
         applyToPhysics();
     }
 
@@ -134,7 +228,7 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
-        write();
+        hub.write();
         this.zeroPowerBehavior = zeroPowerBehavior;
         applyToPhysics();
     }
@@ -158,7 +252,7 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public void setTargetPosition(int position) {
-        write();
+        hub.write();
         this.targetPosition = position;
     }
 
@@ -169,25 +263,34 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public boolean isBusy() {
-        read();
-        // TODO(stage 2): true while RUN_TO_POSITION is still moving.
-        return false;
+        if (mode != RunMode.RUN_TO_POSITION) {
+            return false;
+        }
+        return hub.readMotor(port, SimHub.Channel.BUSY) > 0.5;
     }
 
     @Override
     public int getCurrentPosition() {
-        read();
-        return (int) ((rawTicks() - encoderZeroTicks) * directionSign());
+        double raw = hub.readMotor(port, SimHub.Channel.POSITION);
+        return (int) ((raw - encoderZeroTicks) * directionSign());
     }
 
     @Override
     public void setMode(RunMode mode) {
-        write();
-        this.mode = mode.migrate();
-        if (this.mode == RunMode.STOP_AND_RESET_ENCODER) {
+        hub.write();
+        RunMode m = mode.migrate();
+        if (m == RunMode.RUN_TO_POSITION && this.mode != RunMode.RUN_TO_POSITION) {
+            busy = Math.abs(targetPosition - (rawTicks() - encoderZeroTicks) * directionSign()) > targetTolerance;
+        }
+        this.mode = m;
+        if (m == RunMode.STOP_AND_RESET_ENCODER) {
             encoderZeroTicks = rawTicks();
             power = 0.0;
+            velocityTarget = Double.NaN;
         }
+        integral = 0;
+        lastError = 0;
+        controlOutput = 0;
         applyToPhysics();
     }
 
@@ -200,14 +303,14 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public void setMotorEnable() {
-        write();
+        hub.write();
         enabled = true;
         applyToPhysics();
     }
 
     @Override
     public void setMotorDisable() {
-        write();
+        hub.write();
         enabled = false;
         applyToPhysics();
     }
@@ -217,12 +320,18 @@ public final class SimDcMotor implements DcMotorEx {
         return enabled;
     }
 
+    /** Target velocity in ticks/s. Switches the motor to RUN_USING_ENCODER if needed (like the SDK). */
     @Override
     public void setVelocity(double angularRate) {
-        // TODO(stage 2): real closed-loop velocity control using velocityPidf.
-        // Stage 1: open-loop approximation (power = requested / max achievable).
-        double maxTicksPerSec = motorType.getAchieveableMaxTicksPerSecond();
-        setPower(maxTicksPerSec > 0 ? angularRate / maxTicksPerSec : 0.0);
+        hub.write();
+        if (mode != RunMode.RUN_USING_ENCODER && mode != RunMode.RUN_TO_POSITION) {
+            mode = RunMode.RUN_USING_ENCODER;
+            integral = 0;
+            lastError = 0;
+        }
+        velocityTarget = angularRate;
+        power = maxTicksPerSecond() > 0 ? Math.max(-1, Math.min(1, angularRate / maxTicksPerSecond())) : 0;
+        applyToPhysics();
     }
 
     @Override
@@ -233,14 +342,13 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public double getVelocity() {
-        read();
-        return state.velocityRadPerSec * state.spec.ticksPerRadian() * directionSign();
+        return hub.readMotor(port, SimHub.Channel.VELOCITY) * directionSign();
     }
 
     @Override
     public double getVelocity(AngleUnit unit) {
-        read();
-        double radPerSec = state.velocityRadPerSec * directionSign();
+        double tps = getVelocity();
+        double radPerSec = tps / motorType.getTicksPerRev() * 2 * Math.PI;
         return unit == AngleUnit.DEGREES ? Math.toDegrees(radPerSec) : radPerSec;
     }
 
@@ -252,7 +360,7 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) {
-        write();
+        hub.write();
         if (mode.migrate() == RunMode.RUN_TO_POSITION) {
             positionPidf = new PIDFCoefficients(pidfCoefficients);
         } else {
@@ -279,13 +387,13 @@ public final class SimDcMotor implements DcMotorEx {
 
     @Override
     public PIDFCoefficients getPIDFCoefficients(RunMode mode) {
-        read();
+        hub.write();
         return new PIDFCoefficients(mode.migrate() == RunMode.RUN_TO_POSITION ? positionPidf : velocityPidf);
     }
 
     @Override
     public void setTargetPositionTolerance(int tolerance) {
-        write();
+        hub.write();
         targetTolerance = tolerance;
     }
 
@@ -294,11 +402,11 @@ public final class SimDcMotor implements DcMotorEx {
         return targetTolerance;
     }
 
+    /** Motor current (not part of bulk reads - its own message, like the real hub). */
     @Override
     public double getCurrent(CurrentUnit unit) {
-        read();
-        // TODO(stage 2): real current from the motor model.
-        return 0.0;
+        hub.write();
+        return unit.convert(Math.abs(state.currentA), CurrentUnit.AMPS);
     }
 
     @Override
@@ -344,7 +452,10 @@ public final class SimDcMotor implements DcMotorEx {
         direction = Direction.FORWARD;
         mode = RunMode.RUN_WITHOUT_ENCODER;
         power = 0.0;
+        velocityTarget = Double.NaN;
         enabled = true;
+        integral = 0;
+        controlOutput = 0;
         applyToPhysics();
     }
 

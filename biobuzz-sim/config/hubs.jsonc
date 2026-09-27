@@ -64,6 +64,9 @@
     "expansionHubWrite": 2.0,  // ESTIMATE
     "imuRead": 2.0,            // ESTIMATE: I2C read of the BHI260AP IMU
     "voltageRead": 1.2,        // ESTIMATE
-    "servoWrite": 1.0          // ESTIMATE
+    "servoWrite": 1.0,         // ESTIMATE
+    "motorControlPeriod": 20.0,// ESTIMATE: how often the hub's built-in velocity/position PID runs
+    "velocityWindow": 50.0     // ESTIMATE: getVelocity() = encoder change over this window
+                               //   (explains the 20 ticks/s steps teams see on 28-tick motors)
   }
 }

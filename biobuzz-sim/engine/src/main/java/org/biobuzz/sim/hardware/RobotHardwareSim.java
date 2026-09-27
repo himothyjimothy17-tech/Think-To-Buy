@@ -7,6 +7,7 @@ import org.biobuzz.sim.config.SimConfig;
 import org.biobuzz.sim.physics.MotorSpec;
 import org.biobuzz.sim.physics.MotorState;
 import org.biobuzz.sim.robot.SimRobot;
+import org.biobuzz.sim.util.SimRandom;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -41,7 +42,7 @@ public final class RobotHardwareSim {
     /** Problems found while building (shown in the browser and printed at startup). */
     public final List<String> warnings = new ArrayList<>();
 
-    public RobotHardwareSim(SimConfig cfg, SimRobot robot, DoubleSupplier batteryVoltage) {
+    public RobotHardwareSim(SimConfig cfg, SimRobot robot, DoubleSupplier batteryVoltage, SimRandom random) {
         HubTiming timing = new HubTiming(cfg.hubs.obj("timingMs"));
         Map<String, MotorSpec> specs = new HashMap<>();
         Cfg models = cfg.robot.obj("motorModels");
@@ -60,6 +61,8 @@ public final class RobotHardwareSim {
             hardwareMap.dcMotorController.put(hub.name, hub);
             hardwareMap.servoController.putLocal(hub.name, hub);
             hardwareMap.voltageSensor.putLocal(hub.name, hub);
+            // (dcMotorController.put above also registers the hub by name, so
+            //  hardwareMap.getAll(LynxModule.class) finds it for bulk caching.)
 
             for (Cfg m : h.objList("motors")) {
                 int port = m.integer("port");
@@ -82,8 +85,7 @@ public final class RobotHardwareSim {
                 }
                 String role = m.str("role");
                 MotorState state = new MotorState(spec, role);
-                SimDcMotor motor = new SimDcMotor(name, hub, port, state);
-                hub.motors[port] = motor;
+                SimDcMotor motor = new SimDcMotor(name, hub, port, state, timing);
                 hardwareMap.dcMotor.put(name, motor);
                 motorsByRole.put(role, state);
                 motorPortsByRole.put(role, motor);
@@ -101,8 +103,11 @@ public final class RobotHardwareSim {
             }
             for (Cfg d : h.objList("i2c")) {
                 if (d.str("type").equals("IMU")) {
+                    Cfg imuCfg = cfg.robot.obj("imu");
                     imu = new SimImu(d.str("name"), robot, timing.imuReadNs,
-                            cfg.robot.str("imu.logoFacing"), cfg.robot.str("imu.usbFacing"), warnings::add);
+                            imuCfg.str("logoFacing"), imuCfg.str("usbFacing"), warnings::add,
+                            random.stream("imu"), imuCfg.num("yawNoiseDeg"), imuCfg.num("rateNoiseDegPerSec"),
+                            imuCfg.num("driftSigmaDegPerMin"));
                     hardwareMap.put(d.str("name"), imu);
                     noteName(allNames, d.str("name"));
                 }
@@ -200,12 +205,30 @@ public final class RobotHardwareSim {
 
     /** Resets every device to its defaults, like the SDK does before each OpMode. */
     public void resetForNewOpMode() {
+        for (SimHub h : hubs) {
+            h.resetDeviceConfigurationForOpMode();
+        }
         for (SimDcMotor m : motorPortsByRole.values()) {
             m.resetDeviceConfigurationForOpMode();
             m.setPower(0.0);
         }
         for (SimServo s : servosByRole.values()) {
             s.resetDeviceConfigurationForOpMode();
+        }
+    }
+
+    /** Every motor's physics state (for the battery). */
+    public List<MotorState> allMotors() {
+        return new ArrayList<>(motorsByRole.values());
+    }
+
+    /** Runs each hub's built-in motor control and the IMU drift for one physics step. */
+    public void step(double dt) {
+        for (SimDcMotor m : motorPortsByRole.values()) {
+            m.hubStep(dt);
+        }
+        if (imu != null) {
+            imu.step(dt);
         }
     }
 

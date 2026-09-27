@@ -160,8 +160,8 @@ class Stage1Test {
         sim.runFor(0.5);
         String loopLine = sim.telemetryLines().stream().filter(l -> l.startsWith("Loop")).findFirst().orElse("");
         double ms = Double.parseDouble(loopLine.replaceAll("[^0-9.]", ""));
-        // 4 encoder reads + IMU + voltage + 4 writes on the Control Hub, plus overhead.
-        assertTrue(ms > 5 && ms < 25, "loop time should be realistic, was " + ms + " ms");
+        // With bulk reads: 1 bulk read + IMU + voltage + motor writes, plus overhead.
+        assertTrue(ms > 3 && ms < 20, "loop time should be realistic, was " + ms + " ms");
     }
 
     /** An OpMode with a hardware-name typo, like a teammate might write. */

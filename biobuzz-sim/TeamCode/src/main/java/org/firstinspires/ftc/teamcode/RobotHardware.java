@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -57,9 +58,21 @@ public class RobotHardware {
     public Servo shooterServo;
     public IMU imu;
     public VoltageSensor batteryVoltage;
+    private java.util.List<LynxModule> hubs;
 
     /** Looks up every device and sets it to a safe starting state. */
     public void init(HardwareMap hardwareMap) {
+        // BULK READS: one message per hub returns every encoder at once.
+        // (In the sim this took our loop from ~14 ms to ~4 ms.)
+        // AUTO mode is the safe choice: reading the same value twice fetches a
+        // fresh bulk read, so values can never go stale. MANUAL is a little
+        // faster but values stay cached until clearBulkCache() - forget that
+        // once and isBusy()/encoders freeze (the sim reproduces this bug).
+        hubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : hubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         frontLeft = hardwareMap.get(DcMotorEx.class, FRONT_LEFT);
         backLeft = hardwareMap.get(DcMotorEx.class, BACK_LEFT);
         frontRight = hardwareMap.get(DcMotorEx.class, FRONT_RIGHT);
@@ -92,6 +105,13 @@ public class RobotHardware {
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(HUB_LOGO, HUB_USB)));
 
         batteryVoltage = hardwareMap.voltageSensor.iterator().next();
+    }
+
+    /** Optional in AUTO mode: call at the top of a loop to force fresh reads. */
+    public void clearBulkCache() {
+        for (LynxModule hub : hubs) {
+            hub.clearBulkCache();
+        }
     }
 
     /** The four drive motors in the order frontLeft, backLeft, frontRight, backRight. */
