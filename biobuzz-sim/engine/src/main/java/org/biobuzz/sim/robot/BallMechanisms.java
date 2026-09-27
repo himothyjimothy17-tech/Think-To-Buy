@@ -1,5 +1,7 @@
 package org.biobuzz.sim.robot;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.field.Alliance;
 import org.biobuzz.sim.game.Ball;
@@ -312,7 +314,7 @@ public final class BallMechanisms implements ElementCarrier {
         double mx = robot.x + Math.cos(robot.heading) * (robot.length / 2 + mouthDepth / 2);
         double my = robot.y + Math.sin(robot.heading) * (robot.length / 2 + mouthDepth / 2);
         for (Flower f : world.flowers) {
-            if (Math.hypot(f.x - mx, f.y - my) < flowerReach) {
+            if (FastMath.hypot(f.x - mx, f.y - my) < flowerReach) {
                 return f;
             }
         }

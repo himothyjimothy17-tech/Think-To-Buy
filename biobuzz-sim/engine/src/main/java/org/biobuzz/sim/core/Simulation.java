@@ -1,5 +1,7 @@
 package org.biobuzz.sim.core;
 
+import org.biobuzz.sim.util.FastMath;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.biobuzz.sim.config.Cfg;
@@ -10,6 +12,7 @@ import org.biobuzz.sim.game.Ball;
 import org.biobuzz.sim.game.Flower;
 import org.biobuzz.sim.game.GameWorld;
 import org.biobuzz.sim.game.Hive;
+import org.biobuzz.sim.ai.AiRobot;
 import org.biobuzz.sim.game.RuleChecker;
 import org.biobuzz.sim.game.ScoreKeeper;
 import org.biobuzz.sim.robot.ElementCarrier;
@@ -82,6 +85,8 @@ public final class Simulation {
     private BallMechanisms mech;
     private final java.util.Map<SimRobot, List<Ball>> preloads = new java.util.HashMap<>();
     private final java.util.Map<SimRobot, ElementCarrier> carriers = new java.util.LinkedHashMap<>();
+    private final List<AiRobot> ais = new ArrayList<>();
+    private final AiRobot.Context aiContext = new AiRobot.Context();
     private ScoreKeeper score;
     private RuleChecker rules;
 
@@ -202,26 +207,32 @@ public final class Simulation {
         ours.drivetrain = buildDrivetrain();
         mech = buildMechanisms();
         mech.preload(preloads.get(ours));
+        ours.massKg = chassis.num("massLb") * 0.4536;
         carriers.clear();
+        ais.clear();
+        carriers.put(ours, mech);
+        boolean aiOn = cfg.ai.bool("enabled");
+        Cfg el = cfg.game.obj("elements");
+        Cfg phys = cfg.game.obj("elementPhysics");
+        int[] slots = new int[2];
         for (SimRobot r : robots) {
             if (r == ours) {
-                carriers.put(r, mech);
-            } else {
-                // Until the robot AI (stage 6) takes over, other robots just hold their pre-loads.
-                List<Ball> held = new ArrayList<>(preloads.get(r));
-                carriers.put(r, new ElementCarrier() {
-                    public int heldCount() {
-                        held.removeIf(b -> b.state != Ball.State.HELD);
-                        return held.size();
-                    }
-
-                    public List<Ball> heldBalls() {
-                        heldCount();
-                        return held;
-                    }
-                });
+                continue;
+            }
+            // Our partner parks in the far slot of our LOADING ZONE; opponents take slots 0 and 1.
+            int slot = r.alliance == ourAlliance ? 1 : slots[1]++;
+            AiRobot ai = new AiRobot(r, slot, cfg.ai, random.stream("ai-" + r.id), world,
+                    inToM(el.num("pollen.diameter")) / 2, phys.num("pollenMassG") / 1000.0,
+                    inToM(el.num("nectar.diameter")) / 2, phys.num("nectarMassG") / 1000.0);
+            ai.preload(preloads.get(r));
+            carriers.put(r, ai);
+            r.anchored = !aiOn;
+            if (aiOn) {
+                ais.add(ai);
             }
         }
+        aiContext.claims.clear();
+        aiContext.spots.clear();
         score = new ScoreKeeper(cfg.game, field);
         rules = new RuleChecker(cfg.game, field);
         matchAuto = null;
@@ -467,6 +478,9 @@ public final class Simulation {
         matchStartAt = nowSeconds() + (matchAuto != null ? 1.0 : 0.05);
         log("Match queued: AUTO = " + (matchAuto == null ? "none" : matchAuto.name)
                 + ", TELEOP = " + (matchTeleop == null ? "none" : matchTeleop.name) + ", seed " + seed);
+        for (AiRobot ai : ais) {
+            log("AI " + ai.describe());
+        }
     }
 
     /** Puts every robot back at its start. With reloadConfig, re-reads the config files first. */
@@ -570,7 +584,8 @@ public final class Simulation {
         // 2) Hub firmware (motor PID, velocity measurement), then physics.
         hardware.step(STEP_S);
         ours.drivetrain.step(ours, STEP_S, battery.voltage());
-        Collisions.resolve(ours, field, robots);
+        stepAi();
+        Collisions.resolveAll(robots, field);
         mech.step(nowSeconds(), STEP_S, battery.voltage());
         world.step(nowSeconds(), STEP_S, robots);
         if (hardware.limelight != null) {
@@ -583,6 +598,29 @@ public final class Simulation {
         runner.afterStep();
         matchFlow(nowSeconds());
         stepCount++;
+    }
+
+    /** Drives the other three robots. */
+    private void stepAi() {
+        if (ais.isEmpty()) {
+            return;
+        }
+        double now = nowSeconds();
+        AiRobot.Context c = aiContext;
+        c.now = now;
+        c.phase = timer.phase();
+        if (timer.mode() == MatchTimer.Mode.PRACTICE && !cfg.ai.bool("activeInPractice", false)) {
+            c.phase = MatchTimer.Phase.PRE_MATCH;
+        }
+        c.phaseTime = timer.phaseTime(now);
+        c.matchSecondsLeft = timer.mode() == MatchTimer.Mode.MATCH ? timer.matchSecondsLeft(now) : timer.secondsLeft(now);
+        c.autoSecondsLeft = timer.phase() == MatchTimer.Phase.AUTO ? timer.secondsLeft(now) : 0;
+        c.world = world;
+        c.field = field;
+        c.robots = robots;
+        for (AiRobot ai : ais) {
+            ai.step(c, STEP_S);
+        }
     }
 
     // =====================================================================
@@ -650,7 +688,7 @@ public final class Simulation {
         }
         java.util.Map<SimRobot, Boolean> powered = new java.util.HashMap<>();
         for (SimRobot r : robots) {
-            powered.put(r, r == ours ? ourRobotPowered() : Math.hypot(r.intentVx, r.intentVy) > 0.05);
+            powered.put(r, r == ours ? ourRobotPowered() : FastMath.hypot(r.intentVx, r.intentVy) > 0.05);
         }
         rules.step(now, timer.phase().name(), timer.phaseTime(now), robots, carriers, powered, events,
                 timer.mode() == MatchTimer.Mode.MATCH ? timer.matchSecondsLeft(now)
@@ -720,7 +758,7 @@ public final class Simulation {
                 log("RULE " + r.id + " start: " + p);
             }
         }
-        if (Math.hypot(ours.vx, ours.vy) > 0.01 || ourRobotPowered()) {
+        if (FastMath.hypot(ours.vx, ours.vy) > 0.01 || ourRobotPowered()) {
             startProblems.add(ours.id + ": G304.H: not motionless after INIT");
             log("RULE US start: G304.H: not motionless after OpMode INIT finished");
         }
@@ -744,6 +782,12 @@ public final class Simulation {
                 .field("minBatteryV", battery.minVoltage())
                 .field("opModeError", runner.error())
                 .endObject();
+        j.name("others").beginArray();
+        for (AiRobot ai : ais) {
+            j.beginObject().field("id", ai.body.id).field("alliance", ai.body.alliance.name())
+                    .field("shots", ai.shots).field("pickups", ai.pickups).field("style", ai.describe()).endObject();
+        }
+        j.endArray();
         j.name("fouls").beginArray();
         for (RuleChecker.Foul f : rules.all()) {
             j.beginObject().field("t", f.time).field("robot", f.robot).field("alliance", f.alliance.name())
@@ -987,6 +1031,10 @@ public final class Simulation {
 
     public GameWorld world() {
         return world;
+    }
+
+    public List<AiRobot> ais() {
+        return ais;
     }
 
     public ScoreKeeper score() {

@@ -1,5 +1,7 @@
 package org.biobuzz.sim.game;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.field.Alliance;
 import org.biobuzz.sim.field.Field;
@@ -187,7 +189,7 @@ public final class RuleChecker {
                     }
                 }
             }
-            boolean moving = Math.hypot(r.vx, r.vy) > 0.03 || Math.abs(r.omega) > 0.2;
+            boolean moving = FastMath.hypot(r.vx, r.vy) > 0.03 || Math.abs(r.omega) > 0.2;
             boolean isPowered = Boolean.TRUE.equals(powered.get(r));
             // G403: motionless between AUTO and TELEOP (inertia is fine - allow 1 s to coast).
             if (phase.equals("TRANSITION") && phaseTime > 1.0 && isPowered) {
@@ -218,7 +220,7 @@ public final class RuleChecker {
             }
             // G417: don't meddle with the HIVE frame (bumping it).
             if (touchingHiveFrame(r)) {
-                double speed = Math.hypot(r.vx, r.vy);
+                double speed = FastMath.hypot(r.vx, r.vy);
                 addOnce("G417" + r.id + (int) (now / 5), now, r, "G417", Penalty.WARNING,
                         String.format("contacted the HIVE frame at %.0f in/s", speed / 0.0254));
             }
@@ -261,9 +263,9 @@ public final class RuleChecker {
                 // A pins B if A is pushing toward B and B can't move (against a wall or field element).
                 double dx = b.x - a.x;
                 double dy = b.y - a.y;
-                double d = Math.hypot(dx, dy);
+                double d = FastMath.hypot(dx, dy);
                 boolean pushing = d > 1e-6 && (a.intentVx * dx + a.intentVy * dy) / d > 0.1;
-                boolean stuck = Math.hypot(b.vx, b.vy) < 0.05 && (blockedByField(b) || blockedByOthers(b, a, robots));
+                boolean stuck = FastMath.hypot(b.vx, b.vy) < 0.05 && (blockedByField(b) || blockedByOthers(b, a, robots));
                 if (contact && pushing && stuck) {
                     pinSeparatedSince.remove(key);
                     double start = pinStart.computeIfAbsent(key, k -> now);
@@ -369,6 +371,6 @@ public final class RuleChecker {
         double ly = -(x - r.x) * s + (y - r.y) * c;
         double qx = Math.max(-r.length / 2, Math.min(r.length / 2, lx));
         double qy = Math.max(-r.width / 2, Math.min(r.width / 2, ly));
-        return Math.hypot(lx - qx, ly - qy);
+        return FastMath.hypot(lx - qx, ly - qy);
     }
 }

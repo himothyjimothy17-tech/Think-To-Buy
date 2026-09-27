@@ -49,7 +49,7 @@ html, body {
   -webkit-backdrop-filter: blur(6px);
 }
 
-#score-card { top: 12px; left: 12px; width: 210px; }
+#score-card { top: 12px; left: 12px; width: 250px; }
 .alliance-label { letter-spacing: 0.15em; font-size: 11px; font-weight: 700; }
 .alliance-label.red { color: var(--red); }
 .alliance-label.blue { color: var(--blue); }
@@ -175,3 +175,4 @@ table.kv td:last-child { text-align: right; }
 .field.seed { flex: 0 0 90px; }
 .field.seed input { width: 100%; }
 [hidden] { display: none !important; }
+.breakdown td { white-space: nowrap; }

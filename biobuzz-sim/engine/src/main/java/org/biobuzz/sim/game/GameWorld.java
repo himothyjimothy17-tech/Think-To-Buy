@@ -1,5 +1,7 @@
 package org.biobuzz.sim.game;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.field.Alliance;
 import org.biobuzz.sim.field.Field;
@@ -30,7 +32,7 @@ import static org.biobuzz.sim.util.Units.inToM;
  */
 public final class GameWorld {
 
-    private static final double GRAVITY = 9.81;
+    public static final double GRAVITY = 9.81;
     private static final double AIR_DENSITY = 1.2;
     private static final double SLEEP_SPEED = 0.01;
     /** A launched ball doesn't collide with the robot that launched it for this long (it's leaving the shooter). */
@@ -257,7 +259,7 @@ public final class GameWorld {
             // Rolling on the tiles.
             b.vz = 0;
             b.z = b.radius;
-            double hv = Math.hypot(b.vx, b.vy);
+            double hv = FastMath.hypot(b.vx, b.vy);
             if (hv > 1e-9) {
                 double dv = Math.min(rollingDecel * dt, hv);
                 b.vx -= b.vx / hv * dv;
@@ -280,7 +282,7 @@ public final class GameWorld {
                 b.fromTippedHive = false;
             }
         }
-        if (b.onGround() && b.vz == 0 && Math.hypot(b.vx, b.vy) < SLEEP_SPEED) {
+        if (b.onGround() && b.vz == 0 && FastMath.hypot(b.vx, b.vy) < SLEEP_SPEED) {
             b.stop();
             b.asleep = true;
         }
@@ -358,7 +360,7 @@ public final class GameWorld {
     private void bounceOffCircle(Ball b, double cx, double cy, double cr) {
         double dx = b.x - cx;
         double dy = b.y - cy;
-        double d = Math.hypot(dx, dy);
+        double d = FastMath.hypot(dx, dy);
         double min = cr + b.radius;
         if (d >= min || d < 1e-9) {
             return;
@@ -427,7 +429,7 @@ public final class GameWorld {
         double qy = Math.max(-hw, Math.min(hw, ly));
         double ex = lx - qx;
         double ey = ly - qy;
-        double d = Math.hypot(ex, ey);
+        double d = FastMath.hypot(ex, ey);
         if (d >= b.radius) {
             return false;
         }
@@ -646,5 +648,10 @@ public final class GameWorld {
 
     public Field field() {
         return field;
+    }
+
+    /** 0.5 * air density * drag coefficient (multiply by area and v^2 for the drag force). */
+    public double dragK() {
+        return dragK;
     }
 }

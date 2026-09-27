@@ -236,7 +236,9 @@ class Stage4Test {
 
     @Test
     void fullMatchRunsAllPhasesAndScoresLeave() throws Exception {
-        newSim();
+        // AI off: the other robots sit still, so only our LEAVE counts.
+        sim = new Simulation(SimConfig.load(Paths.get("config"), List.of()).withAiOverrides(java.util.Map.of("enabled", false)),
+                List.of());
         sim.registry().register(org.biobuzz.sim.opmode.OpModeRegistry.Entry.of(LeaveOnly.class, true));
         sim.registry().register(org.biobuzz.sim.opmode.OpModeRegistry.Entry.of(NeverStops.class, false));
         sim.startMatch("LeaveOnly", "NeverStops");

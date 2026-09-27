@@ -13,6 +13,7 @@ import java.util.Map;
  *   game.jsonc   - rules and field (from the manual)
  *   robot.jsonc  - our robot (with any design variants applied on top)
  *   hubs.jsonc   - the Driver Station robot configuration
+ *   ai.jsonc     - how the other three robots drive and play
  */
 public final class SimConfig {
 
@@ -20,13 +21,16 @@ public final class SimConfig {
     public final Cfg game;
     public final Cfg robot;
     public final Cfg hubs;
+    /** The other robots' AI (ai.jsonc). */
+    public final Cfg ai;
     public final List<String> variants;
 
-    private SimConfig(Path configDir, Cfg game, Cfg robot, Cfg hubs, List<String> variants) {
+    private SimConfig(Path configDir, Cfg game, Cfg robot, Cfg hubs, Cfg ai, List<String> variants) {
         this.configDir = configDir;
         this.game = game;
         this.robot = robot;
         this.hubs = hubs;
+        this.ai = ai;
         this.variants = variants;
     }
 
@@ -39,6 +43,7 @@ public final class SimConfig {
         Map<String, Object> game = (Map<String, Object>) read(configDir.resolve("game.jsonc"));
         Map<String, Object> robot = (Map<String, Object>) read(configDir.resolve("robot.jsonc"));
         Map<String, Object> hubs = (Map<String, Object>) read(configDir.resolve("hubs.jsonc"));
+        Map<String, Object> ai = (Map<String, Object>) read(configDir.resolve("ai.jsonc"));
         List<String> applied = new ArrayList<>();
         for (String v : variantNames) {
             if (v == null || v.isBlank()) {
@@ -55,6 +60,7 @@ public final class SimConfig {
                 new Cfg(game, "game.jsonc"),
                 new Cfg(robot, "robot.jsonc" + (applied.isEmpty() ? "" : " + " + applied)),
                 new Cfg(hubs, "hubs.jsonc"),
+                new Cfg(ai, "ai.jsonc"),
                 applied);
     }
 
@@ -62,7 +68,13 @@ public final class SimConfig {
     public SimConfig withRobotOverrides(Map<String, Object> robotOverrides) {
         return new SimConfig(configDir, game,
                 new Cfg(Cfg.deepMerge(robot.raw(), robotOverrides), "robot.jsonc (tuned)"),
-                hubs, variants);
+                hubs, ai, variants);
+    }
+
+    /** Returns a copy with {@code aiOverrides} applied (e.g. {"enabled": false}). */
+    public SimConfig withAiOverrides(Map<String, Object> aiOverrides) {
+        return new SimConfig(configDir, game, robot, hubs, new Cfg(Cfg.deepMerge(ai.raw(), aiOverrides), "ai.jsonc (overridden)"),
+                variants);
     }
 
     private static Object read(Path file) throws IOException {

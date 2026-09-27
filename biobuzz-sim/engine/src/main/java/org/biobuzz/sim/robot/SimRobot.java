@@ -26,6 +26,10 @@ public final class SimRobot {
     public double vx;
     public double vy;
     public double omega;
+    /** Mass for robot-robot pushing (kg). */
+    public double massKg = 13.6;
+    /** An anchored robot can't be pushed (used when the AI is turned off: it just sits there). */
+    public boolean anchored;
     /**
      * Where the robot is TRYING to go (field frame, m/s) - from its wheel speeds
      * or its AI. Differs from vx/vy when it is pushing against something (G421 pins).

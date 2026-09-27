@@ -1,5 +1,7 @@
 package org.biobuzz.sim.game;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.field.Alliance;
 import org.biobuzz.sim.field.Field;
@@ -256,7 +258,7 @@ public final class ScoreKeeper {
     public static boolean circleOverlapsRect(double x, double y, double r, Rect z) {
         double cx = Math.max(z.xMin, Math.min(z.xMax, x));
         double cy = Math.max(z.yMin, Math.min(z.yMax, y));
-        return Math.hypot(x - cx, y - cy) < r;
+        return FastMath.hypot(x - cx, y - cy) < r;
     }
 
     // ------------------------------------------------------------ output

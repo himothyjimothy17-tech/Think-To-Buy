@@ -106,12 +106,16 @@ class Stage5Test {
         assertEquals(List.of(1L, 2L, 3L), Headless.parseSeeds("3"));
         assertEquals(List.of(5L, 6L, 7L), Headless.parseSeeds("5-7"));
         assertEquals(List.of(2L, 9L, 11L, 12L), Headless.parseSeeds("2,9,11-12"));
+        // A worker process must get exactly its one seed (not "seeds 1..N").
+        List<String> args = new Headless.Row().args(7);
+        assertEquals(List.of(7L), Headless.parseSeeds(args.get(args.indexOf("--seeds") + 1)));
     }
 
     @Test
     void headlessRunOneGivesAReport() throws Exception {
         Headless.Row r = new Headless.Row();
         r.auto = "Leave Auto";
+        r.ai = "off"; // only our robot scores
         String rep = Headless.runOne(Paths.get("config"), r, 3);
         @SuppressWarnings("unchecked")
         java.util.Map<String, Object> m = (java.util.Map<String, Object>) org.biobuzz.sim.config.Jsonc.parse(rep, "r");

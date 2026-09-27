@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
  *   --variant a,b        design variants from config/variants
  *   --set Class.FIELD=v  set a TeamCode tunable (repeatable)
  *   --alliance red|blue  --start POSE
+ *   --ai on|off          the other three robots play (default) or sit still
  *   --jobs N             run N matches at once in separate JVMs (default: CPU count)
  *   --out FILE           where to save the JSON (default runs/<time>.json)
  *
@@ -64,6 +65,7 @@ public final class Headless {
         List<String> sets = new ArrayList<>();
         String alliance = "red";
         String start = "";
+        String ai = "on";
         boolean full;
 
         Row copy() {
@@ -75,13 +77,14 @@ public final class Headless {
             r.sets = new ArrayList<>(sets);
             r.alliance = alliance;
             r.start = start;
+            r.ai = ai;
             r.full = full;
             return r;
         }
 
         List<String> args(long seed) {
-            List<String> a = new ArrayList<>(List.of("--worker", "--seeds", Long.toString(seed), "--auto", auto,
-                    "--teleop", teleop, "--variant", variants, "--alliance", alliance, "--start", start));
+            List<String> a = new ArrayList<>(List.of("--worker", "--seeds", seed + "-" + seed, "--auto", auto,
+                    "--teleop", teleop, "--variant", variants, "--alliance", alliance, "--start", start, "--ai", ai));
             for (String s : sets) {
                 a.add("--set");
                 a.add(s);
@@ -100,6 +103,7 @@ public final class Headless {
         List<String> sets = new ArrayList<>();
         String alliance = "red";
         String start = "";
+        String ai = "on";
         String seedsText = "1-20";
         boolean full = false;
         boolean worker = false;
@@ -116,6 +120,7 @@ public final class Headless {
                 case "--set": sets.add(args[++i]); break;
                 case "--alliance": alliance = args[++i]; break;
                 case "--start": start = args[++i]; break;
+                case "--ai": ai = args[++i]; break;
                 case "--jobs": jobs = Integer.parseInt(args[++i]); break;
                 case "--out": out = args[++i]; break;
                 case "--config": config = Paths.get(args[++i]); break;
@@ -135,6 +140,7 @@ public final class Headless {
             r.sets = sets;
             r.alliance = alliance;
             r.start = start;
+            r.ai = ai;
             r.full = full;
             PrintStream realOut = System.out;
             System.setOut(new PrintStream(System.err, true)); // keep sim chatter off the result channel
@@ -162,6 +168,7 @@ public final class Headless {
         }
         rows = expand(rows, alliance, (r, v) -> r.alliance = v, "alliance");
         rows = expand(rows, start, (r, v) -> r.start = v, "start");
+        rows = expand(rows, ai, (r, v) -> r.ai = v, "ai");
         for (Row r : rows) {
             if (r.label.isEmpty()) {
                 r.label = r.auto.isEmpty() ? "(no auto)" : r.auto;
@@ -233,6 +240,9 @@ public final class Headless {
     static String runOne(Path config, Row r, long seed) throws IOException {
         List<String> vs = r.variants.isBlank() ? List.of() : Arrays.asList(r.variants.split(","));
         SimConfig cfg = SimConfig.load(config, vs);
+        if (r.ai.equalsIgnoreCase("off")) {
+            cfg = cfg.withAiOverrides(Map.of("enabled", false));
+        }
         Simulation sim = new Simulation(cfg, vs);
         try {
             for (String s : r.sets) {
@@ -438,6 +448,7 @@ public final class Headless {
             Row r = rows.get(i);
             j.beginObject().field("label", r.label).field("auto", r.auto).field("teleop", r.teleop)
                     .field("variants", r.variants).field("alliance", r.alliance).field("start", r.start);
+            j.field("ai", r.ai);
             j.name("sets").any(new ArrayList<Object>(r.sets));
             j.name("summary").beginObject();
             for (String key : metrics(res.get(i).get(0), autoOnly).keySet()) {

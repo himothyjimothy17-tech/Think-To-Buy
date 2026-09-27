@@ -1,5 +1,7 @@
 package org.biobuzz.sim.robot;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.physics.MotorState;
 
 import java.util.Random;
@@ -138,7 +140,7 @@ public final class MecanumDrivetrain {
                 double rollerSlide = (gx - surface) * a[0] + gy * a[1];
                 double fa = -p.rollerResistance * normal * Math.tanh(rollerSlide / p.slipSpeed);
                 // Rolling resistance opposes the robot's motion at this wheel.
-                double speed = Math.hypot(gx, gy);
+                double speed = FastMath.hypot(gx, gy);
                 double frx = speed > 1e-6 ? -p.rollingResistance * normal * gx / speed * Math.tanh(speed / p.slipSpeed) : 0;
                 double fry = speed > 1e-6 ? -p.rollingResistance * normal * gy / speed * Math.tanh(speed / p.slipSpeed) : 0;
 

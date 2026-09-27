@@ -1,5 +1,7 @@
 package org.biobuzz.sim.game;
 
+import org.biobuzz.sim.util.FastMath;
+
 import org.biobuzz.sim.config.Cfg;
 import org.biobuzz.sim.field.Alliance;
 
@@ -75,7 +77,7 @@ public final class Flower {
         if (b.vz >= 0 || prevZ < topZ || b.z > topZ + b.radius) {
             return false;
         }
-        double off = Math.hypot(b.x - x, b.y - y);
+        double off = FastMath.hypot(b.x - x, b.y - y);
         if (off > openingRadius - b.radius + slop) {
             return false;
         }

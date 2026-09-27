@@ -1,0 +1,44 @@
+// ============================================================================
+// The other three robots (our PARTNER and both OPPONENTS).
+//
+// None of this comes from the game manual: it describes "typical" competitor
+// robots, so EVERY number here is an ESTIMATE. Each robot draws its own values
+// from these [min, max] ranges using the match seed, so every seed gives a
+// slightly different set of opponents (faster, more accurate, parks or not...).
+// ============================================================================
+{
+  // false = the other robots just sit at their start (handy for testing our auto alone).
+  "enabled": true,
+  // Also play during single-period practice (INIT/START without "Start match")?
+  // Off by default so tuning our own robot isn't disturbed.
+  "activeInPractice": false,
+
+  "massLb": [26, 38],                   // ESTIMATE: typical competition robots
+  "maxSpeedInPerSec": [45, 75],         // ESTIMATE: top speed while driving around
+  "accelInPerSec2": [90, 160],          // ESTIMATE: limited by traction and motors
+  "maxTurnDegPerSec": [220, 360],       // ESTIMATE
+  "reactionSeconds": [0.1, 0.5],        // ESTIMATE: delay before starting AUTO
+
+  "capacity": 4,                        // G407: may CONTROL at most 4 (§11.4)
+  "pickupIntervalSeconds": [0.15, 0.35],// ESTIMATE: time between two intake pickups
+  "mouthDepthIn": 3.0,                  // ESTIMATE: how far in front the intake grabs
+  "mouthWidthIn": 14.0,                 // ESTIMATE
+
+  // Shooting: a fixed-angle flywheel, solved with drag like ours would be.
+  "launchHeightIn": 15.0,               // ESTIMATE
+  "launchAngleDeg": [45, 62],           // ESTIMATE: some robots have steeper shooters
+  "maxLaunchSpeedMps": 12.0,            // ESTIMATE
+  "speedSpread": [0.015, 0.045],        // ESTIMATE: 1-sigma relative launch speed error
+  "angleSpreadDeg": [0.5, 2.0],         // ESTIMATE: 1-sigma aim error
+  "spinUpSeconds": [0.5, 1.2],          // ESTIMATE: before the first shot
+  "shotIntervalSeconds": [0.3, 0.7],    // ESTIMATE: between shots
+  "aimToleranceDeg": 3.0,               // must face the target this well before shooting
+
+  // Strategy (each is the chance a given robot does it).
+  "parkInAutoChance": 0.6,              // ESTIMATE: many teams park in AUTO (§10.5.4, 5 points)
+  "parkInTeleopChance": 0.85,           // ESTIMATE
+  "collectInAutoChance": 0.5,           // ESTIMATE: collect GARDEN POLLEN after shooting the pre-loads
+  "flowerEndgameChance": 0.35,          // ESTIMATE: lobs NECTAR into FLOWERS in the last 60 s
+  "parkWhenSecondsLeft": [6, 12],       // ESTIMATE: start heading to park this long before the end
+  "autoParkWhenSecondsLeft": [4, 7]     // ESTIMATE
+}

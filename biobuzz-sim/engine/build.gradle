@@ -51,3 +51,7 @@ tasks.register('headless', JavaExec) {
     mainClass = 'org.biobuzz.sim.Headless'
     workingDir = rootProject.projectDir
 }
+
+tasks.register('printCp') {
+    doLast { println sourceSets.main.runtimeClasspath.asPath }
+}
