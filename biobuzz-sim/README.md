@@ -124,6 +124,8 @@ biobuzz-sim/
   sdk-mock/     fake FTC SDK: same package names, classes and methods as the real one
   engine/       physics, field, OpMode runner, web server (Java)
   web/          the 3D view (HTML + JavaScript + Three.js, stored locally)
+    gfx/        realistic field/robot models, textures, CAD loading
+    models/     optional real CAD (.glb), see "Using real CAD"
   config/       game.jsonc (rules), robot.jsonc (our robot), hubs.jsonc (wiring)
   tools/        SDK checker (calibration tools later)
   docs/manual/  the game manual, one image per page
@@ -201,6 +203,106 @@ Everything uses inches and degrees:
 - **+y:** away from the **audience**.
 - **Heading:** 0° faces +x, counter-clockwise is positive.
 - **Tiles:** columns A–F run along +x, rows 1–6 along +y (manual §9.4).
+
+### Graphics
+
+**Settings → Graphics quality** picks how the 3D view is drawn (your browser
+remembers the choice). The fps counter is next to it.
+
+| Level | What you get | For |
+|---|---|---|
+| **Low** | The original simple look: flat colors, no shadows | old or slow laptops |
+| **Medium** (default) | Realistic materials, venue lighting, soft shadows, reflections | most laptops |
+| **High** | Medium plus sharper shadows, clear-coat plastics and more detail | a good graphics card |
+
+On Medium and High, a slow computer automatically draws fewer pixels (down to
+60 %) to keep the frame rate up. Add `?fixedres` to the page address to turn
+that off.
+
+What you see on Medium and High:
+- **Field:** gray foam tiles with puzzle seams, clear polycarbonate walls on
+  aluminum rails, brushed-aluminum HIVE frame, see-through pentagon CELLS
+  with AprilTags, FLOWERS drawn from Fig 9-12, and wiffle-style balls at their
+  real sizes. All textures are drawn in code, so nothing is downloaded.
+- **Our robot** is built from `config/robot.jsonc`: goBILDA U-channel with
+  holes, 4 mecanum wheels with 45° rollers, Control Hub, Expansion Hub,
+  battery, Limelight, 2 intake rollers, 2-motor flywheel and the servo gate
+  (or hood).
+- **It moves like the sim says.** The wheels turn at their simulated speed,
+  the intake rollers spin while they run, and the flywheel turns at its real
+  RPM. Above about 480 RPM the flywheel shows a motion-blurred disc, as your
+  eye would see it. The gate or hood follows the servo. The state message
+  carries `ours.anim` (wheel, intake and flywheel speeds in rad/s) for this.
+- **Other robots:** a simpler model with alliance-colored panels, number
+  plates, and wheels that spin to match how the robot moves.
+
+### Using real CAD
+
+You can swap in real CAD for the generated models. Put the files in
+`web/models/` and reload the page (no restart needed):
+
+| File | Replaces |
+|---|---|
+| `web/models/field.glb` | the generated field (tiles, walls, FLOWERS, HIVE frame) |
+| `web/models/robot.glb` | our generated robot |
+| `web/models/models.json` | optional: scale, rotation, offset and part names |
+
+If a file isn't there, the generated model is drawn. The browser console
+(F12) says which files were loaded and which moving robot parts were found.
+
+**Getting a .glb**
+1. **Field:** FIRST posts the season's field CAD on the FTC game and season
+   resources page, usually as an Onshape document and STEP files. Open the
+   field assembly in Onshape (make a copy if it's read-only).
+2. **Our robot:** open the robot's top-level assembly in Onshape.
+3. In Onshape, right-click the assembly tab, choose **Export**, and pick
+   **GLTF** with the binary (`.glb`) option. If you only have a STEP file,
+   import it into Blender (with a STEP importer add-on) or FreeCAD, then
+   choose **File → Export → glTF 2.0 (.glb)**.
+4. Keep the files small: under about 50 MB and 1–2 million triangles. Hide
+   screws and hardware before exporting, or use Blender's *Decimate*
+   modifier. Big files load slowly and lower the frame rate.
+
+**Lining it up.** glTF files are Y-up and in meters. The sim is Z-up and in
+inches. The defaults (`scale` 39.37, `rotationDeg` [90, 0, 0]) handle that
+conversion, so a model exported with the usual origin often lines up with no
+changes. If it doesn't, create `web/models/models.json`:
+
+```jsonc
+{
+  "field": {
+    "scale": 39.3701,           // meters -> inches (use 1 if the file is already in inches)
+    "rotationDeg": [90, 0, 0],  // 90 about X turns Y-up into Z-up; the 2nd number turns it about the vertical
+    "offset": [0, 0, 0],        // inches, after rotating: +x = blue wall, +y = away from the audience, +z = up
+    "keepGenerated": { "hives": true },   // the sim still draws the HIVES (they tip during a match)
+    "hideParts": ["cell", "hive.?body"]   // hide the CAD's own HIVE CELLS (names are matched as regex)
+  },
+  "robot": {
+    "scale": 39.3701,
+    "rotationDeg": [90, 0, 0],
+    "offset": [0, 0, 0],        // inches: move the origin to the robot's center at floor level, front = +x
+    "wheels": { "FL": "Wheel FL", "BL": "Wheel BL", "FR": "Wheel FR", "BR": "Wheel BR" },
+    "flywheel": "Flywheel",
+    "intake": ["Intake Roller 1", "Intake Roller 2"],
+    "gate": "Gate",             // or the hood part, for the hood design
+    "wheelAxis": "y"            // axis each part spins about, in the robot frame (x, y or z)
+  }
+}
+```
+
+- **Field:** the sim's origin is the center of the field at floor level. Check
+  the **Top** camera. The audience should be at the bottom, red on the left.
+  The generated alliance zone tape and FLOWER rings are still drawn, so you
+  can see whether the CAD field sits on them.
+- **Robot:** the sim's robot origin is the center of the robot at floor level,
+  facing +x. If the robot faces sideways, change the 2nd rotation number by
+  90. Use the **Chase** camera: the intake should point away from you.
+- **Moving parts are found by name.** Onshape instance names become the part
+  names in the file. Give each wheel a name with "wheel" and its corner in
+  it ("Wheel FL", "front left wheel"). Name the other parts "Flywheel",
+  "Intake Roller 1" and so on, and "Gate" (or "Hood"). You can also list the
+  exact names in `models.json`, which may use `//` comments. Parts that can't
+  be found just don't move.
 
 ---
 

@@ -16,7 +16,10 @@ const $ = id => document.getElementById(id);
 const GAMEPAD_SEND_MS = 20;      // send controller state up to 50 times a second
 const GAMEPAD_HEARTBEAT_MS = 250; // ...and at least 4 times a second even if nothing changed
 
-const scene = new FieldScene($('viewport'));
+// Graphics quality (Settings panel), remembered in this browser.
+let quality = 'medium';
+try { quality = localStorage.getItem('biobuzz.quality') || 'medium'; } catch (e) { /* storage blocked */ }
+const scene = new FieldScene($('viewport'), quality);
 const input = new GamepadInput();
 let socket = null;
 let fieldMsg = null;
@@ -122,7 +125,8 @@ function onState(s) {
   if (!fieldMsg) return; // wait for the field layout first
   record(s);
   if (viewMode === 'live') {
-    scene.updateRobots(s.robots);
+    scene.updateRobots(s.robots, true, s.t);
+    scene.updateOurMechanisms(s.ours, s.t);
     scene.updateBalls(s.balls);
     scene.updateHives(s.hives);
   }
@@ -290,6 +294,12 @@ for (const id of ['match-auto', 'match-teleop']) $(id).addEventListener('change'
 $('startpose-select').addEventListener('change', e => cmd('startPose', { value: e.target.value }));
 $('speed-select').addEventListener('change', e => cmd('speed', { value: parseFloat(e.target.value) }));
 $('chk-trail').addEventListener('change', e => scene.setTrailVisible(e.target.checked));
+$('quality-select').value = scene.q.name;
+$('quality-select').addEventListener('change', e => {
+  scene.setQuality(e.target.value);
+  try { localStorage.setItem('biobuzz.quality', e.target.value); } catch (err) { /* storage blocked */ }
+});
+setInterval(() => { $('fps').textContent = scene.fps.toFixed(0); }, 1000);
 $('chk-zones').addEventListener('change', e => scene.setZonesVisible(e.target.checked));
 for (const b of document.querySelectorAll('button.cam')) {
   b.addEventListener('click', () => {
@@ -352,7 +362,8 @@ function showFrame(i) {
   const f = frames[i];
   if (!f) return;
   const info = robotsInfo();
-  scene.updateRobots(info.map((r, k) => ({ ...r, x: f.robots[k][0], y: f.robots[k][1], h: f.robots[k][2] })), false);
+  scene.updateOurMechanisms(null, f.t); // no live wheel speeds: spin wheels from the motion instead
+  scene.updateRobots(info.map((r, k) => ({ ...r, x: f.robots[k][0], y: f.robots[k][1], h: f.robots[k][2] })), false, f.t);
   scene.updateBalls(f.balls);
   scene.updateHives(f.hives.map((a, k) => ({ alliance: k === 0 ? 'RED' : 'BLUE', angle: a })));
   scene.updateFlowers(f.flowers.map(o => ({ owner: o })));

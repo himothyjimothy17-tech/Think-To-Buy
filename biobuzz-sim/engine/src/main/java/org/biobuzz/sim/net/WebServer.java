@@ -49,6 +49,10 @@ public final class WebServer {
         CONTENT_TYPES.put("png", "image/png");
         CONTENT_TYPES.put("svg", "image/svg+xml");
         CONTENT_TYPES.put("ico", "image/x-icon");
+        CONTENT_TYPES.put("glb", "model/gltf-binary");
+        CONTENT_TYPES.put("gltf", "model/gltf+json");
+        CONTENT_TYPES.put("bin", "application/octet-stream");
+        CONTENT_TYPES.put("jpg", "image/jpeg");
     }
 
     private final Path webRoot;
@@ -153,6 +157,10 @@ public final class WebServer {
             sendRunList(out);
             return;
         }
+        if (path.equals("/models/")) {
+            sendModelList(out);
+            return;
+        }
         Path root = path.startsWith("/runs/") ? runsRoot : webRoot;
         Path file = (path.startsWith("/runs/") ? runsRoot.resolve(path.substring(6)) : webRoot.resolve(path.substring(1)))
                 .normalize();
@@ -170,6 +178,28 @@ public final class WebServer {
         out.write(("HTTP/1.1 200 OK\r\nContent-Length: " + body.length
                 + "\r\nContent-Type: " + CONTENT_TYPES.getOrDefault(ext, "application/octet-stream")
                 + "\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+        out.write(body);
+        out.flush();
+    }
+
+    /** JSON list of the optional CAD files in web/models/ (so the page can check without 404s). */
+    private void sendModelList(OutputStream out) throws IOException {
+        StringBuilder sb = new StringBuilder("[");
+        Path dir = webRoot.resolve("models");
+        if (Files.isDirectory(dir)) {
+            try (java.util.stream.Stream<Path> st = Files.list(dir)) {
+                for (Path f : (Iterable<Path>) st.sorted()::iterator) {
+                    if (sb.length() > 1) {
+                        sb.append(',');
+                    }
+                    sb.append('"').append(f.getFileName().toString().replace("\"", "").replace("\\", "")).append('"');
+                }
+            }
+        }
+        byte[] body = sb.append(']').toString().getBytes(StandardCharsets.UTF_8);
+        out.write(("HTTP/1.1 200 OK\r\nContent-Length: " + body.length
+                + "\r\nContent-Type: application/json\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n")
+                .getBytes(StandardCharsets.US_ASCII));
         out.write(body);
         out.flush();
     }

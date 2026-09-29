@@ -1110,7 +1110,18 @@ public final class Simulation {
                 .field("pickups", mech.pickups)
                 .field("jams", mech.jams)
                 .field("ballAtGate", mech.ballAtGate(now))
+                .field("hood", mech.hoodMode())
                 .endObject();
+        // For the 3D view only: how fast things spin (rad/s), so it can animate them.
+        j.name("anim").beginObject();
+        j.name("wheels").beginArray(); // FL, BL, FR, BR; + = rolling the robot forward
+        for (int i = 0; i < 4; i++) {
+            j.value(ours.drivetrain.wheelSpeed(i));
+        }
+        j.endArray();
+        j.field("intake", mech.rollerInwardSpeed() / mech.rollerRadius()); // + = pulling balls in
+        j.field("flywheel", mech.flywheelRpm() * 2 * Math.PI / 60);
+        j.endObject();
         j.name("servos").beginArray();
         hardware.servosByRole.forEach((role, s) ->
                 j.beginObject().field("name", s.configName()).field("role", role).field("position", s.getPosition()).endObject());

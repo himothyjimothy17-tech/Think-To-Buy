@@ -428,6 +428,11 @@ public final class BallMechanisms implements ElementCarrier {
         return hoodMode;
     }
 
+    /** Intake roller radius (m). */
+    public double rollerRadius() {
+        return rollerRadius;
+    }
+
     public double flywheelRadius() {
         return flywheelRadius;
     }
